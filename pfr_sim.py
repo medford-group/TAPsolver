@@ -3,11 +3,10 @@ from dolfin_adjoint import *
 from pfr_variational import make_f_equation
 from mpmath import nsum, exp, inf
 import matplotlib.pyplot as plt
-import pandas as pd
 import numpy as np
 import math as mp
-import dijitso
 import time
+import dijitso
 import csv
 import sys
 import os
