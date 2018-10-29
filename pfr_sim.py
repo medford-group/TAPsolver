@@ -1,8 +1,8 @@
 from fenics import *
-from dolfin_adjoint import *
+from fenics_adjoint import *
 from pfr_variational import make_f_equation
 from mpmath import nsum, exp, inf
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import math as mp
@@ -14,13 +14,15 @@ import os
 
 parameters["std_out_all_processes"] = False																							
 cache_params = {"cache_dir":"*","lib_dir":"*","log_dir":"*","inc_dir":"*","src_dir":"*"}											
-set_log_active(False)
+#set_log_active(False)
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-#reactions_test = ['O2 <-> 2O','CO + O -> CO2']
+reactions_test = ['O2 <-> 2O','CO + O -> CO2']
 
-reactions_test = ['A <-> B','B <-> C','A + B <-> D', 'C + D <-> E']
+#reactions_test = ['A <-> B']
+
+#reactions_test = ['A <-> B','B <-> C','A + B <-> D', 'C + D <-> E']
 
 reactants_num = 1
 Inert_pulse_size = (2.5e-8)*(6.022e23)																											### Size of inert pulse (# of molecules, not mol)
@@ -103,7 +105,7 @@ class thin_zone(SubDomain):
 		return between(x[0], ( (grid_loc_1[0]/grid_points) , (grid_loc_1[1]/grid_points)))
 thin_zone = thin_zone()
 
-domains = CellFunction("size_t", mesh)
+domains = MeshFunction("size_t", mesh,0)#CellFunction("size_t", mesh)
 domains.set_all(0)
 thin_zone.mark(domains,1)
 
@@ -115,7 +117,7 @@ def boundary_L(x, on_boundary):
 def boundary_R(x, on_boundary):
 	return on_boundary and near(x[0],1,tol)
 
-boundaries = FacetFunction("size_t",mesh)
+boundaries = MeshFunction("size_t",mesh,0)
 boundary_L = CompiledSubDomain('near(x[0], 0)')#'on_boundary && near(x[0], 0, tol)',tol=1E-14
 #boundary_out = CompiledSubDomain('near(x[0], 0.98)')
 #boundary_out.mark(boundaries,2)
@@ -179,20 +181,20 @@ bcs = []
 #for k in range(0,reactants_num):
 bcs.append(DirichletBC(V.sub(0),Constant(1),boundary_L))
 bcs.append(DirichletBC(V.sub(1),Constant(0),boundary_L))
-bcs.append(DirichletBC(V.sub(2),Constant(0),boundary_L))
-bcs.append(DirichletBC(V.sub(3),Constant(0),boundary_L))
-bcs.append(DirichletBC(V.sub(4),Constant(0),boundary_L))
-bcs.append(DirichletBC(V.sub(5),Constant(0),boundary_L))
-bcs.append(DirichletBC(V.sub(6),Constant(1),boundary_L))
+#bcs.append(DirichletBC(V.sub(2),Constant(0),boundary_L))
+#bcs.append(DirichletBC(V.sub(3),Constant(0),boundary_L))
+#bcs.append(DirichletBC(V.sub(4),Constant(0),boundary_L))
+#bcs.append(DirichletBC(V.sub(5),Constant(0),boundary_L))
+#bcs.append(DirichletBC(V.sub(6),Constant(1),boundary_L))
 
 #	bcs.append(DirichletBC(V.sub(k),Constant(0),boundary_R))
 bcs.append(DirichletBC(V.sub(all_molecules),Constant(1),boundary_L))
 #bcs.append(DirichletBC(V.sub(all_molecules),Constant(0),boundary_R))
 
 ################################################################################################################################	### Define parameters / graph used in next sections
-fig2, ax2 = plt.subplots()
-ax2.set_xlabel('$t (s)$')
-ax2.set_ylabel('$Flux (molecules/s)$')
+#fig2, ax2 = plt.subplots()
+#ax2.set_xlabel('$t (s)$')
+#ax2.set_ylabel('$Flux (molecules/s)$')
 zef = np.linspace(dx_r, 1.-dx_r, grid_points+1)
 
 to_flux = []
@@ -209,6 +211,14 @@ J = derivative(F,u)
 problem = NonlinearVariationalProblem(F,u,bcs,J)
 solver = NonlinearVariationalSolver(problem)
 solver.parameters["newton_solver"]["relative_tolerance"] = 1.0e-8
+
+
+#A = np.array((0,0.5,0.5,1))	
+#B = np.array([[0,0,0,0],[0.5,0,0,0],[0,1/2,0,0],[0,0,1,0]])
+#C = np.array((1/6,1/3,1/3,1/6))
+#scheme = BDF1(F, u,t=dk,bcs=bcs)
+#scheme = ButcherMultiStageScheme(F, u,time=dk,a=B,b=A,c=C,order=1,bcs=bcs)
+#solver = RKSolver(scheme,1)
 
 def solver_iteration(time_step):
 	try:
@@ -233,7 +243,7 @@ start_time = time.time()
 
 
 osub = integration_section()
-domains = CellFunction("size_t", mesh)
+domains = MeshFunction("size_t", mesh,0)
 domains.set_all(0)
 osub.mark(domains, 1)
 dP = Measure('vertex',domain = mesh, subdomain_data=domains)
@@ -309,6 +319,8 @@ while t <= Time+0.01:
 	#	dt = dt+0.0001
 	#	dk.assign(dt)
 	t += dt
+print('')
+print('Total simulation time')
 print(time.time() - start_time)
 u_final = u.split(deepcopy=False)
 #print(len(u_final))
@@ -327,13 +339,12 @@ control8 = Control(Kd3)
 sens_func = assemble(inner(u_final[0],u_final[0])*dP(1))
 #ens_func = assemble(test_new[k][0]*dP(1))
 start_time = time.time()
-print("")
 print('sensitivity time')
-dJdm1,dJdm2,dJdm3,dJdm4,dJdm5,dJdm6,dJdm7,dJdm8 = compute_gradient(sens_func,[control1,control2,control3,control4,control5,control6,control7,control8])#compute_gradient(sens_func,[control1,control2])
+dJdm1,dJdm2 = compute_gradient(sens_func,[control1,control2])#compute_gradient(sens_func,[control1,control2])
 print(time.time() - start_time)
 print("dJdm for each control")
-print(dJdm1.values(),dJdm2.values(),dJdm3.values(),dJdm4.values(),dJdm5.values(),dJdm6.values(),dJdm7.values(),dJdm8.values())
-
+print(dJdm1.values(),dJdm2.values())
+sys.exit()
 sens_func = assemble(inner(u_final[2],u_final[2])*dP(1))
 #ens_func = assemble(test_new[k][0]*dP(1))
 start_time = time.time()
@@ -341,6 +352,7 @@ print("")
 print('sensitivity time')
 dJdm1,dJdm2,dJdm3,dJdm4,dJdm5,dJdm6,dJdm7,dJdm8 = compute_gradient(sens_func,[control1,control2,control3,control4,control5,control6,control7,control8])#compute_gradient(sens_func,[control1,control2])
 print(time.time() - start_time)
+print('')
 print("dJdm for each control")
 print(dJdm1.values(),dJdm2.values(),dJdm3.values(),dJdm4.values(),dJdm5.values(),dJdm6.values(),dJdm7.values(),dJdm8.values())
 

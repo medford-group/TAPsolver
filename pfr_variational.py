@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import random
 import sys
 import time
@@ -106,8 +106,7 @@ def make_f_equation(reactions_n,reactants_number,Inert_only=False):
 			element = element + 'P1]'
 	necessary_dictionary = {'F': F,'gas_num': gas_num, 'surf_num': (len(reactants)-gas_num-1),'element': element,'gas_molecules': gas_molecules,'reactants_number':reactants_number,'reactants':reactants,'molecules_in_gas_phase':molecules_in_gas_phase}
 	
-	#print(F)
-	#sys.exit()
+	
 	return necessary_dictionary
 
 #test_new_again = make_f_equation(reactions_test)
