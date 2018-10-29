@@ -6,8 +6,8 @@ from mpmath import nsum, exp, inf
 import pandas as pd
 import numpy as np
 import math as mp
-import dijitso
 import time
+import dijitso
 import csv
 import sys
 import os
