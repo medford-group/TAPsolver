@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import random
 import sys
 import time
@@ -30,9 +30,14 @@ def make_f_equation(reactions_n,reactants_number,Inert_only=False):
 
 	F = ''
 	rate_array, reactions, reactants, rev_irr = reac_list_parsing(reactions_n)
+	print("")
+	print("Reactions")
 	print(reactions)
+	print("")
+	print("Reactants")
 	print(reactants)
-	print(rate_array)
+	print("")
+	#print(rate_array)
 	#sys.exit()
 	#print(reactants)
 	#Removed the removal of the *
@@ -78,7 +83,7 @@ def make_f_equation(reactions_n,reactants_number,Inert_only=False):
 			#print("Constant(eb[0])*((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']))*v_d['v_"+str(k+1)+"']*dx(0)  + dk*Constant(D["+str(k)+"][0]/(np.sum(r_param)**2))*dot(grad(u_d['u_"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(0) + Constant(eb[1])*((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']) )*v_d['v_"+str(k+1)+"']*dx(1)  + dk*Constant(D["+str(k)+"][1]/(np.sum(r_param)**2))*dot(grad(u_d['u_"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(1)" )
 			#print("")
 	for k in range(molecules_in_gas_phase,len(reactants)):
-		F = F + " + ((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']))*v_d['v_"+str(k+1)+"']*dx(0) + dk*((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']) )*v_d['v_"+str(k+1)+"']*dx(1)"
+		F = F + " + ((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']))*v_d['v_"+str(k+1)+"']*dx(0) + ((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']) )*v_d['v_"+str(k+1)+"']*dx(1)"
 		#print(" + ((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']))*v_d['v_"+str(k+1)+"']*dx(0) + dk*((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']) )*v_d['v_"+str(k+1)+"']*dx(1)")
 		#print("")
 	for k,z in enumerate(rate_array):
@@ -141,7 +146,8 @@ def make_f_equation(reactions_n,reactants_number,Inert_only=False):
 		else:
 			element = element + 'P1]'
 	necessary_dictionary = {'F': F,'gas_num': gas_num, 'surf_num': (len(reactants)-gas_num-1),'element': element,'gas_molecules': gas_molecules,'reactants_number':reactants_number,'reactants':reactants,'molecules_in_gas_phase':molecules_in_gas_phase}
-	
+	#print(F)
+	#sys.exit()
 	return necessary_dictionary
 
 #test_new_again = make_f_equation(reactions_test)
