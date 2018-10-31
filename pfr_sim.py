@@ -2,7 +2,12 @@ from fenics import *
 from fenics_adjoint import *
 from pfr_variational import make_f_equation
 from mpmath import nsum, exp, inf
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
+from pyadjoint.tape import get_working_tape, stop_annotating
+from pyadjoint.enlisting import Enlist
+#from pyadjoint.block import evaluate_adj
+#from .tape import get_working_tape
+#from timestepping import *
 import pandas as pd
 import numpy as np
 import math as mp
@@ -11,6 +16,33 @@ import dijitso
 import csv
 import sys
 import os
+from progressbar import ProgressBar
+
+def evaluate(tape,step):
+    tape._blocks[step].evaluate_adj()
+    return tape
+
+def compute_gradient(J,m,block_idx=0,options=None,tape=None):
+    pbar = ProgressBar()
+    X = np.empty(shape=[0, len(m)])
+    options = {} if options is None else options
+    tape = get_working_tape() if tape is None else tape
+    tape.reset_variables()
+    J.adj_value = 1.0
+    ## MY METHOD FOR CALCULATING
+    for k in pbar(range(len(tape.get_blocks())-1,0,-1)):
+    	with stop_annotating():
+    		tape = evaluate(tape,k)
+    		m = Enlist(m)
+    		if k < len(tape.get_blocks())-(len(bcs)+3) and k%(len(bcs)+3) == 0:
+    			grads = [i.get_derivative(options=options) for i in m]
+    			value_list = []
+    			for nu in grads:
+    				value_list.append(nu.values()[0])
+    			temp = np.array((value_list))
+    			X = np.vstack((X,temp))
+    #pbar.flush()
+    return X
 
 parameters["std_out_all_processes"] = False																							
 cache_params = {"cache_dir":"*","lib_dir":"*","log_dir":"*","inc_dir":"*","src_dir":"*"}											
@@ -18,39 +50,35 @@ cache_params = {"cache_dir":"*","lib_dir":"*","log_dir":"*","inc_dir":"*","src_d
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-reactions_test = ['O2 <-> 2O','CO + O -> CO2']
-
+#reactions_test = ['O2 <-> 2O','CO + O -> CO2']
+#reactions_test = ['A -> B']
 #reactions_test = ['A <-> B']
 
-#reactions_test = ['A <-> B','B <-> C','A + B <-> D', 'C + D <-> E']
+reactions_test = ['A <-> B','B -> C','A + B -> D', 'C + D -> E']
 
 reactants_num = 1
-Inert_pulse_size = (2.5e-8)*(6.022e23)																											### Size of inert pulse (# of molecules, not mol)
-reactant_ratio = [1,1]
+#Inert_pulse_size = (2.5e-8)*(6.022e23)																											### Size of inert pulse (# of molecules, not mol)
+#reactant_ratio = [1,1]
 
 #### TIME 
-Time = 0.6
-Time_steps = 50
+Time = 1.5
+Time_steps = 20
 
 T = 400+273.15
 reac_radius = 0.2
 
-len_inert_1 = 2
-len_cat = 0.1
-len_inert_2 = 2
+len_inert_1 = 0.1
+len_cat = 2
+len_inert_2 = 0.1
 
-Ke0 = Constant(5000)
-Kd0 = Constant(200)
+Ke0 = Constant(6)
+Kd0 = Constant(3)
 
-Ke1 = Constant(20)
-Kd1 = Constant(1000)
+Ke1 = Constant(15)
 
-Ke2= Constant(230)
-Kd2 = Constant(400*(100**3)/(6.022e23))
+Ke2 = Constant(5)
 
-Ke3 = Constant(1000)
-Kd3 = Constant(2000)
-
+Ke3 = Constant(20)
 
 #########################
 
@@ -105,7 +133,7 @@ class thin_zone(SubDomain):
 		return between(x[0], ( (grid_loc_1[0]/grid_points) , (grid_loc_1[1]/grid_points)))
 thin_zone = thin_zone()
 
-domains = MeshFunction("size_t", mesh,0)#CellFunction("size_t", mesh)
+domains = MeshFunction("size_t", mesh,0)
 domains.set_all(0)
 thin_zone.mark(domains,1)
 
@@ -119,8 +147,6 @@ def boundary_R(x, on_boundary):
 
 boundaries = MeshFunction("size_t",mesh,0)
 boundary_L = CompiledSubDomain('near(x[0], 0)')#'on_boundary && near(x[0], 0, tol)',tol=1E-14
-#boundary_out = CompiledSubDomain('near(x[0], 0.98)')
-#boundary_out.mark(boundaries,2)
 boundary_L.mark(boundaries,1)
 ds = Measure('ds')[boundaries]
 
@@ -140,20 +166,18 @@ for kit in range(0,(all_molecules)+1):
 	u_d['u_'+str(kit+1)] = tempB[kit]
 	u_nd['u_n'+str(kit+1)] = tempC[kit]
 
-#w = Constant(1)
 W = VectorFunctionSpace(mesh, 'P', 1)
 w = Function(W)
 
 dt = Time/Time_steps
 
 Length = np.sum(r_param)**2
-#print(w.vector().get_local())
 w.vector()[:] = 1
-#print(w.vector().get_local())
-#sys.exit()
 
 try:
 	F = eval(necessary_values['F'])
+	#print(necessary_values['F'])
+	#sys.exit()	
 except NameError:
 	print("       ")
 	print("       ")
@@ -179,22 +203,19 @@ except NameError:
 
 bcs = []
 #for k in range(0,reactants_num):
-bcs.append(DirichletBC(V.sub(0),Constant(1),boundary_L))
+bcs.append(DirichletBC(V.sub(0),Constant(0.3),boundary_L))
 bcs.append(DirichletBC(V.sub(1),Constant(0),boundary_L))
-#bcs.append(DirichletBC(V.sub(2),Constant(0),boundary_L))
-#bcs.append(DirichletBC(V.sub(3),Constant(0),boundary_L))
-#bcs.append(DirichletBC(V.sub(4),Constant(0),boundary_L))
-#bcs.append(DirichletBC(V.sub(5),Constant(0),boundary_L))
-#bcs.append(DirichletBC(V.sub(6),Constant(1),boundary_L))
+bcs.append(DirichletBC(V.sub(2),Constant(0),boundary_L))
+bcs.append(DirichletBC(V.sub(3),Constant(0),boundary_L))
+bcs.append(DirichletBC(V.sub(4),Constant(0),boundary_L))
 
-#	bcs.append(DirichletBC(V.sub(k),Constant(0),boundary_R))
-bcs.append(DirichletBC(V.sub(all_molecules),Constant(1),boundary_L))
-#bcs.append(DirichletBC(V.sub(all_molecules),Constant(0),boundary_R))
+bcs.append(DirichletBC(V.sub(all_molecules),Constant(0.3),boundary_L))
 
 ################################################################################################################################	### Define parameters / graph used in next sections
-#fig2, ax2 = plt.subplots()
-#ax2.set_xlabel('$t (s)$')
-#ax2.set_ylabel('$Flux (molecules/s)$')
+fig2, ax2 = plt.subplots()
+plt.title("PFR Outlet Concentration over Time")
+ax2.set_xlabel('$t\ (s)$')
+ax2.set_ylabel('$Outlet\ Concentration$')
 zef = np.linspace(dx_r, 1.-dx_r, grid_points+1)
 
 to_flux = []
@@ -212,14 +233,6 @@ problem = NonlinearVariationalProblem(F,u,bcs,J)
 solver = NonlinearVariationalSolver(problem)
 solver.parameters["newton_solver"]["relative_tolerance"] = 1.0e-8
 
-
-#A = np.array((0,0.5,0.5,1))	
-#B = np.array([[0,0,0,0],[0.5,0,0,0],[0,1/2,0,0],[0,0,1,0]])
-#C = np.array((1/6,1/3,1/3,1/6))
-#scheme = BDF1(F, u,t=dk,bcs=bcs)
-#scheme = ButcherMultiStageScheme(F, u,time=dk,a=B,b=A,c=C,order=1,bcs=bcs)
-#solver = RKSolver(scheme,1)
-
 def solver_iteration(time_step):
 	try:
 		test1,test2 = solver.solve()
@@ -236,11 +249,6 @@ def solver_iteration(time_step):
 
 cur_max = 0
 tot_max = 0
-start_time = time.time()
-#g1 = Constant(0.001)
-#L = g1*v_d['v_4']*ds(1)
-
-
 
 osub = integration_section()
 domains = MeshFunction("size_t", mesh,0)
@@ -251,11 +259,10 @@ dP = Measure('vertex',domain = mesh, subdomain_data=domains)
 sens_data['conVtime_1'].append(0)
 sens_data['conVtime_2'].append(0)
 start_time = time.time()
+print('')
+print("Running Simulation")
 while t <= Time+0.01:	
-	graph_data['timing'].append(t)																									### Store each time step
-	#test_new = project(u,V)
-	#sens_func = assemble(inner(u,u)*dP(1))
-	#test_new_split = test_new.split(deepcopy=True)
+	graph_data['timing'].append(t)
 	max_list=[]
 	if reactions_test != ['INERT_ONLY']:																							### Store the outlet flux for each observed gas
 		for k in range(0,monitored_gas):
@@ -273,17 +280,6 @@ while t <= Time+0.01:
 		tot_max = cur_max
 
 	if t > 0:																														
-		#dt,test1,test2 = solver_iteration(dt)
-		#sens_func = assemble(test_new[k]*dP(1))
-		
-		#ens_func = assemble(test_new[k][0]*dP(1))
-		#start_time = time.time()
-		#dJdm1,dJdm2 = compute_gradient(sens_func,[control1,control2],forget=True)#compute_gradient(sens_func,[control1,control2])
-		#print("")
-		#print('sensitivity time')
-		#print(time.time() - start_time)
-		#print("dJdm: values for control 1 & 2")
-		#print(dJdm1.values(),dJdm2.values())
 		solve(F==0,u,bcs)
 		newish = u.split(deepcopy=False)
 		#ax2.plot(zef,newish[3].vector().get_local(), ls = '--', alpha=0.7)
@@ -293,9 +289,6 @@ while t <= Time+0.01:
 			#	u_n.vector()[z*(all_molecules+1)-2] = 100
 				#u_n.vector()[z*(all_molecules+1)-(8-5)] = OB
 				#u_n.vector()[z*(all_molecules+1)-(8-3)] = OA
-			
-			#print(type(sens_func))
-
 			
 			#for k in range(0,reactants_num):#necessary_values['reactants_number']
 			#	u_n.vector()[int((all_molecules+1)*(grid_points+1)-1)+k-(all_molecules)] = reactant_ratio[k]*Inert_pulse_size/(point_volume)
@@ -308,64 +301,42 @@ while t <= Time+0.01:
 			u_n.vector()[int(grid_points)-1] = 10000
 			solve(F== 0,u,bcs,solver_parameters=parms_solve)
 
-	print("TIME STEP")
-	print(t)
 	u_n.assign(u)
-	#if t > 1:
-	#if cur_max < (1/500)*tot_max:
-	#	dt = 0.05
-	#	dk.assign(dt)
-	#if test1 < 2:
-	#	dt = dt+0.0001
-	#	dk.assign(dt)
 	t += dt
+
 print('')
 print('Total simulation time')
 print(time.time() - start_time)
-u_final = u.split(deepcopy=False)
-#print(len(u_final))
-#sys.exit()
-#Ke0,Kd0,Ke1,Kd1,Ke2,Kd2,Ke3,Kd3
-
-control1 = Control(Ke0)
-control2 = Control(Kd0)
-control3 = Control(Ke1)
-control4 = Control(Kd1)
-control5 = Control(Ke2)
-control6 = Control(Kd2)
-control7 = Control(Ke3)
-control8 = Control(Kd3)
-#sens_func = assemble(inner(u,u)*dP(1))
-sens_func = assemble(inner(u_final[0],u_final[0])*dP(1))
-#ens_func = assemble(test_new[k][0]*dP(1))
-start_time = time.time()
-print('sensitivity time')
-dJdm1,dJdm2 = compute_gradient(sens_func,[control1,control2])#compute_gradient(sens_func,[control1,control2])
-print(time.time() - start_time)
-print("dJdm for each control")
-print(dJdm1.values(),dJdm2.values())
-sys.exit()
-sens_func = assemble(inner(u_final[2],u_final[2])*dP(1))
-#ens_func = assemble(test_new[k][0]*dP(1))
-start_time = time.time()
-print("")
-print('sensitivity time')
-dJdm1,dJdm2,dJdm3,dJdm4,dJdm5,dJdm6,dJdm7,dJdm8 = compute_gradient(sens_func,[control1,control2,control3,control4,control5,control6,control7,control8])#compute_gradient(sens_func,[control1,control2])
-print(time.time() - start_time)
 print('')
-print("dJdm for each control")
-print(dJdm1.values(),dJdm2.values(),dJdm3.values(),dJdm4.values(),dJdm5.values(),dJdm6.values(),dJdm7.values(),dJdm8.values())
+print('')
+u_final = u.split(deepcopy=False)
 
-#print(time.time() - start_time)
+controls = [Control(Ke0),Control(Kd0),Control(Ke1),Control(Ke2),Control(Ke3)]
 
+legend_2 = ['Ke0','Kd0','Ke1','Ke2','Ke3']
+#for kit in range(0,len(controls)):
+#	legend_2.append("Rate Constant # "+str(kit+1))
 
-################################################################################################################################	### Generate the Legend & Color options for output graph
 legend_label = []
 if reactions_test[0] != 'INERT_ONLY':
 	for k in range(0,necessary_values['molecules_in_gas_phase']):
 		legend_label.append(necessary_values['reactants'][k])
 legend_label.append("Inert")
-colors = ['b','r','m','g','b','r']
+colors = ['b','r','m','g','c','r']
+
+sensitivity_output = []
+
+for k_step in range(0,monitored_gas):
+	print(legend_label[k_step]+" Sensitivity Analysis Being Performed")
+	sens_func = assemble(inner(u_final[k_step],u_final[k_step])*dP(1))
+	X = compute_gradient(sens_func,controls)#compute_gradient(sens_func,[control1,control2])
+	sensitivity_output.append(X)
+	print('')
+
+###############################
+
+################################################################################################################################	### Generate the Legend & Color options for output graph
+
 
 ################################################################################################################################	### Graph the output Curves
 for k,j in enumerate(graph_data):
@@ -376,5 +347,20 @@ for k,j in enumerate(graph_data):
 
 ax2.legend(title="Gas Species")
 
+###############################
+
+species_of_interst = 2
+
+fig3, ax3 = plt.subplots()
+plt.title("Sensitivity of Species "+legend_label[species_of_interst]+" to Rate Constants")
+ax3.set_xlabel('$t\ (s)$')
+ax3.set_ylabel('$Sensitivity$')
+zef_2 = np.linspace(0,2,sensitivity_output[species_of_interst].shape[0])
+
+for kit in range(0,sensitivity_output[species_of_interst].shape[1]):
+	ax3.plot(zef_2,sensitivity_output[species_of_interst][:,kit],label=legend_2[kit], ls = '--', alpha=0.7)
+#plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+ax3.legend(title="parameters",loc=7)
 plt.show()
+
 sys.exit()
