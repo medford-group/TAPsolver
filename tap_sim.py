@@ -36,7 +36,7 @@ mesh_spacing = 100/2
 
 ############# Reactor Parameters ############################################################################
 
-len_inert_1 = 1.35		###Length of the first inert zone (cm)
+len_inert_1 = 0.1#1.35		###Length of the first inert zone (cm)
 len_cat = 0.2			###Length of the catalyst zone (cm) 
 len_inert_2 = 1.35		###Length of the second inert zone (cm)
 reac_radius = 0.2		###Radius of the reactor
@@ -58,7 +58,7 @@ ref_mass = 423.15
 mass_list = np.array((16,40))
 #mass_list = np.array((28,44,40))	
 #mass_list = np.array((17.03,2.015,28.01,40))
-velcoity = 1
+velocity = 1
 
 ############# Catalyst properties ##########################################################################
 
