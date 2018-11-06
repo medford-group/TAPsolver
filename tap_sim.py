@@ -24,33 +24,58 @@ from pyadjoint.enlisting import Enlist
 #from timestepping import *
 from progressbar import ProgressBar
 
-
 ######## Reactor type & data storage ########################################################################
 
 reactor_type = 'tap' 	#currently t_pfr / tap / t_pfr_diff 
-output_file_name = "./ammonia_iron_goddard.csv" # "./FILENAME.csv"
-theta = 1 				# forward_euler = 0, backward_euler = 1, crank_nicolson = 1/2 
-Time = 0.3				# Total pulse time
-Time_steps = 1000		# Number of time steps 
-mesh_spacing = 100/2 
+output_file_name = "pt_oxidation" # "./FILENAME.csv"
+theta = 1 				# forward_euler = 0, backward_euler = 1, crank_nicolson = 1/2
+solver_method_options = 'None'	#'simple_adaptive' or None 
+Time = 0.5				# Total pulse time
+Time_steps = 100		# Number of time steps 
+mesh_spacing = 100 
+sensitivity_analysis = False # True = on / False = off
+
+############# Reaction Equations ############################################################################
+
+### Pt oxidation
+# actual
+#reactions_test = ['O2 + 2* -> 2O*']
+# Toy model
+reactions_test = ['A + * -> A*']
+
+### CO OXIDATION
+#Eley
+#reactions_test = ['A + * -> A*','B + A* -> * + C']
+#Eley with preadsorbed
+#reactions_test = ['CO + O* ->  CO2 + *']
+#Lang
+#reactions_test = ['CO + * <-> CO*','CO* + O* -> CO2 + 2*']
+#Eley & Lang
+#reactions_test = ['CO + * <-> CO*','CO* + O* -> CO2 + 2*','CO + O* -> CO2 + *']
+#Reece reaction network
+#reactions_test = ['CO <-> CO*', 'CO* + OA* -> CO2*', 'CO* + OB* -> CO2*', 'CO2* -> CO2']
+
+### Ammonia decomposition 
+#reactions_test = ['NH3 + * <-> NH3*', 'H2 + 2* <-> 2H*', 'N2 + * <-> N2*', 'N2* + * <-> 2N*', 'NH3* + * <-> NH2* + H*', 'NH2* + * <-> NH* + H*', 'NH* + * <-> N* + H*']
 
 ############# Reactor Parameters ############################################################################
 
-len_inert_1 = 0.1#1.35		###Length of the first inert zone (cm)
+len_inert_1 = 2.1		###Length of the first inert zone (cm)
 len_cat = 0.2			###Length of the catalyst zone (cm) 
-len_inert_2 = 1.35		###Length of the second inert zone (cm)
+len_inert_2 = 2.1		###Length of the second inert zone (cm)
 reac_radius = 0.2		###Radius of the reactor
 
 ############# Feed composition ############################################################################
 
 reactants_num = 1
-Inert_pulse_size = (0.5e-8)*6.022e23	###Size of inert pulse (# of molecules, not mol)#5e-8
+Inert_pulse_size = 6.022e23	###Size of inert pulse (# of molecules, not mol)#5e-8 #(5e-9)*
 reactant_ratio = [1]		###Ratio of reactant to the size of Inert_pulse_size
+number_of_pulses = 3
 
 ############# Transport properties ##########################################################################
 
-void_inert = 0.5970		###Voidage of the catalyst
-void_cat = 0.5970			###Voidage of the catalyst
+void_inert = 0.4		###Voidage of the catalyst
+void_cat = 0.4			###Voidage of the catalyst
 
 ref_rate_inert = 43.5319		###Reference 
 ref_rate_cat = 32.5319
@@ -73,27 +98,8 @@ open_sites = 0.55*sdensity
 OA = 0.15*sdensity 		### OA site density (atoms/cm2)
 OB = 0.30*sdensity	
 
-rangesurface_species = [(0.5/1000)*6.022e23]
-
-############# Reaction Equations ############################################################################
-
-### Pt oxidation
-reactions_test = ['O2 + 2* -> 2O*']
-
-### CO OXIDATION
-#Eley
-#reactions_test = ['A + * -> A*','B + A* -> * + C']
-#Eley with preadsorbed
-#reactions_test = ['CO + O* ->  CO2 + *']
-#Lang
-#reactions_test = ['CO + * <-> CO*','CO* + O* -> CO2 + 2*']
-#Eley & Lang
-#reactions_test = ['CO + * <-> CO*','CO* + O* -> CO2 + 2*','CO + O* -> CO2 + *']
-#Reece reaction network
-#reactions_test = ['CO <-> CO*', 'CO* + OA* -> CO2*', 'CO* + OB* -> CO2*', 'CO2* -> CO2']
-
-### Ammonia decomposition 
-#reactions_test = ['NH3 + * <-> NH3*', 'H2 + 2* <-> 2H*', 'N2 + * <-> N2*', 'N2* + * <-> 2N*', 'NH3* + * <-> NH2* + H*', 'NH2* + * <-> NH* + H*', 'NH* + * <-> N* + H*']
+rangesurface_species = [(5e-9)*6.022e23]
+#rangesurface_species = [(0.5/1000)*6.022e23]
 
 ########## Input Rate Constants #############################################################################
 
@@ -128,7 +134,7 @@ def rate_con_gen(T,del_g):
 
 ###### Time stepping/solver options
 
-Ke0 = Constant((1/(1.5e20))*(100**3)/(6.022e23))
+Ke0 = Constant(1000*(100**3)/(6.022e23))
 
 #Ke0 = Constant(1.15*(100**3)/(6.022e23))
 #Kd0 = Constant(10)
@@ -142,6 +148,9 @@ Ke0 = Constant((1/(1.5e20))*(100**3)/(6.022e23))
 #Ke2 = Constant(3.287e-10)
 #Ke3 = Constant(9.6077e9)
 
+#controls = [Control(Ke0),Control(Kd0),Control(Ke1),Control(Ke2),Control(Ke3)]
+#legend_2 = ['Ke0','Kd0','Ke1','Ke2','Ke3']
+
 #%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%##%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#
 #%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%# FEniCS code beyond this point #%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%
 #%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%##%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#
@@ -150,7 +159,7 @@ Ke0 = Constant((1/(1.5e20))*(100**3)/(6.022e23))
 
 parameters["std_out_all_processes"] = False																							
 cache_params = {"cache_dir":"*","lib_dir":"*","log_dir":"*","inc_dir":"*","src_dir":"*"}											
-#set_log_active(False)
+set_log_active(False)
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 tol = 1E-14
@@ -191,6 +200,10 @@ grid_loc_1 = np.round(np.cumsum(zone_sizes))
 dx_r = np.sum(r_param)/grid_points 			###Distance (cm) per grid point
 dx2_r = dx_r*dx_r 							###(cm2) for calculation of alpha
 
+print(grid_points)
+print(zone_sizes)
+print(dx_r)
+
 ############# Establish reactor parameters in FEniCS ###################################################################################
 
 ca = (reac_radius**2)*3.14159				###Cross sectional area of reactor
@@ -203,17 +216,15 @@ vect_vol_imp = np.vectorize(vect_vol)
 vr = np.sum(vect_vol_imp(r_param,eb))		### Volume of the reactor
 vc = r_param[1]*(reac_radius**(2))*np.pi*eb[1]		### Volume of the catalyst zone
 Q = sarea/vc 			### surface to gas scaling coefficient (1/cm)
-Inert_pulse_size = Inert_pulse_size/(dx_r*(reac_radius**2)*3.14159)
+Inert_pulse_size = Inert_pulse_size/(dx_r*ca)
 
-############# Establish method to define and track reactants/intermediates/products #######################################################
-
+############# Establish method to define and track reactants/intermediates/products ######################################################
+#
 graph_data = {}
 v_d = {}
 u_d = {}
 u_nd = {}
 sens_data = {}																															
-
-graph_data['timing'] = []
 
 if reactions_test[0] != 'INERT_ONLY':
 	inert_st = False
@@ -265,6 +276,16 @@ def boundary_R(x, on_boundary):
 
 def pulse_point(x, on_boundary):
 	return near(x[0],1/grid_points,tol)
+
+class integration_section(SubDomain):
+	def inside(self, x, on_boundary):
+		return between(x[0], (0.96,1.0))
+
+osub = integration_section()
+domains = MeshFunction("size_t", mesh,0)
+domains.set_all(0)
+osub.mark(domains, 1)
+dP = Measure('vertex',domain = mesh, subdomain_data=domains)
 
 ############# Establish method to define and track reactants/intermediates/products #######################################################
 
@@ -355,7 +376,7 @@ elif reactor_type == 't_pfr' or 't_pfr_diff':
 		bcs.append(DirichletBC(V.sub(kin),Constant(0),boundary_L))
 	bcs.append(DirichletBC(V.sub(monitored_gas),Constant(0),boundary_L))
 
-############# Initialize the graphs #######################################################
+############# Initialize the graphs and set the graphical parameters #######################################################
 
 fig2, ax2 = plt.subplots()
 ax2.set_xlabel('$t (s)$')
@@ -365,10 +386,26 @@ elif reactor_type == 't_pfr' or 't_pfr_diff':
 	ax2.set_ylabel('$Outlet Concentration (molecules/cm3)$')
 zef = np.linspace(dx_r, 1.-dx_r, grid_points+1)
 
+legend_label = []
+header = "time"
+if reactions_test[0] != 'INERT_ONLY':
+	for k in range(0,necessary_values['molecules_in_gas_phase']):
+		legend_label.append(necessary_values['reactants'][k])
+		header = header+","+necessary_values['reactants'][k]
+legend_label.append("Inert")
+header = header+",Inert"
+colors = ['b','r','m','g']
+
+ax2.legend(title="Gas Species")
+#ax2.set_xlim(left=0,right=.3)
+
 to_flux = []
 for k in range(0,monitored_gas):
 	to_flux.append(2*(1/original_pulse_size) *D[k][0] * dx_r*(reac_radius**2)*3.14159/(eb[0]*dx2_r))
 to_flux.append((2*(1/original_pulse_size) *D[monitored_gas][0] * dx_r*(reac_radius**2)*3.14159/(eb[0]*dx2_r)))
+
+if sensitivity_analysis == True:
+	os.makedirs('./sensitivity_'+output_file_name)
 
 ############# Declare the solver to be used #######################################################
 
@@ -381,195 +418,191 @@ solver.parameters["newton_solver"]["absolute_tolerance"] = 1e3
 
 ############# Define a method to iteratively choose time-step (will change based on meeting with tobin isaac) ##
  
-def solver_iteration(time_step):
-	try:
-		##dk.assign(time_step/1.1)
-		##u_temp.assign(u)
-		solver.solve()
-		##u_1.assign(u)
-		##u.assign(u_temp)
-		##dk.assign(time_step*1.1)
-		##solver.solve()
-		##u_3.assign(u)
-		##u.assign(u_temp)
-		##dk.assign(time_step)
-		##solver.solve()
-		##u_2.assign(u)
-
-		#u.assign(u_temp)
-		#print('')
-		#print('norms')
-		##ref_norm = u_2.vector().norm("l2")
-		##norm_1 = ((u_1.vector() - u_2.vector()))
-		##norm1 = norm_1.norm("l2")/ref_norm
-		#print(print(norm1))
-		##norm_2 = (u_2.vector() - u_3.vector())
-		##norm2 = norm_2.norm("l2")/ref_norm
-		#print(print(norm2))
-		#print('')
-
-		##if norm1 > 0.02:
-		##	time_step = time_step/1.5
-		##	dk.assign(time_step)
-		##	u.assign(u_1)
-			#print("")
-			#print("decrease")
-			#print("")
-		##elif norm2 < 0.02:
-		##	time_step = time_step*1.1
-		##	dk.assign(time_step)
-		##	u.assign(u_3)
-			#print("")
-			#print("Increase")
-			#print("")
-		#time.sleep(0.4)
-		return time_step
+def solver_iteration(time_step,method):
+	if method == 'simple_adaptive':
+		try:
+			dk.assign(time_step/1.1)
+			u_temp.assign(u)
+			solver.solve()
+			u_1.assign(u)
+			u.assign(u_temp)
+			dk.assign(time_step*1.1)
+			solver.solve()
+			u_3.assign(u)
+			u.assign(u_temp)
+			dk.assign(time_step)
+			solver.solve()
+			u_2.assign(u)
 	
-	except RuntimeError:
-		time_step = time_step*0.5
-		print(time_step)
-		dk.assign(time_step)
-		if time_step < 1e-5:
-			print("Time step too low")
-			print(time.time() - start_time)
-			sys.exit()
-		time_step=solver_iteration(time_step)
-		return time_step
+			#u.assign(u_temp)
+			#print('')
+			#print('norms')
+			ref_norm = u_2.vector().norm("l2")
+			norm_1 = ((u_1.vector() - u_2.vector()))
+			norm1 = norm_1.norm("l2")/ref_norm
+			#print(print(norm1))
+			norm_2 = (u_2.vector() - u_3.vector())
+			norm2 = norm_2.norm("l2")/ref_norm
+			#print(print(norm2))
+			#print('')
+	
+			if norm1 > 0.02:
+				time_step = time_step/1.1
+				dk.assign(time_step)
+				u.assign(u_1)
+				#print("")
+				#print("decrease")
+				#print("")
+			elif norm2 < 0.02:
+				time_step = time_step*1.1
+				dk.assign(time_step)
+				u.assign(u_3)
+				#print("")
+				#print("Increase")
+			#print("")
+			#time.sleep(0.4)
+			return time_step
 		
+		except RuntimeError:
+			time_step = time_step*0.5
+			print(time_step)
+			dk.assign(time_step)
+			if time_step < 1e-5:
+				print("Time step too low")
+				print(time.time() - start_time)
+				sys.exit()
+			time_step=solver_iteration(time_step,solver_method_options)
+			return time_step
+	elif method == 'None':
+		try:
+			solver.solve()
+			return time_step
+
+		except RuntimeError:
+			time_step = time_step*0.5
+			print(time_step)
+			dk.assign(time_step)
+			if time_step < 1e-5:
+				print("Time step too low")
+				print(time.time() - start_time)
+				sys.exit()
+			time_step=solver_iteration(time_step,solver_method_options)
+			return time_step
+
+
 ############# Solve the system #######################################################
 
-start_time = time.time()
-t = 0
-while t <= Time+0.01:	
-	graph_data['timing'].append(t)																									### Store each time step
-
-	if reactions_test != ['INERT_ONLY']:																							### Store the outlet flux for each observed gas
-		if reactor_type == 'tap':
-			for k in range(0,monitored_gas):
-				new_val = (to_flux[k]*( u.vector().get_local()[(all_molecules)+k+1]))#/(2*Inert_pulse_size)
-				graph_data['conVtime_'+str(k)].append((new_val))
-			new_val = ((to_flux[monitored_gas]*u.vector().get_local()[2*(all_molecules+1)-1]))#/(2*Inert_pulse_size)
-			graph_data['conVtime_'+str(all_molecules-1)].append((new_val))
-		elif reactor_type == 't_pfr' or 't_pfr_diff':
-			for k in range(0,monitored_gas):
-				new_val = (( u.vector().get_local()[(all_molecules)+k+1]))
-				graph_data['conVtime_'+str(k)].append((new_val))
-			new_val = ((u.vector().get_local()[2*(all_molecules+1)-1]))
-			graph_data['conVtime_'+str(all_molecules-1)].append((new_val))
-
-	else:
-		graph_data['conVtime_0'].append((( (u.vector().get_local()[1]))))
-
-	if t > 0:			
-		dt = solver_iteration(dt)																											
-		newish = u.split(deepcopy=False)
-		#ax2.plot(zef,newish[2].vector().get_local(), ls = '--', alpha=0.7)
-		
-	else:
-		if reactions_test != ['INERT_ONLY']:
-			for z in range(int(grid_loc_1[0]-1),int(grid_loc_1[1])):
-				for z_num,z_sur in enumerate(rangesurface_species):
-					u_n.vector()[z*(all_molecules+1)-(2+z_num)] = z_sur
-			for k in range(0,reactants_num):#necessary_values['reactants_number']
-				u_n.vector()[int((all_molecules+1)*(grid_points+1)-1)+k-(all_molecules)] = reactant_ratio[k]*Inert_pulse_size#/(point_volume)
-			u_n.vector()[int((all_molecules+1)*(grid_points+1)-1)] = Inert_pulse_size#/(point_volume)
-			newish = u_n.split(deepcopy=True)
-			dt = solver_iteration(dt)
-			temp_again = u.split(deepcopy=True)
+for k_pulse in range(0,number_of_pulses):
+	start_time = time.time()
+	sensitivity_output = []
+	graph_data['timing'] = []
+	for k_gasses in range(0,necessary_values['molecules_in_gas_phase']):
+		graph_data['conVtime_'+str(k_gasses)] = []
+	graph_data['conVtime_'+str(necessary_values['gas_num']+necessary_values['surf_num'])] = []
+	t = 0
+	while t <= Time+0.01:
+		#####STORE THE RESULTS FOR EACH ITERATION
+		graph_data['timing'].append(t)																									
+		if reactions_test != ['INERT_ONLY']:																							
+			if reactor_type == 'tap':
+				for k in range(0,monitored_gas):
+					new_val = (to_flux[k]*( u.vector().get_local()[(all_molecules)+k+1]))#/(2*Inert_pulse_size)
+					graph_data['conVtime_'+str(k)].append((new_val))
+				new_val = ((to_flux[monitored_gas]*u.vector().get_local()[2*(all_molecules+1)-1]))#/(2*Inert_pulse_size)
+				graph_data['conVtime_'+str(all_molecules-1)].append((new_val))
+			elif reactor_type == 't_pfr' or 't_pfr_diff':
+				for k in range(0,monitored_gas):
+					new_val = (( u.vector().get_local()[(all_molecules)+k+1]))
+					graph_data['conVtime_'+str(k)].append((new_val))
+				new_val = ((u.vector().get_local()[2*(all_molecules+1)-1]))
+				graph_data['conVtime_'+str(all_molecules-1)].append((new_val))
 		else:
-			u_n.vector()[int(grid_points)-1] = 10000
-			solve(F== 0,u,bcs,solver_parameters=parms_solve)
+			graph_data['conVtime_0'].append((( (u.vector().get_local()[1]))))
+		
+		########################################
 
-	print("Current Time")
-	print(t)
-	u_n.assign(u)
-	t += dt
+		#####Solve for remaining time steps
 
-print(time.time() - start_time)
+		if t > 0:			
+			dt = solver_iteration(dt,solver_method_options)																											
+			newish = u.split(deepcopy=False)
+		
+		#####Solve and initialize for first time step	
+		
+		else:
+			if reactions_test != ['INERT_ONLY']:
+				if reactor_type == 'tap':
+					for k in range(0,reactants_num):#necessary_values['reactants_number']
+						u_n.vector()[int((all_molecules+1)*(grid_points+1)-1)+k-(all_molecules)] = reactant_ratio[k]*Inert_pulse_size#/(point_volume)
+					u_n.vector()[int((all_molecules+1)*(grid_points+1)-1)] = Inert_pulse_size#/(point_volume)
+				if k_pulse == 0:
+					for z in range(int(grid_loc_1[0]-1),int(grid_loc_1[1])):
+						for z_num,z_sur in enumerate(rangesurface_species):
+							u_n.vector()[z*(all_molecules+1)-(2+z_num)] = z_sur
+
+				newish = u_n.split(deepcopy=True)
+				dt = solver_iteration(dt,solver_method_options)
+				temp_again = u.split(deepcopy=True)
+			else:
+				u_n.vector()[int(grid_points)-1] = 10000
+				solve(F== 0,u,bcs,solver_parameters=parms_solve)
+		
+		if sensitivity_analysis == True:
+			if t < 0.3:
+				for k in range(0,monitored_gas):
+					u_final = u.split(deepcopy=False)
+					print(legend_label[k_step]+" Sensitivity Analysis Being Performed")
+					sens_func = assemble(inner(u_final[k_step],u_final[k_step])*dP(1))
+					X = compute_gradient(sens_func,controls)#compute_gradient(sens_func,[control1,control2])
+					sensitivity_output.append(X)
+
+		print("Current Time")
+		print(t)
+		u_n.assign(u)
+		t += dt
+	
+	print(time.time() - start_time)
 
 ############# Store the output data #######################################################
-
-legend_label = []
-header = "time"
-if reactions_test[0] != 'INERT_ONLY':
-	for k in range(0,necessary_values['molecules_in_gas_phase']):
-		legend_label.append(necessary_values['reactants'][k])
-		header = header+","+necessary_values['reactants'][k]
-legend_label.append("Inert")
-header = header+",Inert"
-colors = ['b','r','m','g','o']
-
-output_data = np.empty(shape=[0, len(graph_data['timing'])])
-new_data = np.asarray(graph_data['timing'])
-output_data = np.vstack((output_data,new_data))
+	if k_pulse == 0:
+		dictionaray_of_numpy_data = {}
+		for j_species in range(0,monitored_gas+1):
+			dictionaray_of_numpy_data[legend_label[j_species]] = np.empty(shape=[0, len(graph_data['timing'])])
+			#output_data = np.empty(shape=[0, len(graph_data['timing'])])
+			new_data = np.asarray(graph_data['timing'])
+			dictionaray_of_numpy_data[legend_label[j_species]] = np.vstack((dictionaray_of_numpy_data[legend_label[j_species]],new_data))
 
 ############# Visualize/graph the data #######################################################
 
-for k,j in enumerate(graph_data):
-	if j != 'timing':
-		ax2.plot(graph_data['timing'],graph_data[j],color=colors[k-1],label=legend_label[k-1], ls = '--', alpha=0.7)
-		new_data = np.asarray(graph_data[j])
-		output_data = np.vstack((output_data,new_data))
-	else:
-		pass
+	for k,j in enumerate(graph_data):
+		if j != 'timing':
+			ax2.plot(graph_data['timing'],graph_data[j],color=colors[k-1],label=legend_label[k-1], ls = '--', alpha=0.7)
+			new_data = np.asarray(graph_data[j])
+			dictionaray_of_numpy_data[legend_label[k-1]] = np.vstack((dictionaray_of_numpy_data[legend_label[k-1]],new_data))
+			#output_data = np.vstack((output_data,new_data))
+		else:
+			pass
 
-ax2.legend(title="Gas Species")
-ax2.set_xlim(left=0,right=.3)
+	np.savetxt('./sensitivity_'+output_file_name+'/pulse_'+str(k_pulse+1)+'.csv',sensitivity_output,delimeter=',')
+
 plt.show()
 
-sys.exit()
-
-############# Store the parameters used in the model #######################################################
-
+for j_species in range(0,monitored_gas+1):
+	dictionaray_of_numpy_data[legend_label[j_species]] = np.transpose(dictionaray_of_numpy_data[legend_label[j_species]])
+	np.savetxt('./'+legend_label[j_species]+'_'+output_file_name+'.csv', dictionaray_of_numpy_data[legend_label[j_species]], delimiter=",")
 #output_data = np.transpose(output_data)
 #np.savetxt(output_file_name, output_data, header=header, delimiter=",")
 
-F = open("./ammonia_iron_goddard.txt","w")
+############# Store the parameters used in the model #######################################################
 
+F = open("./"+output_file_name+".txt","w")
 F.write("Reactor Length: "+str(np.sum(r_param))+"\n")
 F.write("First Forward: "+str(1.1108e07)+"\n")
 F.write("Inert pulse size: "+str(Inert_pulse_size)+"\n")
 F.write("rangesurface_species: "+str(rangesurface_species)+"\n")
 F.write("reactions_test: "+str(reactions_test))
-
 F.close()
 
-
-#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%##%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#
-#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%# Sensitivity Analysis Beyond this point #%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#
-#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%##%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#
-
-
-############# Define the subdomain for the functional #######################################################
-
-class integration_section(SubDomain):
-	def inside(self, x, on_boundary):
-		return between(x[0], (0.96,1.0))
-
-osub = integration_section()
-domains = MeshFunction("size_t", mesh,0)
-domains.set_all(0)
-osub.mark(domains, 1)
-dP = Measure('vertex',domain = mesh, subdomain_data=domains)
-
-u_final = u.split(deepcopy=False)
-
-############# Define the controls & perform the sensitivity analysis #######################################################
-
-controls = [Control(Ke0),Control(Kd0),Control(Ke1),Control(Ke2),Control(Ke3)]
-
-legend_2 = ['Ke0','Kd0','Ke1','Ke2','Ke3']
-
-sensitivity_output = []
-
-for k_step in range(0,monitored_gas):
-	print(legend_label[k_step]+" Sensitivity Analysis Being Performed")
-	sens_func = assemble(inner(u_final[k_step],u_final[k_step])*dP(1))
-	X = compute_gradient(sens_func,controls)#compute_gradient(sens_func,[control1,control2])
-	sensitivity_output.append(X)
-	print(X)
-
-############# Graph the results from the sensitivity analysis #######################################################
 
 for k,j in enumerate(graph_data):
 	if j != 'timing':
@@ -578,8 +611,6 @@ for k,j in enumerate(graph_data):
 		pass
 
 ax2.legend(title="Gas Species")
-
-species_of_interst = 0
 
 fig3, ax3 = plt.subplots()
 plt.title("Sensitivity of Species "+legend_label[species_of_interst]+" to Rate Constants")
@@ -589,7 +620,6 @@ zef_2 = np.linspace(0,2,sensitivity_output[species_of_interst].shape[0])
 
 for kit in range(0,sensitivity_output[species_of_interst].shape[1]):
 	ax3.plot(zef_2,sensitivity_output[species_of_interst][:,kit],label=legend_2[kit], ls = '--', alpha=0.7)
-#plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 ax3.legend(title="parameters",loc=7)
 
 
