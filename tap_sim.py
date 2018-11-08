@@ -27,22 +27,24 @@ from progressbar import ProgressBar
 ######## Reactor type & data storage ########################################################################
 
 reactor_type = 'tap' 	#currently t_pfr / tap / t_pfr_diff / batch {not ready just yet}
-output_file_name = "pt_oxidation" # "./FILENAME.csv"
+output_file_name = "lang_&_eley_eluc" # "./FILENAME.csv"
 theta = 1 				# forward_euler = 0, backward_euler = 1, crank_nicolson = 1/2
-solver_method_options = 'simple_adaptive'	#'simple_adaptive' or None 
-Time = 1				# Total pulse time
-Time_steps = 20		# Number of time steps 
+solver_method_options = 'None'	#'simple_adaptive' or None 
+Time = 2				# Total pulse time
+Time_steps = 1000		# Number of time steps 
 mesh_spacing = 100 
-mesh_size = 200
-sensitivity_analysis = True # True = on / False = off
+mesh_size = 280
+sensitivity_analysis = False # True = on / False = off
 Frequency_of_sensitivity = 1
+save_figure = True
+store_data = True
 
 ############# Feed composition ############################################################################
 
 reactants_num = 1
-Inert_pulse_size = 6.022e23	###Size of inert pulse (# of molecules, not mol)#5e-8 #(5e-9)*
+Inert_pulse_size = (5e-8)*6.022e23/2	###Size of inert pulse (# of molecules, not mol)#5e-8 #(5e-9)*
 reactant_ratio = [1]		###Ratio of reactant to the size of Inert_pulse_size
-number_of_pulses = 5
+number_of_pulses = 1
 
 ############# Reaction Equations ############################################################################
 
@@ -50,7 +52,7 @@ number_of_pulses = 5
 # actual
 #reactions_test = ['O2 + 2* -> 2O*']
 # Toy model
-reactions_test = ['A + * -> A*']
+#reactions_test = ['A + * -> A*']
 
 ### CO OXIDATION
 #Eley
@@ -60,7 +62,7 @@ reactions_test = ['A + * -> A*']
 #Lang
 #reactions_test = ['CO + * <-> CO*','CO* + O* -> CO2 + 2*']
 #Eley & Lang
-#reactions_test = ['CO + * <-> CO*','CO* + O* -> CO2 + 2*','CO + O* -> CO2 + *']
+reactions_test = ['CO + * <-> CO*','CO* + O* -> CO2 + 2*','CO + O* -> CO2 + *']
 #Reece reaction network
 #reactions_test = ['CO <-> CO*', 'CO* + OA* -> CO2*', 'CO* + OB* -> CO2*', 'CO2* -> CO2']
 
@@ -69,21 +71,21 @@ reactions_test = ['A + * -> A*']
 
 ############# Reactor Parameters ############################################################################
 
-len_inert_1 = 2.1		###Length of the first inert zone (cm)
-len_cat = 0.2			###Length of the catalyst zone (cm) 
-len_inert_2 = 2.1		###Length of the second inert zone (cm)
+len_inert_1 = 2.7/2		###Length of the first inert zone (cm)
+len_cat = 0.1			###Length of the catalyst zone (cm) 
+len_inert_2 = 2.7/2		###Length of the second inert zone (cm)
 reac_radius = 0.2		###Radius of the reactor
 
 ############# Transport properties ##########################################################################
 
-void_inert = 0.4		###Voidage of the catalyst
-void_cat = 0.4			###Voidage of the catalyst
+void_inert = 0.53		###Voidage of the catalyst
+void_cat = 0.53			###Voidage of the catalyst
 
 ref_rate_inert = 43.5319		###Reference 
 ref_rate_cat = 32.5319
 ref_mass = 423.15
-mass_list = np.array((16,40))
-#mass_list = np.array((28,44,40))	
+#mass_list = np.array((16,40))
+mass_list = np.array((28,44,40))	
 #mass_list = np.array((17.03,2.015,28.01,40))
 velocity = 1
 
@@ -100,14 +102,15 @@ open_sites = 0.55*sdensity
 OA = 0.15*sdensity 		### OA site density (atoms/cm2)
 OB = 0.30*sdensity	
 
-rangesurface_species = [(5e-9)*6.022e23]
+rangesurface_species = [(0.25/1000)*6.022e23,(0.5/1000)*6.022e23]
+#rangesurface_species = [(5e-9)*6.022e23,(5e-9)*6.022e23]
 #rangesurface_species = [(0.5/1000)*6.022e23]
 
 ########## Input Rate Constants #############################################################################
 
 kb = 8.61733e-5
 h = 4.1357e-15
-T = 400+273.15
+T = 473.15
 
 # Can redefine the rate constant equation if desired
 def rate_con_gen(T,del_g):
@@ -136,14 +139,14 @@ def rate_con_gen(T,del_g):
 
 ###### Time stepping/solver options
 
-Ke0 = Constant(1000*(100**3)/(6.022e23))
+#Ke0 = Constant((100**3)/(6.022e23))
 
-#Ke0 = Constant(1.15*(100**3)/(6.022e23))
-#Kd0 = Constant(10)
+Ke0 = Constant(1.15*(100**3)/(6.022e23))
+Kd0 = Constant(10)
 
-#Ke1 = Constant(400*(1000)/(6.022e23))		###Rate constants
+Ke1 = Constant(400*(1000)/(6.022e23))		###Rate constants
 
-#Ke2 = Constant((100**3)/(6.022e23))
+Ke2 = Constant((100**3)/(6.022e23))
 #Ke0 = Constant(1.1108e07)
 #Kd0 = Constant(1.6900e12)
 #Ke1 = Constant(3.354e-7)
@@ -277,7 +280,9 @@ if reactor_type == 't_pfr' or 't_pfr_diff' or 'tap':
 		def inside(self, x, on_boundary):
 			return between(x[0], ((cat_location - 0.5*frac_length), (cat_location + 0.5*frac_length)))
 	thin_zone = thin_zone()
-	
+	#print((cat_location - 0.5*frac_length))
+	#print((cat_location + 0.5*frac_length))
+	#sys.exit()
 	domains = MeshFunction("size_t", mesh,0)
 	domains.set_all(0)
 	thin_zone.mark(domains,1)
@@ -412,19 +417,23 @@ if reactor_type == 't_pfr' or 't_pfr_diff' or 'tap':
 	header = header+",Inert"
 	colors = ['b','r','m','g']
 	
-	ax2.legend(title="Gas Species")
-	#ax2.set_xlim(left=0,right=.3)
-	
 	to_flux = []
 	for k in range(0,monitored_gas):
-		to_flux.append(2*(1/original_pulse_size) *D[k][0] * dx_r*(reac_radius**2)*3.14159/(eb[0]*dx2_r))
-	to_flux.append((2*(1/original_pulse_size) *D[monitored_gas][0] * dx_r*(reac_radius**2)*3.14159/(eb[0]*dx2_r)))
+		to_flux.append(2*(1/((1+reactants_num)*original_pulse_size)) *D[k][0] * dx_r*(reac_radius**2)*3.14159/(eb[0]*dx2_r))
+	to_flux.append((2*(1/((1+reactants_num)*original_pulse_size)) *D[monitored_gas][0] * dx_r*(reac_radius**2)*3.14159/(eb[0]*dx2_r)))
 	
 	if sensitivity_analysis == True:
 		try:
 			os.makedirs('./sensitivity_'+output_file_name)
 		except OSError:
 			pass
+
+
+	if store_data == True:
+		try:
+			os.makedirs('./'+output_file_name+'_folder')
+		except OSError:
+			pass	
 
 	############# Declare the solver to be used #######################################################
 	
@@ -510,8 +519,16 @@ if reactor_type == 't_pfr' or 't_pfr_diff' or 'tap':
 	
 	
 	############# Solve the system #######################################################
-	
+	def progressBar(value, endvalue, bar_length=20):
+		percent = float(value) / endvalue
+		arrow = '-' * int(round(percent * bar_length)-1) + '>'
+		spaces = ' ' * (bar_length - len(arrow))
+		sys.stdout.write("\rPercent: [{0}] {1}%".format(arrow + spaces, round(percent * 100,3)))
+		sys.stdout.flush()
+
 	for k_pulse in range(0,number_of_pulses):
+		print("")
+		print("Simulation Status: "+"Pulse #"+str(k_pulse+1))
 		dk = Constant(Time/Time_steps)
 		dt = Time/Time_steps
 		start_time = time.time()
@@ -521,7 +538,7 @@ if reactor_type == 't_pfr' or 't_pfr_diff' or 'tap':
 			graph_data['conVtime_'+str(k_gasses)] = []
 		graph_data['conVtime_'+str(necessary_values['gas_num']+necessary_values['surf_num'])] = []
 		t = 0
-		while t <= Time+0.01:
+		while t <= Time:
 			#####STORE THE RESULTS FOR EACH ITERATION
 			graph_data['timing'].append(t)																									
 			if reactions_test != ['INERT_ONLY']:																							
@@ -561,13 +578,12 @@ if reactor_type == 't_pfr' or 't_pfr_diff' or 'tap':
 					if k_pulse == 0:
 						#!#!@#@#for z in range(int(grid_loc_1[0]-1),int(grid_loc_1[1])):
 						if int((cat_location - 0.5*frac_length)*mesh_size)-1 <= 0:
-							for z in range(int((cat_location - 0.5*frac_length)*mesh_size)-1,int((cat_location - 0.5*frac_length)*mesh_size)):
+							for z in range(int((cat_location - 0.5*frac_length)*mesh_size)-1,int((cat_location + 0.5*frac_length)*mesh_size)):
 								for z_num,z_sur in enumerate(rangesurface_species):
-									print(z)
 									u_n.vector()[(all_molecules+1)-(2+z_num)] = z_sur
 
 						else:	
-							for z in range(int((cat_location - 0.5*frac_length)*mesh_size)-1,int((cat_location - 0.5*frac_length)*mesh_size)):
+							for z in range(int((cat_location - 0.5*frac_length)*mesh_size)-1,int((cat_location + 0.5*frac_length)*mesh_size)):
 								for z_num,z_sur in enumerate(rangesurface_species):
 									u_n.vector()[z*(all_molecules+1)-(2+z_num)] = z_sur
 	
@@ -585,15 +601,21 @@ if reactor_type == 't_pfr' or 't_pfr_diff' or 'tap':
 						print(legend_label[k_step]+" Sensitivity Analysis Being Performed")
 						sens_func = assemble(inner(u_final[k_step],u_final[k_step])*dP(1))
 						X = compute_gradient(sens_func,controls)#compute_gradient(sens_func,[control1,control2])
-						new_data = np.asarray(graph_data['timing'])
+						m = Enlist(controls)
+						grads = [i.get_derivative(options=None) for i in m]
+						value_list = []
+						for nu in grads:
+							value_list.append(nu.values()[0])
+							temp = np.array((value_list))
+							X = np.vstack((X,temp))
+						#new_data = np.asarray(graph_data['timing'])
 						sensitivity_output.append(X)
-	
-			print("Current Time")
-			print(t)
+			progressBar(t, Time)
+
 			u_n.assign(u)
 			t += dt
-		
-		print(time.time() - start_time)
+		print("")
+		print("Complete in "+str(time.time() - start_time)+" seconds")
 	
 	############# Store the output data #######################################################
 		if k_pulse == 0:
@@ -608,48 +630,61 @@ if reactor_type == 't_pfr' or 't_pfr_diff' or 'tap':
 	
 		for k,j in enumerate(graph_data):
 			if j != 'timing':
-				ax2.plot(graph_data['timing'],graph_data[j],color=colors[k-1],label=legend_label[k-1], ls = '--', alpha=0.7)
+				ax2.plot(graph_data['timing'],graph_data[j],color=colors[k],label=legend_label[k], ls = '--', alpha=0.7)
 				new_data = np.asarray(graph_data[j])
 				dictionaray_of_numpy_data[legend_label[k-1]] = np.vstack((dictionaray_of_numpy_data[legend_label[k-1]],new_data))
 				#output_data = np.vstack((output_data,new_data))
 			else:
 				pass
-		
+
 		if sensitivity_analysis == True:
 			np.savetxt('./sensitivity_'+output_file_name+'/pulse_'+str(k_pulse+1)+'.csv',sensitivity_output)
-	
+	ax2.legend(title="Gas Species")
+	if save_figure == True:
+		plt.savefig('./'+output_file_name+'_folder/'+output_file_name+'.png')
 	plt.show()
-	
+
 	for j_species in range(0,monitored_gas+1):
 		dictionaray_of_numpy_data[legend_label[j_species]] = np.transpose(dictionaray_of_numpy_data[legend_label[j_species]])
-		np.savetxt('./'+legend_label[j_species]+'_'+output_file_name+'.csv', dictionaray_of_numpy_data[legend_label[j_species]], delimiter=",")
+		np.savetxt('./'+output_file_name+'_folder/'+legend_label[j_species]+'.csv', dictionaray_of_numpy_data[legend_label[j_species]], delimiter=",")
 	#output_data = np.transpose(output_data)
 	#np.savetxt(output_file_name, output_data, header=header, delimiter=",")
 	
 	############# Store the parameters used in the model #######################################################
 	
-	F = open("./"+output_file_name+".txt","w")
+	F = open("./"+output_file_name+'_folder/'+output_file_name+".txt","w")
 	F.write("Reactor Length: "+str(np.sum(r_param))+"\n")
-	F.write("First Forward: "+str(1.1108e07)+"\n")
+	F.write("Catalyst Length: "+str(len_cat)+"\n")
+	F.write("Mesh Size: "+str(mesh_size)+"\n")
+	F.write("\n")
+	F.write("Time: "+str(Time)+"\n")
+	F.write("Time Steps: "+str(Time_steps)+"\n")
+	F.write("\n")
+	F.write("reactions_test: "+str(reactions_test)+"\n")
+	F.write("R1 Forward: "+str(1.15*(100**3)/(6.022e23))+"\n")
+	F.write("R1 Backward: "+str(10)+"\n")
+	F.write("R2 Forward: "+str(400*(1000)/(6.022e23))+"\n")
+	F.write("R3 Forward: "+str((100**3)/(6.022e23))+"\n")
 	F.write("Inert pulse size: "+str(Inert_pulse_size)+"\n")
-	F.write("rangesurface_species: "+str(rangesurface_species)+"\n")
-	F.write("reactions_test: "+str(reactions_test))
-	F.close()
-	
+	F.write("Open site density: "+str(rangesurface_species[0])+"\n")
+	F.write("OA density: "+str(rangesurface_species[0])+"\n")
+	F.close()	
+
+	sys.exit()
 	
 	for k,j in enumerate(graph_data):
 		if j != 'timing':
 			ax2.plot(graph_data['timing'],graph_data[j],color=colors[k-1],label=legend_label[k-1], ls = '--', alpha=0.7)
 		else:
 			pass
-	
-	ax2.legend(title="Gas Species")
-	
-	fig3, ax3 = plt.subplots()
-	plt.title("Sensitivity of Species "+legend_label[species_of_interst]+" to Rate Constants")
-	ax3.set_xlabel('$t\ (s)$')
-	ax3.set_ylabel('$Sensitivity$')
-	zef_2 = np.linspace(0,2,sensitivity_output[species_of_interst].shape[0])
+	if sensitivity_analysis == True:
+		ax2.legend(title="Gas Species")
+		
+		fig3, ax3 = plt.subplots()
+		plt.title("Sensitivity of Species "+legend_label[species_of_interst]+" to Rate Constants")
+		ax3.set_xlabel('$t\ (s)$')
+		ax3.set_ylabel('$Sensitivity$')
+		zef_2 = np.linspace(0,2,sensitivity_output[species_of_interst].shape[0])
 	
 	for kit in range(0,sensitivity_output[species_of_interst].shape[1]):
 		ax3.plot(zef_2,sensitivity_output[species_of_interst][:,kit],label=legend_2[kit], ls = '--', alpha=0.7)
