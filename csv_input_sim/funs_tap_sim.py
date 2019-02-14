@@ -131,7 +131,7 @@ def flux_generation(reactor,gasses,reactants,pulse_size,Diff,voidage,dx,radius,d
 			#print(dx)
 			#sys.exit()
 			#to_flux.append(1)
-			to_flux.append(2 (dx*(radius**2)*3.14159) * (Diff[k][0] /(voidage[0]*dx2_r)))#(1/((1)*pulse_size)) *
+			to_flux.append(2 *(dx*(radius**2)*3.14159) * (Diff[k][0] /(voidage[0]*dx2_r)))#(1/((1)*pulse_size)) *
 			#to_flux.append(2*Diff[k][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r))#(1/((1)*pulse_size)) *
 			#to_flux.append(2*(1/((1+reactants)*pulse_size)) *Diff[k][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r))
 		#to_flux.append(1)
