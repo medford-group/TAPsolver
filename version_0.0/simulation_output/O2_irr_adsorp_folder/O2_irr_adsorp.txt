@@ -1,0 +1,16 @@
+Reactor Length: 2.54
+Catalyst Length: 0.127
+Mesh Size: 200
+
+Time: 0.3
+Time Steps: 1000
+
+reactions_test: ['A  * -> A*']
+R1 Forward: 1.9096645632680173e-18
+R1 Backward: 10
+R2 Forward: 6.642311524410495e-19
+R3 Forward: 1.6605778811026236e-18
+R3 Forward: 1.6605778811026236e-21
+Inert pulse size: 2.155332856120258e+19
+Open site density: 3.0110000000000005e+18
+OA density: 3.0110000000000005e+18

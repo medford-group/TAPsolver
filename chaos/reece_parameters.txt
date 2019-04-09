@@ -1,0 +1,9 @@
+Reactor Length: 2.9000000000000004
+First Forward: 11108000.0
+First Reverse1690000000000.0
+Second Forward3.354e-07
+Third Forward3.287e-10
+Fourth Forward9607700000.0
+Inert pulse size: 1.1980398460652085e+19
+rangesurface_species: [0, 420000000000000.0, 0, 210000000000000.0, 0]
+reactions_test: ['CO <-> CO*', 'CO*  OA* -> CO2*', 'CO*  OB* -> CO2*', 'CO2* -> CO2']

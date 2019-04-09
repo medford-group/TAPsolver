@@ -1,0 +1,2 @@
+reactorLength,catalystLength,meshSize,time,timeSteps,rateConstant,inertPulseSize,openSiteDensity,OAdensity,inertAMU,reactantAMU,productAMU
+2.8,0.1,280,2,1000,11108000,1.2E+019,3.01E+020,3.01E+020,40,32,44

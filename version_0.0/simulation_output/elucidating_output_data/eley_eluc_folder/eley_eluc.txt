@@ -1,0 +1,12 @@
+Reactor Length: 2.8000000000000003
+Catalyst Length: 0.1
+Mesh Size: 280
+
+Time: 2
+Time Steps: 1000
+
+reactions_test: ['CO  O* ->  CO2  *']
+Rate Constant: 11108000.0
+Inert pulse size: 1.1980398460652087e+19
+Open site density: 3.011e+20
+OA density: 3.011e+20
