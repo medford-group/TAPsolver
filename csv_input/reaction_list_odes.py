@@ -20,14 +20,15 @@ import networkx as nx
 #from rxn_network import scissions, recursive_scissions, get_mechanisms
 #from data_structures import MolGraph, RxnGraph
 
-def variational_list_parsing(reactions):
+def variational_list_parsing(reactions,active_sites):
+
+	active_site_names = ['*','^','@','#']
 
 	reacs = reactions.copy()
 	reactants = []
 	rev_irr = []
 
 	#need to make this a function
-	print(reacs)
 	for k,i in enumerate(reacs):
 		if '<->' in reacs[k]:
 			rev_irr.append(1)
@@ -61,14 +62,24 @@ def variational_list_parsing(reactions):
 	insert_location = 0
 
 	for k,i in enumerate(reactants):
-		if '*' not in i:
+		if '*' not in i and '^' not in i and '@' not in i and '#' not in i:
 			reactants.insert(insert_location, reactants.pop(k))
 			insert_location += 1
 		if i == '*':
 			reactants.pop(k)
+		if i == '^':
+			reactants.pop(k)
+		if i == '@':
+			reactants.pop(k)
+		if i == '#':
+			reactants.pop(k)
 
-	#Add the surface site to the end of the list of reactants
-	reactants.insert(len(reactants), '*')
+
+	####Add the surface site to the end of the list of reactants
+	###reactants.insert(len(reactants), '*')
+
+	for kj in range(0,int(active_sites)):
+		reactants.insert(len(reactants), active_site_names[kj])		
 
 	#make empty matrix for storing coefficients in reactions
 	rate_array = np.zeros((len(reactions),len(reactants)))

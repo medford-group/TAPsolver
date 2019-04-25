@@ -10,10 +10,11 @@ def generate_folder(path_name):
 	try:  
 		os.mkdir(path_name)
 	except OSError:  
-		print ("Creation of the directory %s failed" % path_name)
+		###print ("Creation of the directory %s failed" % path_name)
 		pass
 	else:  
-		print ("Successfully created the directory %s " % path_name)
+		###print ("Successfully created the directory %s " % path_name)
+		pass
 
 def call_sens_analysis(u_value,control_list,domain):
 	flux =  u_value*u_value*domain
@@ -141,12 +142,12 @@ def flux_generation(reactor,gasses,reactants,pulse_size,Diff,voidage,dx,radius,d
 			#print(dx)
 			#sys.exit()
 			#to_flux.append(1)
-			to_flux.append( (Diff[k][0]*voidage[0] /(dx)) * (radius**2)*3.14159/(2*pulse_size) ) 
+			to_flux.append( (Diff[k][0]*voidage[0] /(dx)) * (radius**2)*3.14159/(.65*pulse_size) ) 
 			#to_flux.append(2 *(dx*(radius**2)*3.14159) * (Diff[k][0] /(dx*voidage[0])))#(1/((1)*pulse_size)) *###??? changed from 1 to the new form
 			#to_flux.append(2*Diff[k][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r))#(1/((1)*pulse_size)) *
 			#to_flux.append(2*(1/((1+reactants)*pulse_size)) *Diff[k][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r))
 		#to_flux.append(1)
-		to_flux.append( (Diff[gasses][0]*voidage[0] /(dx)) * (radius**2)*3.14159/(2*pulse_size) )
+		to_flux.append( (Diff[gasses][0]*voidage[0] /(dx)) * (radius**2)*3.14159/(.65*pulse_size) )
 		#to_flux.append((2*Diff[gasses][0] * (dx*(radius**2)*3.14159)/(dx*voidage[0])))#*(1/((1)*pulse_size)) *
 		#to_flux.append((2*(1/((1+reactants)*pulse_size)) *Diff[gasses][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r)))
 	elif reactor_type == 't_pfr' or 't_pfr_diff':
@@ -157,14 +158,16 @@ def flux_generation(reactor,gasses,reactants,pulse_size,Diff,voidage,dx,radius,d
 	#sys.exit()
 	return to_flux
 
-
-def define_boundary_conditions(reactor,elem_list,nec_values,V_sec,reacs_num,all_mol,reac_ratio,L_bound,R_bound):
+def define_boundary_conditions(reactor,elem_list,nec_values,V_sec,reacs_num,all_mol,reac_ratio,L_bound,R_bound,number_of_inerts):
 	if reactor == 'tap':
 		bcs = []
 		if elem_list != ['INERT_ONLY']:
 			for k in range(0,nec_values):
 				bcs.append(DirichletBC(V_sec.sub(k),Constant(0),R_bound))
-			bcs.append(DirichletBC(V_sec.sub(all_mol),Constant(0),R_bound))
+			
+			for k in range(0,int(number_of_inerts)):
+				bcs.append(DirichletBC(V_sec.sub(all_mol-(1+k)),Constant(0),R_bound))
+			
 		else:	
 			bcs.append(DirichletBC(V_sec,Constant(0),R_bound))
 	
@@ -195,19 +198,17 @@ def initialize_variable_dictionaries(nec,moles,V_nu,u_nu,un_nu):
 	graph_data['conVtime_'+str(species_count)] = []
 	#cat_data['conVtime_'+str(nec['molecules_in_gas_phase'])] = []
 	sens_data['conVtime_'+str(species_count)] = []
-
-	for kj in range(nec['molecules_in_gas_phase'],len(nec['reactants'])-1):
+	for kj in range(nec['molecules_in_gas_phase'],len(nec['reactants'])):
 		surf_data['conVtime_'+str(kj)] = []
-
+	#sys.exit()
 	tempA = TestFunctions(V_nu)
 	tempB = split(u_nu)
 	tempC = split(un_nu)
-
-	for kit in range(0,(moles)+1):
+	for kit in range(0,int(moles)):
 		v_d['v_'+str(kit+1)] = tempA[kit]
 		u_d['u_'+str(kit+1)] = tempB[kit]
 		u_nd['u_n'+str(kit+1)] = tempC[kit]
-
+	
 	return graph_data,v_d,u_d,u_nd,sens_data,surf_data,cat_data
 
 def establish_grid_system(in_1,cat,in_2,mesh_size):
@@ -231,7 +232,7 @@ def establish_grid_system(in_1,cat,in_2,mesh_size):
 
 	return r_param,dx_r,dx2_r,frac_length,cat_location
 
-def establish_output_graph(reactor,gas_phase,reacs):
+def establish_output_graph(reactor,gas_phase,reacs,inerts):
 	fig2, ax2 = plt.subplots()
 	ax2.set_xlabel('$t (s)$')
 	if reactor == 'tap':
@@ -245,9 +246,10 @@ def establish_output_graph(reactor,gas_phase,reacs):
 	for k in range(0,gas_phase):
 		legend_label.append(reacs[k])
 		header = header+","+reacs[k]
-	legend_label.append("Inert")
+	for j in range(0,inerts):
+		legend_label.append("Inert-"+str(1+j))
 	header = header+",Inert"
-	colors = ['b','r','g','m','k','y','c']
+	colors = ['b','orange','g','r','k','y','c','m','brown','darkgreen','goldenrod','lavender','lime']
 
 	return fig2,ax2,legend_label,header,colors
 
@@ -446,7 +448,9 @@ def exp_data_fitting(species_list,time,folder):
 		#time_step.append(peak2[0])
 		times.append(round(peak_loc[0],6))
 		values.append(peak_loc[1])
-
+		print(round(peak_loc[0],6))
+		print(peak_loc[1])
+		print('')
 		#%85 point
 		value_test = 0.85*peak_loc[1]
 		sort_fif = user_data[k_new].iloc[(user_data[k_new][1]-value_test).abs().argsort()[:]]
@@ -503,10 +507,10 @@ def read_input():
 	rows_4, cols_4 = np.where(user_data == 'Reaction_Information')
 
 	### Store each section as a data frame ###
-	reactor_info = user_data.iloc[(2+rows_1[0]):(rows_2[0]-1),:] 
-	feed_surf_info = user_data.iloc[2+rows_2[0]:rows_3[0]-1,:]
-	data_storage = user_data.iloc[2+rows_3[0]:rows_4[0]-1,:]
-	reaction_info = user_data.iloc[2+rows_4[0]:,:]
+	reactor_info = user_data.iloc[(1+rows_1[0]):(rows_2[0]-1),:] 
+	feed_surf_info = user_data.iloc[1+rows_2[0]:rows_3[0]-1,:]
+	data_storage = user_data.iloc[1+rows_3[0]:rows_4[0]-1,:]
+	reaction_info = user_data.iloc[1+rows_4[0]:,:]
 
 	### Read in data related to the first three sections ###
 	reactor_kinetics_input = {}

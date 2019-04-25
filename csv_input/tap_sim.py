@@ -26,20 +26,21 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	r_const = constants_input
 	
 	### Generate the folders for information storage ###
-	path = './'+reac_input['output_file_name']+'_folder/'
+	path = './'+reac_input['output_folder_name']+'_folder/'
 	generate_folder(path)
-	
-	path_3 = './'+reac_input['output_file_name']+'_folder/flux_data/'
+		
+	path_3 = './'+reac_input['output_folder_name']+'_folder/flux_data/'
 	generate_folder(path_3)
+	
+	if reac_input['mkm_analysis'].lower() == 'true' or reac_input['RRM_analysis'].lower() == 'true' or reac_input['petal_plots'].lower() == 'true':
+		path_4 = './'+reac_input['output_folder_name']+'_folder/thin_data/'
+		generate_folder(path_4)
 
-	path_4 = './'+reac_input['output_file_name']+'_folder/thin_data/'
-	generate_folder(path_4)
-
-	path_5 = './'+reac_input['output_file_name']+'_folder/graphs/'
+	path_5 = './'+reac_input['output_folder_name']+'_folder/graphs/'
 	generate_folder(path_5)
 
 	if reac_input['fit_parameters'].lower() == 'true':
-		path_6 = './'+reac_input['output_file_name']+'_folder/fitting/'
+		path_6 = './'+reac_input['output_folder_name']+'_folder/fitting/'
 		generate_folder(path_6)
 
 	### Declare and define the constants ###
@@ -70,7 +71,8 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	### Used to define the initial surface composition over the simulation ###
 	if ',' in str(reac_input['rangesurface_species']):
 		rangesurface_species = list(reversed(reac_input['rangesurface_species'].split(',')))
-		rangesurface_species = rangesurface_species[::-1]
+		#rangesurface_species = rangesurface_species[::-1]
+		reac_input['rangesurface_species'] = list(map(float, rangesurface_species))
 	else:
 		rangesurface_species = reac_input['rangesurface_species']
 	
@@ -80,20 +82,20 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	dk = Constant(reac_input['Time']/reac_input['Time_steps'])
 	eb = np.array((reac_input['void_inert'],reac_input['void_cat'],reac_input['void_inert']))
 
-	ref_rate = np.append(reac_input['ref_rate_inert'],reac_input['ref_rate_cat'])
+	ref_rate = np.append(reac_input['ref_diff_inert'],reac_input['ref_diff_cat'])
 	ref_rate = np.append(ref_rate,ref_rate[0])  	
 
 	D = np.empty((len(reac_input['mass_list'].split(',')),3))#,dtype=Constant
 	def diff_func(ref_mass,ref_T,mol_mass,ref_r):     	
-		return ref_r*(mp.sqrt(ref_mass*reac_input['T'])/mp.sqrt(ref_T*mol_mass))
+		return ref_r*(mp.sqrt(ref_mass*reac_input['temp'])/mp.sqrt(ref_T*mol_mass))
 
 	for k,j in enumerate(reac_input['mass_list'].split(',')):
 		for k_2,j_2 in enumerate(ref_rate):
-			D[k,k_2] = Constant(diff_func(reac_input['ref_mass'],reac_input['ref_T'],float(j),j_2)) ###??? should this (np.sum(r_param)**2) be here? This puts it in dimensional form!
-	print(D)
+			D[k,k_2] = Constant(diff_func(reac_input['ref_mass'],reac_input['ref_temp'],float(j),j_2)) ###??? should this (np.sum(r_param)**2) be here? This puts it in dimensional form!
+
 	#sys.exit()
 	### Define the dimensions of the reactor ###
-	ca = (reac_input['reac_radius']**2)*3.14159
+	ca = (reac_input['reac_radius']**2)*3.14159 
 	#sys.exit()
 	point_volume = dx_r * ca * eb[0] ###??? Should this include the voidage?
 	#specific_area = 1e8
@@ -114,12 +116,13 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	#Length = np.sum(r_param)**2
 
 	### Construct the reaction equation in a form that Fenics can understand ###
-	necessary_values = make_f_equation(reac_input['reactions_test'],reac_input['reactants_num'],reac_input['reactor_type'],False)
+	necessary_values = make_f_equation(reac_input['reactions_test'],reac_input['reactants_num'],reac_input['reactor_type'],reac_input['number_of_active_sites'],reac_input['number_of_inerts'],False)
+	
 	
 	### Declaring the trial / test functions in fenics and defining the finite elements ###
 	mesh = UnitIntervalMesh(int(reac_input['mesh_size']))  ###??? Swap the mesh size here
 	P1 = FiniteElement('P',mesh.ufl_cell(),1)
-	
+
 	if reac_input['reactions_test'] != ['INERT_ONLY']:
 		test_new = eval(necessary_values['element'])
 		element = MixedElement(test_new)
@@ -128,14 +131,18 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	else:
 		V = FunctionSpace(mesh,P1)
 		V_du = FunctionSpace(mesh,P1)
-	all_molecules = necessary_values['gas_num']+necessary_values['surf_num']+1
+	#all_molecules = necessary_values['gas_num']+necessary_values['surf_num']+reac_input['number_of_inerts']
+	all_molecules = necessary_values['gas_num']
+
 	u = Function(V)
 	u_n = Function(V)
 	u_temp = Function(V)
 	u_1 = Function(V)
 	u_2 = Function(V)
 	u_3 = Function(V)
-
+	
+	
+	
 	graph_data,v_d,u_d,u_nd,sens_data,surf_data,cat_data = initialize_variable_dictionaries(necessary_values,all_molecules,V,u,u_n)
 
 	### Define the subdomain for the catalyst region
@@ -160,8 +167,8 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	dz = 1/reac_input['mesh_size']
 
 	class integration_section(SubDomain):
-			def inside(self, x, on_boundary):
-				return between(x[0], (1-dz,1.0))
+		def inside(self, x, on_boundary):
+			return between(x[0], (1-dz,1.0))
 
 	right = CompiledSubDomain("near(x[0], 1.)")
 
@@ -174,19 +181,19 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		F = eval(necessary_values['F'])
 	except NameError:
 		error_output(reac_input['reactions_test'])
-
+	
 	monitored_gas = necessary_values['molecules_in_gas_phase']
 	
-	bcs = define_boundary_conditions(reac_input['reactor_type'],reac_input['reactions_test'],necessary_values['molecules_in_gas_phase'],V,reac_input['reactants_num'],all_molecules,reac_input['reactant_ratio'],boundary_L,boundary_R)
+	bcs = define_boundary_conditions(reac_input['reactor_type'],reac_input['reactions_test'],necessary_values['molecules_in_gas_phase'],V,reac_input['reactants_num'],all_molecules,reac_input['reactant_ratio'],boundary_L,boundary_R,reac_input['number_of_inerts'])
 	
 	### Initialize the graphs and set the graphical parameters ###
-	fig2,ax2,legend_label,header,colors = establish_output_graph(reac_input['reactor_type'],necessary_values['molecules_in_gas_phase'],necessary_values['reactants'])
+	fig2,ax2,legend_label,header,colors = establish_output_graph(reac_input['reactor_type'],necessary_values['molecules_in_gas_phase'],necessary_values['reactants'],int(reac_input['number_of_inerts']))
 
 	if reac_input['fit_parameters'].lower() == 'true':
 		output_fitting = exp_data_fitting(legend_label,reac_input['Time_steps'],reac_input['exp_data_folder'])
-
+	
 	if reac_input['sensitivity_analysis'].lower() == 'true':
-		path_2 = reac_input['output_file_name']+'_folder/sensitivity/'
+		path_2 = reac_input['output_folder_name']+'_folder/sensitivity/'
 		generate_folder(path_2)
 		sens_time_list = []
 		
@@ -198,8 +205,8 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			r_const[j] = Constant(r_const[j])
 
 	to_flux = flux_generation(reac_input['reactor_type'],monitored_gas,reac_input['reactants_num'],reac_input['Inert_pulse_size'],D,eb,dx_r,reac_input['reac_radius'],dx2_r)
-	store_data_func(reac_input['store_data'],reac_input['output_file_name'])
-	store_sens_analysis(reac_input['sensitivity_analysis'],reac_input['output_file_name'],monitored_gas,legend_label)
+	store_data_func(reac_input['store_data'],reac_input['output_folder_name'])
+	store_sens_analysis(reac_input['sensitivity_analysis'],reac_input['output_folder_name'],monitored_gas,legend_label)
 
 	### Declare the solver to be used ###
 	
@@ -217,21 +224,29 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	### Handle a pulse intensity that changes with each pulse ###
 	if '/' in str(reac_input['reactant_ratio']):
 		list_of_feed = reac_input['reactant_ratio'].split('/')
+		list_of_time = reac_input['pulse_time'].split('/')
 		pulse_variation = len(list_of_feed)
+		pulse_time = len(list_of_time)
 		reactant_feed = []
+		reactant_time = []
 		for k in range(0,len(reac_input['reactant_ratio'].split('/'))):
 			reactant_feed.append(list_of_feed[k].split(','))
+			reactant_time.append(list_of_time[k].split(','))
 	else:
 		pulse_variation = 1
 		reactant_feed = []
+		reactant_time = []
 		try:
 			reactant_feed.append(reac_input['reactant_ratio'].split(','))
+			reactant_time = list(map(float, reac_input['pulse_time'].split(',')))
 		except AttributeError:
 			reactant_feed.append(reac_input['reactant_ratio'])
+			reactant_time = list(map(float, reac_input['pulse_time'].split(',')))
 
 	### Begin simulation for each desired pulse ###
 	current_reac_set = 1
 	tot_objective = 0
+
 	for k_pulse in range(0,int(reac_input['number_of_pulses'])):
 
 		### Clear the tape for the adjoint (will lead to challenges with fitting parameters over multiple pulses) ###
@@ -241,7 +256,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		print("Simulation Status: "+"Pulse #"+str(k_pulse+1))
 
 		species_pulse_list = reactant_feed[current_reac_set-1]
-		
+		species_time = reactant_time[current_reac_set-1]
 		### Incase the time step was altered during a previous pulse, just reset to the original values ### 
 		dk = Constant(reac_input['Time']/reac_input['Time_steps'])
 		dt = reac_input['Time']/reac_input['Time_steps']
@@ -253,18 +268,22 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		for k_sens in range(monitored_gas):
 			sensitivity_output[k_sens] = []
 		
-		graph_data['timing'] = []
+		graph_data = {}
 		for k_gasses in range(0,necessary_values['molecules_in_gas_phase']):
 			graph_data['conVtime_'+str(k_gasses)] = []
-		graph_data['conVtime_'+str(necessary_values['gas_num']+necessary_values['surf_num'])] = []
+		for kjc in range(0,int(reac_input['number_of_inerts'])):
+			graph_data['conVtime_'+str((necessary_values['gas_num']+1)+necessary_values['surf_num']+kjc)] = []
 		
 		surf_data['timing'] = []
+		
 		for j_gasses in range(necessary_values['molecules_in_gas_phase'],len(necessary_values['reactants'])-1):
 			surf_data['conVtime_'+str(j_gasses)] = []
+		
+		graph_data['timing'] = []
 
 		cat_data['timing'] = []
-
-		for z_gasses in range(0,necessary_values['molecules_in_gas_phase']):
+		
+		for z_gasses in range(0,all_molecules):
 			cat_data['conVtime_'+str(z_gasses)] = []
 
 		t = 0
@@ -294,13 +313,13 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			### Store the results of each iteration ###
 			graph_data['timing'].append(t)
 			for k in range(0,monitored_gas):
-				new_val = (to_flux[k]*( u.vector().get_local()[(all_molecules)+k+1]))
+				new_val = (to_flux[k]*( u.vector().get_local()[(all_molecules)+k]))
 				graph_data['conVtime_'+str(k)].append((new_val))
-			new_val = ((to_flux[monitored_gas]*u.vector().get_local()[2*(all_molecules+1)-1]))
-			graph_data['conVtime_'+str(all_molecules-1)].append((new_val))
+			#for kjc in range(all_molecules-int(reac_input['number_of_inerts']),all_molecules):
+			for kjc in range(0,int(reac_input['number_of_inerts'])):
+				new_val = ((to_flux[monitored_gas]*u.vector().get_local()[2*(all_molecules+1)-2-(int(reac_input['number_of_inerts'])-kjc)]))
+				graph_data['conVtime_'+str(all_molecules-(int(reac_input['number_of_inerts'])-kjc))].append((new_val))
 			
-			new_values = [] 
-			cat_values = []
 
 			mesh_size = reac_input['mesh_size']
 
@@ -320,49 +339,55 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 						try:
 							if legend_label[k_fitting] != 'Inert':
 								jfunc_2 += assemble(inner(u_n[k_fitting] - w3,u_n[k_fitting] - w3)*dP(1))
-								print(legend_label[k_fitting])
 								tot_objective += assemble(inner(u_n[k_fitting] - w3,u_n[k_fitting] - w3)*dP(1))
+								print('test')
 							else:
 								pass
 
 						except UnboundLocalError:
 							if legend_label[k_fitting] != 'Inert':
 								jfunc_2 = assemble(inner(u_n[k_fitting] - w3,u_n[k_fitting] - w3)*dP(1))
-								print(legend_label[k_fitting])
 								tot_objective += assemble(inner(u_n[k_fitting] - w3,u_n[k_fitting] - w3)*dP(1))
 							else:
 								pass
 
+			if reac_input['mkm_analysis'].lower() == 'true' or reac_input['RRM_analysis'].lower() == 'true' or reac_input['petal_plots'].lower() == 'true':
+				for jk in range(0,all_molecules):
+					new_values = [] 
+					cat_values = []
 
-			for cj in range(0,monitored_gas+1):
-				cat_values.append(0)
+					#for cj in range(0,all_molecules):
+					#	cat_values.append(0)
 
-			for kj in range(monitored_gas+1,len(necessary_values['reactants'])+1):
-				new_values.append(0)
+					#for kj in range(monitored_gas+1,len(necessary_values['reactants'])+1):
+					#	new_values.append(0)
 			
-			for z in range(int((cat_location - 0.5*frac_length)*reac_input['mesh_size'])-1,int((cat_location + 0.5*frac_length)*reac_input['mesh_size'])):
-				try:
-					for z_num in range(0,1+necessary_values['molecules_in_gas_phase']):#.split(',')
-						#print(z*(all_molecules+1)-(z_num))
-						value_cat = u_n.vector().get_local()[z*(all_molecules+1)-(z_num)+1]# = float(z_sur)
-						cat_values[z_num] += value_cat*dx_r
-						#surf_data['conVtime_'+str(z_num+monitored_gas)] += value_new*dx_r
-				except AttributeError:
-					value_cat = u_n.vector().get_local()[z*(all_molecules+1)]# = float(z_sur)
-					cat_values[0] += value_cat*dx_r
-				#value_cat = u_n.vector().get_local()[z*(all_molecules+1)-all_molecules]
-				#cat_values[necessary_values['molecules_in_gas_phase']] += value_cat*dx_r
+					for z in range(int((cat_location - 0.5*frac_length)*reac_input['mesh_size'])-1,int((cat_location + 0.5*frac_length)*reac_input['mesh_size'])):
+						
+						try:
+							###for z_num in range(0,1+necessary_values['molecules_in_gas_phase']):#.split(',')
+							#print(z*(all_molecules+1)-(z_num))
+							value_cat = u_n.vector().get_local()[z*(all_molecules)-(all_molecules)+jk]# = float(z_sur)
+							cat_values.append(value_cat)
+							###cat_values[z_num] += value_cat*dx_r
+							#surf_data['conVtime_'+str(z_num+monitored_gas)] += value_new*dx_r
+						except AttributeError:
+							value_cat = u_n.vector().get_local()[z*(all_molecules)]# = float(z_sur)
+							cat_values[0] += value_cat*dx_r
+						#value_cat = u_n.vector().get_local()[z*(all_molecules+1)-all_molecules]
+						#cat_values[necessary_values['molecules_in_gas_phase']] += value_cat*dx_r
 
-				try:
-					swap_for_2 = necessary_values['molecules_in_gas_phase']
-					for z_num,z_sur in enumerate(reac_input['rangesurface_species'].split(',')):
-						#print(z*(all_molecules+1)-(swap_for_2+z_num))
-						value_new = u_n.vector().get_local()[z*(all_molecules+1)-(swap_for_2+z_num)]# = float(z_sur)
-						new_values[z_num] += value_new*dx_r
-						#surf_data['conVtime_'+str(z_num+monitored_gas)] += value_new*dx_r
-				except AttributeError:
-					value_new = u_n.vector().get_local()[z*(all_molecules+1)]# = float(z_sur)
-					new_values[0] += value_new*dx_r
+						###try:
+						###	swap_for_2 = necessary_values['molecules_in_gas_phase']
+						###	for z_num,z_sur in enumerate(reac_input['rangesurface_species'].split(',')):
+						###		#print(z*(all_molecules+1)-(swap_for_2+z_num))
+						###		value_new = u_n.vector().get_local()[z*(all_molecules)-(swap_for_2+z_num)]# = float(z_sur)
+						###		new_values[z_num] += value_new*dx_r
+						###		#surf_data['conVtime_'+str(z_num+monitored_gas)] += value_new*dx_r
+						###except AttributeError:
+						###	value_new = u_n.vector().get_local()[z*(all_molecules)]# = float(z_sur)
+						###	new_values[0] += value_new*dx_r
+					cat_data['conVtime_'+str(jk)].append(cat_values)
 
 			#cat_length = reac_input['length_reac']*reac_input['factor']
 			#if ',' in str(reac_input['rangesurface_species']):
@@ -373,7 +398,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			#	cat_data['conVtime_'+str(0)].append(cat_values[0])
 
 			#if ',' in str(reac_input['rangesurface_species']):
-			#	for z_num,z_sur in enumerate(reac_input['rangesurface_species'].split(',')):
+			#	for z_num,z_sur in enumerate(reac_input['ranges2urface_species'].split(',')):
 			#		surf_data['conVtime_'+str(z_num+monitored_gas)].append(new_values[z_num])
 			#else:
 			#	surf_data['conVtime_'+str(monitored_gas)].append(new_values[0])
@@ -385,35 +410,49 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			#	rangesurface_species = list(reversed(reac_input['rangesurface_species'].split(',')))
 			#else:
 			#	rangesurface_species = reac_input['rangesurface_species']
-
-
-			if t > 0:
+			
+	
+			##if t > 0:
+			if round(t,6) not in reactant_time:
 				dt = solver_iteration(dt,reac_input['solver_method_options'],solver,dk,1.5,1.1)
 			else:
 				if reac_input['reactor_type'] == 'tap':
 					if ',' in str(species_pulse_list):
+						#print('')
+						#print(all_molecules)
+						#sys.exit()
 						for k in range(0,int(reac_input['reactants_num'])):
-							u_n.vector()[int((all_molecules+1)*(reac_input['mesh_size']+1)-1)+k-(all_molecules)] = float(species_pulse_list[k])*Inert_pulse_conc#list_species_pulse[k]
+							if reactant_time[k] == round(t,6):
+							###u_n.vector()[int((all_molecules)*(reac_input['mesh_size']+1)-1)+k-(all_molecules)] = float(species_pulse_list[k])*Inert_pulse_conc#list_species_pulse[k]
+								u_n.vector()[int((all_molecules)*(reac_input['mesh_size']+1))+k-(all_molecules)] = float(species_pulse_list[k])*Inert_pulse_conc#list_species_pulse[k]
+
 					else:
-						u_n.vector()[int((all_molecules+1)*(reac_input['mesh_size']+1)-1)-(all_molecules)] = float(species_pulse_list)*Inert_pulse_conc
-					u_n.vector()[int((all_molecules+1)*(reac_input['mesh_size']+1)-1)] = Inert_pulse_conc###??? Added the porosity contribution
-				
+						u_n.vector()[int((all_molecules)*(reac_input['mesh_size']+1)-1)-(all_molecules)] = float(species_pulse_list)*Inert_pulse_conc
+					for k_step in range(0,int(reac_input['number_of_inerts'])):
+						##u_n.vector()[int((all_molecules)*(reac_input['mesh_size']+1)-1-k_step)] = float(species_pulse_list[-1-k_step])*Inert_pulse_conc###??? Added the porosity contribution
+						if reactant_time[-1-k_step] == round(t,6):
+							u_n.vector()[int((all_molecules)*(reac_input['mesh_size']+1)-1-k_step)] = float(species_pulse_list[-1-k_step])*Inert_pulse_conc###??? Added the porosity contribution
+					#sys.exit()
 				if k_pulse == 0:
+
 					for z in range(int((cat_location - 0.5*frac_length)*reac_input['mesh_size'])-1,int((cat_location + 0.5*frac_length)*reac_input['mesh_size'])):
 						if ',' in str(reac_input['rangesurface_species']):
-							for z_num,z_sur in enumerate(reac_input['rangesurface_species'].split(',')):
+							###for z_num,z_sur in enumerate(reac_input['rangesurface_species'].split(',')):
+							for z_num,z_sur in enumerate(reac_input['rangesurface_species']):	
 								if int((cat_location - 0.5*frac_length)*reac_input['mesh_size'])-1 <= 0:
-									u_n.vector()[(all_molecules+1)-(2+z_num)] = float(z_sur)
+									#u_n.vector()[(all_molecules)-(2+z_num)] = float(z_sur)
+									u_n.vector()[(all_molecules)-(int(reac_input['number_of_inerts'])+z_num+1)] = float(z_sur)
 								else:
-									u_n.vector()[z*(all_molecules+1)-(2+z_num)] = float(z_sur)
+									###u_n.vector()[z*(all_molecules)-(2+z_num)] = float(z_sur)
+									u_n.vector()[z*(all_molecules)-(int(reac_input['number_of_inerts'])+z_num+1)] = float(z_sur)
 						else:
 							if int((cat_location - 0.5*frac_length)*reac_input['mesh_size'])-1 <= 0:
-								u_n.vector()[(all_molecules+1)-(2)] = float(species_pulse_list)
+								u_n.vector()[(all_molecules)-(2)] = float(species_pulse_list)
 							else:
-								u_n.vector()[z*(all_molecules+1)-(2)] = float(species_pulse_list)
+								u_n.vector()[z*(all_molecules)-(2)] = float(species_pulse_list)
 
 				dt = solver_iteration(dt,reac_input['solver_method_options'],solver,dk,1.5,1.1)
-				
+
 			if reac_input['sensitivity_analysis'].lower() == 'true':
 				time_size = time.time()
 				u_final = u.split(deepcopy=False)
@@ -456,7 +495,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			#u_opt = minimize(rf, method="COBYLA", bounds = ((0,0,0),(np.inf,np.inf,np.inf)), callback=print_fun,tol = 1e-10)#, options={"disp": True} # , method="COBYLA", bounds = ((0,0),(np.inf,np.inf), callback=print_fun,tol = 1e-5
 			#u_opt = minimize(rf, method="TNC", callback=print_fun,tol = 1e-5, options={"disp": True})#,options={'gtol': 1e-05})#  , bounds=(0,1000)  #method="L-BFGS-B" ###, , constraints={'type':'ineq', 'fun': rf}
 			u_opt_2 = minimize(rf_2, callback=print_fun, bounds = (low_bounds,up_bounds),tol=1e-13, options={"ftol":1e-13,"gtol":1e-13})
-			with open('./'+reac_input['output_file_name']+'_folder/fitting/your_file.txt', 'w') as f:
+			with open('./'+reac_input['output_folder_name']+'_folder/fitting/your_file.txt', 'w') as f:
 				f.write("Contents: "+str(it_times))
 				f.write('\n')
 				f.write("Constants: "+str(x_values))
@@ -465,7 +504,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	############# Store the output data #######################################################
 		if k_pulse == 0:
 			dictionary_of_numpy_data = {}
-			for j_species in range(0,monitored_gas+1):
+			for j_species in range(0,monitored_gas+int(reac_input['number_of_inerts'])):
 				dictionary_of_numpy_data[legend_label[j_species]] = np.empty(shape=[0, len(graph_data['timing'])])
 				new_data = np.asarray(graph_data['timing'])
 				dictionary_of_numpy_data[legend_label[j_species]] = np.vstack((dictionary_of_numpy_data[legend_label[j_species]],new_data))
@@ -474,11 +513,13 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 				dictionary_of_numpy_data[necessary_values['reactants'][k_species-1]] = np.empty(shape=[0, len(graph_data['timing'])])
 				new_data = np.asarray(graph_data['timing'])
 				dictionary_of_numpy_data[necessary_values['reactants'][k_species-1]] = np.vstack((dictionary_of_numpy_data[necessary_values['reactants'][k_species-1]],new_data))
-			dictionary_of_gas_cat_data = {}
-			for z_species in range(0,monitored_gas):
-				dictionary_of_gas_cat_data[legend_label[z_species]] = np.empty(shape=[0, len(graph_data['timing'])])
-				new_data = np.asarray(graph_data['timing'])
-				dictionary_of_gas_cat_data[legend_label[z_species]] = np.vstack((dictionary_of_gas_cat_data[legend_label[z_species]],new_data))
+			
+			#dictionary_of_gas_cat_data = {}
+			
+			#for z_species in range(0,all_molecules):
+			#	dictionary_of_gas_cat_data[necessary_values['reactants'][z_species]] = np.empty(shape=[0, len(graph_data['timing'])])
+			#	new_data = np.asarray(graph_data['timing'])
+			#	dictionary_of_gas_cat_data[necessary_values['reactants'][z_species]] = np.vstack((dictionary_of_gas_cat_data[necessary_values['reactants'][z_species]],new_data))
 
 #for z in range(int((cat_location - 0.5*frac_length)*reac_input['mesh_size'])-1,int((cat_location + 0.5*frac_length)*reac_input['mesh_size'])):
 #	for z_num,z_sur in enumerate(reac_input['rangesurface_species'].split(',')):
@@ -486,13 +527,65 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 #		surf_data['conVtime_'+str(z_num+monitored_gas)] += value_new*dx_r
 
 	############# Visualize/graph the data #######################################################
-		data = pd.ExcelFile('../example_data/COoxidationData_Pt/COoxidationData.xlsx')
-		df3 = pd.read_excel(data,'Argon',header=None)
-		for k in range(1,6):
-			ax2.plot(df3[0][:2000].convert_objects(convert_numeric=True),df3[k][:2000].convert_objects(convert_numeric=True))
+		####data = pd.ExcelFile('../example_data/CO_oxidation_112.5_C.base_corrected.xlsx')
+		####df3 = pd.read_excel(data,'Averaged_last_50_pulse',header=None)
+		###df4 = pd.read_excel(data,'4AMU',header=None)
+		###df5 = pd.read_excel(data,'40AMU',header=None)
+		###df6 = pd.read_excel(data,'28AMU',header=None)
+		###df7 = pd.read_excel(data,'32AMU',header=None)
+		###df8 = pd.read_excel(data,'44AMU',header=None)
+
+		#data2 = pd.ExcelFile('../example_data/COoxidationData_Pt/COoxidationData.xlsx')
+		#df4 = pd.read_excel(data2,'Averaged_last_50_pulse',header=None)
+		
+		#df6 = pd.read_excel(data2,'Argon',header=None)
+		#for k in range(1,20):
+
+		###ax2.plot(df3[0][:1500].convert_objects(convert_numeric=True),df3[2][:1500].convert_objects(convert_numeric=True),label='av CO',color = 'b')
+		###ax2.plot(df3[0][:1500].convert_objects(convert_numeric=True),df3[3][:1500].convert_objects(convert_numeric=True),label='av O2',color = 'y')
+		###ax2.plot(df3[0][:1500].convert_objects(convert_numeric=True),df3[1][:1500].convert_objects(convert_numeric=True),label='av CO2',color = 'g')
+		###ax2.plot(df3[0][:1500].convert_objects(convert_numeric=True),df3[4][:1500].convert_objects(convert_numeric=True),label='av Ar',color = 'r')
+		###ax2.plot(df3[0][:1500].convert_objects(convert_numeric=True),df3[5][:1500].convert_objects(convert_numeric=True),label='av He',color = 'k')
+		
+
+
+		#ax2.plot(df3[0][:3001].convert_objects(convert_numeric=True),df4[0][:3001].convert_objects(convert_numeric=True),label='He 1')
+		
+		#ax2.plot(df3[0][:3001].convert_objects(convert_numeric=True),df4[1][:3001].convert_objects(convert_numeric=True),label='He 1')
+
+		#ax2.plot(df3[0][:3001].convert_objects(convert_numeric=True),df4[2][:3001].convert_objects(convert_numeric=True),label='He 1')
+		#ax2.scatter(df3[0][:1500].convert_objects(convert_numeric=True),df6[0][:1500].convert_objects(convert_numeric=True),label='CO 1')
+		#ax2.scatter(df3[0][:1500].convert_objects(convert_numeric=True),df7[62][:1500].convert_objects(convert_numeric=True),label='O2 1',color='r')
+		#ax2.scatter(df3[0][:1500].convert_objects(convert_numeric=True),df7[63][:1500].convert_objects(convert_numeric=True),label='O2 2',color='b')
+		#ax2.scatter(df3[0][:1500].convert_objects(convert_numeric=True),df4[0][:1500].convert_objects(convert_numeric=True),label='He 1')
+		#ax2.scatter(df3[0][:1500].convert_objects(convert_numeric=True),df8[0][:1500].convert_objects(convert_numeric=True),label='CO2 1')
+		#ax2.scatter(df3[0][:1500].convert_objects(convert_numeric=True),df5[0][:1500].convert_objects(convert_numeric=True),label='Ar 1')		
+		#ax2.plot(df3[0][:1000].convert_objects(convert_numeric=True),df6[2][:1000].convert_objects(convert_numeric=True),label='He 1')
+		#ax2.plot(df3[0][:1000].convert_objects(convert_numeric=True),df6[2][:1000].convert_objects(convert_numeric=True),label='Ar 1')
+
+		sig = 0.05
+		mu = 0.0434
+		
+		alpha_1 = 0.0281
+		alpha_2 = 0.0027
+		
+		beta_1 = 0.00166
+		beta_2 = 0.00270
+		
+		theta_1 = 0
+		theta_2 = 0
+		theta_3 = 0
+		
+		w_1 = 2*3.14159*60
+		w_2 = 2*3.14159*70
+		w_3 = 2*3.14159*120
 
 		for k,j in enumerate(graph_data):
 			if j != 'timing':
+				if reac_input['noise'].lower() == 'true':
+					
+					for z in range(0,int(reac_input['Time_steps'])):
+						graph_data[j][z] += np.random.normal(0,1)*sig +beta_2*np.cos(w_2*(k*dt))
 				if k_pulse > 0:
 					ax2.plot(graph_data['timing'],graph_data[j],color=colors[k], ls = '--', alpha=0.7)
 				else:
@@ -509,9 +602,9 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 				sens_time = sens_time.T#np.transpose(sens_time)
 				sensitivity_output_2 = np.asarray(sensitivity_output[k_sens_step])
 				sensitivity_output_2 = np.append(sens_time[:,None],sensitivity_output_2,axis=1)	
-				np.savetxt(reac_input['output_file_name']+'_folder/sensitivity/'+legend_label[k_sens_step]+'/pulse_'+str(k_pulse+1)+'.csv',sensitivity_output_2,delimiter=",",header='t,'+','.join(legend_2))#
+				np.savetxt(reac_input['output_folder_name']+'_folder/sensitivity/'+legend_label[k_sens_step]+'/pulse_'+str(k_pulse+1)+'.csv',sensitivity_output_2,delimiter=",",header='t,'+','.join(legend_2))#
 			df_sens_time = pd.DataFrame(simulation_time_list)
-			df_sens_time.to_csv(reac_input['output_file_name']+'_folder/sensitivity/time.csv',header=None)			
+			df_sens_time.to_csv(reac_input['output_folder_name']+'_folder/sensitivity/time.csv',header=None)			
 
 		name_list = necessary_values['reactants'][monitored_gas:]
 		#for k,j in enumerate(cat_data):
@@ -548,18 +641,22 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 	#ax2.set_ylim(0,0)
 	if reac_input['save_figure'].lower() == 'true':
-		plt.savefig('./'+reac_input['output_file_name']+'_folder/graphs/flux_data.png')
+		plt.savefig('./'+reac_input['output_folder_name']+'_folder/graphs/flux_data.png')
 	
 	if reac_input['Display_figure'].lower() == 'true':
 		plt.show()
 	
-	for j_species in range(0,monitored_gas+1):
+	for j_species in range(0,monitored_gas+int(reac_input['number_of_inerts'])):
 		dictionary_of_numpy_data[legend_label[j_species]] = np.transpose(dictionary_of_numpy_data[legend_label[j_species]])
-		np.savetxt('./'+reac_input['output_file_name']+'_folder/flux_data/'+legend_label[j_species]+'.csv', dictionary_of_numpy_data[legend_label[j_species]], delimiter=",")
-	
-	#for j_species in range(0,monitored_gas):
-	#	dictionary_of_gas_cat_data[legend_label[j_species]] = np.transpose(dictionary_of_gas_cat_data[legend_label[j_species]])
-	#	np.savetxt('./'+reac_input['output_file_name']+'_folder/thin_data/'+legend_label[j_species]+'.csv', dictionary_of_gas_cat_data[legend_label[j_species]], delimiter=",")
+		np.savetxt('./'+reac_input['output_folder_name']+'_folder/flux_data/'+legend_label[j_species]+'.csv', dictionary_of_numpy_data[legend_label[j_species]], delimiter=",")
+	###Current!!!
+	for j_species in range(0,all_molecules-int(reac_input['number_of_inerts'])):
+		print(necessary_values['reactants'][j_species])
+		np.savetxt('./'+reac_input['output_folder_name']+'_folder/thin_data/'+necessary_values['reactants'][j_species]+'.csv', np.array(cat_data['conVtime_'+str(j_species)]), delimiter=",")
+
+
+		#dictionary_of_gas_cat_data[legend_label[j_species]] = np.transpose(dictionary_of_gas_cat_data[legend_label[j_species]])
+		#np.savetxt('./'+reac_input['output_file_name']+'_folder/thin_data/'+legend_label[j_species]+'.csv', dictionary_of_gas_cat_data[legend_label[j_species]], delimiter=",")
 
 	#for k_species in range(monitored_gas+1,len(necessary_values['reactants'])+1):
 	#	dictionary_of_numpy_data[necessary_values['reactants'][k_species-1]] = np.transpose(dictionary_of_numpy_data[necessary_values['reactants'][k_species-1]])
@@ -575,7 +672,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	plt.close()
 
 	if reac_input['fit_parameters'].lower() == 'true':
-		with open('./'+reac_input['output_file_name']+'_folder/fitting/your_file.txt', 'r') as f:
+		with open('./'+reac_input['output_folder_name']+'_folder/fitting/your_file.txt', 'r') as f:
 			lines = f.readlines()
 		f.close
 		lines = [x.strip() for x in lines]
@@ -596,7 +693,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			alter.iloc[34,1] = 'FALSE'
 			alter.iloc[35,1] = 'TRUE'
 			alter.iloc[40,1] = 'FALSE'
-			alter.iloc[17,1] = reac_input['output_file_name']+'_folder/fitting/iter_'+str(k_num)
+			alter.iloc[17,1] = reac_input['output_folder_name']+'_folder/fitting/iter_'+str(k_num)
 			value = 1
 			current_rate = 44
 			
@@ -618,7 +715,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			
 			call_sim()
 
-		generate_gif(legend_label[:len(legend_label)], './'+reac_input['exp_data_folder'], './'+reac_input['output_file_name']+'_folder/fitting/', len(constants), constants, reactor_kinetics_input['reactions_test'], times)
+		generate_gif(legend_label[:len(legend_label)], './'+reac_input['exp_data_folder'], './'+reac_input['output_folder_name']+'_folder/fitting/', len(constants), constants, reactor_kinetics_input['reactions_test'], times)
 
 	return graph_data, legend_label, necessary_values['reactants']
 
@@ -628,15 +725,15 @@ def call_sim():
 
 	graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters)
 
-	if reactor_kinetics_input['mkm_analysis'].lower() == 'true':
-		MKM_graphs(kin_in,reactor_kinetics_input['reactions_test'],reactor_kinetics_input['output_file_name']+'_folder/thin_data',reactor_kinetics_input['Display_figure'].lower())
-	if reactor_kinetics_input['petal_plots'].lower() == 'true':
-			print('true_mkm')
-	if reactor_kinetics_input['RRM_analysis'].lower() == 'true':
-		R_RRM_func(legend_label[0:len(legend_label)-1],os.getcwd(),reactor_kinetics_input['output_file_name']+'_folder')
-		if reactor_kinetics_input['petal_plots'].lower() == 'true':
-			print('true_RRM')
-	if reactor_kinetics_input['mkm_analysis'].lower() == 'true' and reactor_kinetics_input['RRM_analysis'].lower() == 'true':
-		jacobian_visual(kin_in,reactor_kinetics_input['reactions_test'],reactor_kinetics_input['output_file_name']+'_folder/thin_data',reactor_kinetics_input['Display_figure'].lower(),legend_label[0:len(legend_label)-1],os.getcwd(),reactor_kinetics_input['output_file_name']+'_folder',legend_label[:-1],reactor_kinetics_input['number_of_pulses'])
+	###if reactor_kinetics_input['mkm_analysis'].lower() == 'true':
+	###	MKM_graphs(kin_in,reactor_kinetics_input['reactions_test'],reactor_kinetics_input['output_folder_name']+'_folder/thin_data',reactor_kinetics_input['Display_figure'].lower())
+	###if reactor_kinetics_input['petal_plots'].lower() == 'true':
+	###		print('true_mkm')
+	###if reactor_kinetics_input['RRM_analysis'].lower() == 'true':
+	###	R_RRM_func(legend_label[0:len(legend_label)-1],os.getcwd(),reactor_kinetics_input['output_folder_name']+'_folder')
+	###	if reactor_kinetics_input['petal_plots'].lower() == 'true':
+	###		print('true_RRM')
+	###if reactor_kinetics_input['mkm_analysis'].lower() == 'true' and reactor_kinetics_input['RRM_analysis'].lower() == 'true':
+	###	jacobian_visual(kin_in,reactor_kinetics_input['reactions_test'],reactor_kinetics_input['output_folder_name']+'_folder/thin_data',reactor_kinetics_input['Display_figure'].lower(),legend_label[0:len(legend_label)-1],os.getcwd(),reactor_kinetics_input['output_file_name']+'_folder',legend_label[:-1],reactor_kinetics_input['number_of_pulses'])
 
 call_sim()
