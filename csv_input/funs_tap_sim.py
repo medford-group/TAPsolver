@@ -1,9 +1,13 @@
 from fenics import *
 from fenics_adjoint import *
 from pyadjoint.enlisting import Enlist
+#import matplotlib
+#matplotlib.use('agg')
 import matplotlib.pyplot as plt
+import imageio
 import pandas as pd
 import numpy as np
+import math
 import os
 
 def generate_folder(path_name):
@@ -30,6 +34,21 @@ def call_sens_analysis(u_value,control_list,domain):
 	return temp
 	#sensitivity_output[k_step].append(temp)
 
+def call_ad_rrm_analysis(u_value,control_list,domain):
+	flux =  u_value*u_value*domain
+	#print(type(u_value))
+	#sys.exit()
+	sens_func = assemble(flux)
+	X = compute_gradient(sens_func,control_list)###################
+	m = Enlist(control_list)
+	grads = [i.get_derivative(options=None) for i in m]
+	value_list = []
+	Z = np.array(len(control_list))
+	for nu in grads:
+		value_list.append(nu.values().item(0))
+	temp = np.array((value_list))
+	return temp
+	#sensitivity_output[k_step].append(temp)
 
 def call_solver(dk,u_temp,u,u_new,solver_def,keep_sol = True):
 	u_temp.assign(u)
@@ -58,7 +77,7 @@ def norm_comp(u1,u2,u3,d_t,i_t):
 def solver_iteration(time_step,method,solver,dk,dec_tim,inc_tim):
 	try:
 		if method == 'simple_adaptive':
-		
+	
 			u_temp.assign(u)
 			uout_1 = call_solver(dk.assign(time_step/dec_tim),u_temp,u,u_1,solver)
 			uout_3 = call_solver(dk.assign(time_step*inc_tim),u_temp,u,u_3,solver)
@@ -70,15 +89,24 @@ def solver_iteration(time_step,method,solver,dk,dec_tim,inc_tim):
 			solver.solve()
 			return time_step
 	except RuntimeError:
-		time_step = time_step*0.5
-		print(time_step)
-		dk.assign(time_step)
-		if time_step < 1e-6:
-			print("Time step too low")
-			print(time.time() - start_time)
-			sys.exit()
-		time_step=solver_iteration(time_step,method,solver,dk,1.5,1.1)
-		return time_step
+
+		print('Time Step Failure')
+		
+
+		
+
+
+		
+	#except RuntimeError:
+	#	time_step = time_step*0.5
+	#	print(time_step)
+	#	dk.assign(time_step)
+	#	if time_step < 1e-6:
+	#		print("Time step too low")
+	#		print(time.time() - start_time)
+	#		sys.exit()
+	#	time_step=solver_iteration(time_step,method,solver,dk,1.5,1.1)
+	#	return time_step
 
 
 def progressBar(value, endvalue, bar_length=20):
@@ -101,8 +129,8 @@ def error_output(elem_reacs):
 	print("       ")
 	print("Must follow the following format")
 	print("       ")
-	print("'Ke1' = forward rate constant for reaction # 1")
-	print("'Kd1' = reverse rate constant for reaction # 1")
+	print("'kf1' = forward rate constant for reaction # 1")
+	print("'kb1' = reverse rate constant for reaction # 1")
 	print("       ")
 	print("Rate constants for the following equations")
 	print("must be included")
@@ -139,14 +167,10 @@ def flux_generation(reactor,gasses,reactants,pulse_size,Diff,voidage,dx,radius,d
 	to_flux = []
 	if reactor == 'tap':
 		for k in range(0,gasses):
-			#print(dx)
-			#sys.exit()
-			#to_flux.append(1)
 			to_flux.append( (Diff[k][0]*voidage[0] /(dx)) * (radius**2)*3.14159/(.65*pulse_size) ) 
 			#to_flux.append(2 *(dx*(radius**2)*3.14159) * (Diff[k][0] /(dx*voidage[0])))#(1/((1)*pulse_size)) *###??? changed from 1 to the new form
 			#to_flux.append(2*Diff[k][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r))#(1/((1)*pulse_size)) *
 			#to_flux.append(2*(1/((1+reactants)*pulse_size)) *Diff[k][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r))
-		#to_flux.append(1)
 		to_flux.append( (Diff[gasses][0]*voidage[0] /(dx)) * (radius**2)*3.14159/(.65*pulse_size) )
 		#to_flux.append((2*Diff[gasses][0] * (dx*(radius**2)*3.14159)/(dx*voidage[0])))#*(1/((1)*pulse_size)) *
 		#to_flux.append((2*(1/((1+reactants)*pulse_size)) *Diff[gasses][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r)))
@@ -154,8 +178,6 @@ def flux_generation(reactor,gasses,reactants,pulse_size,Diff,voidage,dx,radius,d
 		for k in range(0,gasses):
 			to_flux.append(1)
 		to_flux.append(1)
-	#print(to_flux)
-	#sys.exit()
 	return to_flux
 
 def define_boundary_conditions(reactor,elem_list,nec_values,V_sec,reacs_num,all_mol,reac_ratio,L_bound,R_bound,number_of_inerts):
@@ -253,39 +275,12 @@ def establish_output_graph(reactor,gas_phase,reacs,inerts):
 
 	return fig2,ax2,legend_label,header,colors
 
-	
-def exp_data_fitting_3(species_list,time,folder):
-	user_data = {}
-	species_list = species_list[:len(species_list)]#'./experimental_data/'
-	for k in range(0,len(species_list)):
-		user_data[species_list[k]] = pd.read_csv(folder+species_list[k]+'.csv',header=None)
-	curve_fitting = {}
-	exp_data = user_data
-	for k_new in species_list:
-		
-		time_step = []
-		times = []
-		values = []	
-		#Peak point
-		peak_loc = user_data[k_new].iloc[user_data[k_new][1].idxmax()]
-		peak2 = user_data[k_new].loc[user_data[k_new][0] == peak_loc[0]].index
+def exp_data_fitting_all(species_list,time,folder):
 
-		time_step.append(peak2[0])
-		times.append(round(peak_loc[0],6))
-		values.append(peak_loc[1])
+	def interp(y2,y1,x2,x1,b,xn):
+		print('used')
+		return ((y2 - y1)/(x2 - x1))*xn + b
 
-		#times.append(peak_loc[0])
-		#values.append(peak_loc[1])
-		data = {}
-		data['time_step'] = time_step
-		data['times'] = times
-		data['values'] = values
-
-		curve_fitting[k_new] = data
-	#sys.exit()
-	return curve_fitting
-
-def exp_data_fitting_2(species_list,time,folder):
 	user_data = {}
 	species_list = species_list[:len(species_list)]
 	print(species_list)
@@ -307,7 +302,379 @@ def exp_data_fitting_2(species_list,time,folder):
 		data['time_step'] = time_step
 		data['times'] = times
 		data['values'] = values
+
 		curve_fitting[k_new] = data
+	print(curve_fitting)
+	sys.exit()
+	return curve_fitting
+
+def exp_data_fitting_1(species_list,sim_steps,folder,time):
+
+	syn_time_step = time/sim_steps
+	
+	def interp(y2,y1,x2,x1,xn):
+
+		return ((y2 - y1)/(x2 - x1))*(xn - x1) + y1
+
+	user_data = {}
+	species_list = species_list[:len(species_list)]#'./experimental_data/'
+	
+	for k in range(0,len(species_list)):
+		user_data[species_list[k]] = pd.read_csv(folder+'/flux_data/'+species_list[k]+'.csv',header=None)
+	curve_fitting = {}
+	exp_data = user_data
+	for k_new in species_list:
+
+		def find_experimental_point(n,exp_step):
+			approx_exp_n = n*(syn_time_step)/exp_step
+			print(n*(syn_time_step))
+			if approx_exp_n != n:
+				high = math.ceil(approx_exp_n)
+				low = int(approx_exp_n)
+				print(interp(user_data[k_new][1][high],user_data[k_new][1][low],user_data[k_new][0][high],user_data[k_new][0][low],n*(syn_time_step)))
+				return interp(user_data[k_new][1][high],user_data[k_new][1][low],user_data[k_new][0][high],user_data[k_new][0][low],n*(syn_time_step))
+
+			else:
+				return user_data[k_new][1][n]
+
+		def exp_point_to_syn_point(n_exp,exp_step):
+			approx_syn_n = n_exp*exp_step/(syn_time_step)
+			if int(approx_syn_n) > 0:
+				return find_experimental_point(int(approx_syn_n),exp_step)
+			else:
+				return find_experimental_point(math.ceil(approx_syn_n),exp_step) 
+
+		time_step = []
+		times = []
+		values = []
+	
+		#Peak point
+		peak_loc = user_data[k_new].iloc[user_data[k_new][1].idxmax()]
+
+		exp_time_step = user_data[k_new][0][1]
+		near_peak = peak_loc[0]/(time/sim_steps)
+
+		peak2 = user_data[k_new].loc[user_data[k_new][0] == peak_loc[0]].index
+
+		test3 = int(round((peak2[0]+1)/2,0))
+		mid_loc = user_data[k_new].iloc[test3,:]
+		near_mid = mid_loc[0]/(time/sim_steps)
+		time_step.append(int(near_mid))
+		times.append(int(near_mid)*(syn_time_step))
+		values.append(find_experimental_point(int(near_mid),exp_time_step))
+
+		time_step.append(int(near_peak))
+		times.append(int(near_peak)*(syn_time_step))
+		values.append(find_experimental_point(int(near_peak),exp_time_step))
+
+		value_test = 0.85*peak_loc[1]
+		sort_fif = user_data[k_new].iloc[(user_data[k_new][1]-value_test).abs().argsort()[:]]
+
+		for k in range(0,sort_fif.index[0]):
+			if sort_fif.iloc[k,0] > peak_loc[0]:
+				fif_point = sort_fif.iloc[k]
+				break
+			else:
+				pass
+
+		near_fif = fif_point[0]/(time/sim_steps)
+
+		time_step.append(int(near_fif))
+		times.append(int(near_fif)*(syn_time_step))
+		values.append(find_experimental_point(int(near_peak),exp_time_step))
+		print()
+		data = {}
+		data['time_step'] = time_step
+		data['times'] = times
+		data['values'] = values
+
+		curve_fitting[k_new] = data
+
+	return curve_fitting
+
+def exp_data_fitting_3(species_list,time,folder):
+
+	def interp(y2,y1,x2,x1,b,xn):
+		return ((y2 - y1)/(x2 - x1))*xn + b
+
+	user_data = {}
+	species_list = species_list[:len(species_list)]#'./experimental_data/'
+	print(species_list)
+	
+	for k in range(0,len(species_list)):
+		user_data[species_list[k]] = pd.read_csv(folder+species_list[k]+'.csv',header=None)
+	curve_fitting = {}
+	exp_data = user_data
+	for k_new in species_list:
+		
+
+		time_step = []
+		times = []
+		values = []	
+		#First data point
+		time_step.append(1)
+
+		#if 
+
+		times.append(round(user_data[k_new].iloc[1,0],6))
+		values.append(user_data[k_new].iloc[1,1])
+	
+		#Peak point
+		peak_loc = user_data[k_new].iloc[user_data[k_new][1].idxmax()]
+		peak2 = user_data[k_new].loc[user_data[k_new][0] == peak_loc[0]].index
+
+		test3 = int(round((peak2[0]+1)/2,0))
+		mid_loc = user_data[k_new].iloc[test3,:]
+		time_step.append(test3)
+		times.append(round(mid_loc[0],6))
+		values.append(mid_loc[1])
+
+		#time_step.append(peak2[0])
+		times.append(round(peak_loc[0],6))
+		values.append(peak_loc[1])
+
+		data = {}
+		data['time_step'] = time_step
+		data['times'] = times
+		data['values'] = values
+
+		curve_fitting[k_new] = data
+	print('3')
+	sys.exit()
+	return curve_fitting
+
+def exp_data_fitting_4(species_list,time,folder):
+
+	def interp(y2,y1,x2,x1,b,xn):
+		return ((y2 - y1)/(x2 - x1))*xn + b
+
+	user_data = {}
+	species_list = species_list[:len(species_list)]#'./experimental_data/'
+	print(species_list)
+	
+	for k in range(0,len(species_list)):
+		user_data[species_list[k]] = pd.read_csv(folder+species_list[k]+'.csv',header=None)
+	curve_fitting = {}
+	exp_data = user_data
+	for k_new in species_list:
+		
+		time_step = []
+		times = []
+		values = []	
+		#First data point
+		time_step.append(1)
+
+		#if 
+
+		times.append(round(user_data[k_new].iloc[1,0],6))
+		values.append(user_data[k_new].iloc[1,1])
+	
+		#Peak point
+		peak_loc = user_data[k_new].iloc[user_data[k_new][1].idxmax()]
+		peak2 = user_data[k_new].loc[user_data[k_new][0] == peak_loc[0]].index
+
+		test3 = int(round((peak2[0]+1)/2,0))
+		mid_loc = user_data[k_new].iloc[test3,:]
+		time_step.append(test3)
+		times.append(round(mid_loc[0],6))
+		values.append(mid_loc[1])
+
+		#time_step.append(peak2[0])
+		times.append(round(peak_loc[0],6))
+		values.append(peak_loc[1])
+		#%85 point
+		value_test = 0.9*peak_loc[1]
+		sort_fif = user_data[k_new].iloc[(user_data[k_new][1]-value_test).abs().argsort()[:]]
+
+		for k in range(0,sort_fif.index[0]):
+			if sort_fif.iloc[k,0] > peak_loc[0]:
+				fif_point = sort_fif.iloc[k]
+				break
+			else:
+				pass
+
+		test2 = user_data[k_new].loc[user_data[k_new][0] == fif_point[0]].index
+		time_step.append(test2[0])
+		times.append(round(fif_point[0],6))
+		values.append(fif_point[1])
+
+		data = {}
+		data['time_step'] = time_step
+		data['times'] = times
+		data['values'] = values
+
+		curve_fitting[k_new] = data
+	print('4')
+	sys.exit()
+	return curve_fitting
+
+def exp_data_fitting_5(species_list,folder,sim_steps,sim_time):
+
+	def interp(y2,y1,x2,x1,b,xn):
+		print('Used')
+		return ((y2 - y1)/(x2 - x1))*xn + b
+
+	user_data = {}
+	species_list = species_list[:len(species_list)]#'./experimental_data/'
+	print(species_list)
+	
+	for k in range(0,len(species_list)):
+		user_data[species_list[k]] = pd.read_csv(folder+species_list[k]+'.csv',header=None)
+	curve_fitting = {}
+	exp_data = user_data
+	for k_new in species_list:
+		
+		time_step = []
+		times = []
+		values = []	
+		#First data point
+		time_step.append(1)
+
+		#if 
+
+		times.append(round(user_data[k_new].iloc[1,0],6))
+		values.append(user_data[k_new].iloc[1,1])
+	
+		#Peak point
+		peak_loc = user_data[k_new].iloc[user_data[k_new][1].idxmax()]
+		peak2 = user_data[k_new].loc[user_data[k_new][0] == peak_loc[0]].index
+
+		test3 = int(round((peak2[0]+1)/2,0))
+		mid_loc = user_data[k_new].iloc[test3,:]
+		time_step.append(test3)
+		times.append(round(mid_loc[0],6))
+		values.append(mid_loc[1])
+
+		#time_step.append(peak2[0])
+		times.append(round(peak_loc[0],6))
+		values.append(peak_loc[1])
+		#%85 point
+		value_test = 0.85*peak_loc[1]
+		sort_fif = user_data[k_new].iloc[(user_data[k_new][1]-value_test).abs().argsort()[:]]
+
+		for k in range(0,sort_fif.index[0]):
+			if sort_fif.iloc[k,0] > peak_loc[0]:
+				fif_point = sort_fif.iloc[k]
+				break
+			else:
+				pass
+
+		test2 = user_data[k_new].loc[user_data[k_new][0] == fif_point[0]].index
+		time_step.append(test2[0])
+		times.append(round(fif_point[0],6))
+		values.append(fif_point[1])
+		#%20 point
+		value_test = 0.2*peak_loc[1]
+		sort_twen = user_data[k_new].iloc[(user_data[k_new][1]-value_test).abs().argsort()[:]]
+		
+		for k in range(0,sort_twen.index[0]):
+			if sort_twen.iloc[k,0] > peak_loc[0]:
+				twen_point = sort_twen.iloc[k]
+				break
+			else:
+				pass
+
+		test2 = user_data[k_new].loc[user_data[k_new][0] == twen_point[0]].index
+		time_step.append(test2[0])
+		times.append(round(twen_point[0],6))
+		values.append(twen_point[1])
+		
+
+		#times.append(peak_loc[0])
+		#values.append(peak_loc[1])
+		data = {}
+		data['time_step'] = time_step
+		data['times'] = times
+		data['values'] = values
+
+		curve_fitting[k_new] = data
+	print(data['times'])
+	print(data['time_step'])
+	print(data['values'])
+	sys.exit()
+	return curve_fitting
+
+def exp_data_user_defined(species_list,folder,sim_steps,sim_time):
+
+	def interp(y2,y1,x2,x1,b,xn):
+		return ((y2 - y1)/(x2 - x1))*xn + b
+
+	user_data = {}
+	species_list = species_list[:len(species_list)]#'./experimental_data/'
+	print(species_list)
+	
+	for k in range(0,len(species_list)):
+		user_data[species_list[k]] = pd.read_csv(folder+species_list[k]+'.csv',header=None)
+	curve_fitting = {}
+	exp_data = user_data
+	for k_new in species_list:
+		
+		time_step = []
+		times = []
+		values = []	
+		#First data point
+		time_step.append(1)
+
+		#if 
+
+		times.append(round(user_data[k_new].iloc[1,0],6))
+		values.append(user_data[k_new].iloc[1,1])
+	
+		#Peak point
+		peak_loc = user_data[k_new].iloc[user_data[k_new][1].idxmax()]
+		peak2 = user_data[k_new].loc[user_data[k_new][0] == peak_loc[0]].index
+
+		test3 = int(round((peak2[0]+1)/2,0))
+		mid_loc = user_data[k_new].iloc[test3,:]
+		time_step.append(test3)
+		times.append(round(mid_loc[0],6))
+		values.append(mid_loc[1])
+
+		#time_step.append(peak2[0])
+		times.append(round(peak_loc[0],6))
+		values.append(peak_loc[1])
+		#%85 point
+		value_test = 0.85*peak_loc[1]
+		sort_fif = user_data[k_new].iloc[(user_data[k_new][1]-value_test).abs().argsort()[:]]
+
+		for k in range(0,sort_fif.index[0]):
+			if sort_fif.iloc[k,0] > peak_loc[0]:
+				fif_point = sort_fif.iloc[k]
+				break
+			else:
+				pass
+
+		test2 = user_data[k_new].loc[user_data[k_new][0] == fif_point[0]].index
+		time_step.append(test2[0])
+		times.append(round(fif_point[0],6))
+		values.append(fif_point[1])
+		#%20 point
+		value_test = 0.2*peak_loc[1]
+		sort_twen = user_data[k_new].iloc[(user_data[k_new][1]-value_test).abs().argsort()[:]]
+		
+		for k in range(0,sort_twen.index[0]):
+			if sort_twen.iloc[k,0] > peak_loc[0]:
+				twen_point = sort_twen.iloc[k]
+				break
+			else:
+				pass
+
+		test2 = user_data[k_new].loc[user_data[k_new][0] == twen_point[0]].index
+		time_step.append(test2[0])
+		times.append(round(twen_point[0],6))
+		values.append(twen_point[1])
+		
+
+		#times.append(peak_loc[0])
+		#values.append(peak_loc[1])
+		data = {}
+		data['time_step'] = time_step
+		data['times'] = times
+		data['values'] = values
+
+		curve_fitting[k_new] = data
+	print('defined')
+	sys.exit()
 	return curve_fitting
 
 def generate_gif(molecules,exp_loc,fit_loc,all_steps,constants,reactions,time_data):
@@ -344,7 +711,8 @@ def generate_gif(molecules,exp_loc,fit_loc,all_steps,constants,reactions,time_da
 		exp_data = {}
 		sim_data = {}
 		for k_names in molecules:
-			exp_data[k_names] = pd.read_csv(exp_loc+k_names+'.csv',header=None)
+
+			exp_data[k_names] = pd.read_csv(exp_loc+'/'+k_names+'.csv',header=None)
 			sim_data[k_names] = pd.read_csv(fit_loc+'/iter_'+str(step)+'_folder/flux_data/'+k_names+'.csv',header=None)
 		
 		for k_names in molecules:
@@ -416,84 +784,6 @@ def generate_gif(molecules,exp_loc,fit_loc,all_steps,constants,reactions,time_da
 	imageio.mimsave(fit_loc+'/output.gif', [tap_plot(i) for i in range(all_steps)], fps=4)
 
 
-def exp_data_fitting(species_list,time,folder):
-	user_data = {}
-	species_list = species_list[:len(species_list)]#'./experimental_data/'
-	print(species_list)
-	
-	for k in range(0,len(species_list)):
-		user_data[species_list[k]] = pd.read_csv(folder+species_list[k]+'.csv',header=None)
-	curve_fitting = {}
-	exp_data = user_data
-	for k_new in species_list:
-		
-		time_step = []
-		times = []
-		values = []	
-		#First data point
-		time_step.append(1)
-		times.append(round(user_data[k_new].iloc[1,0],6))
-		values.append(user_data[k_new].iloc[1,1])
-	
-		#Peak point
-		peak_loc = user_data[k_new].iloc[user_data[k_new][1].idxmax()]
-		peak2 = user_data[k_new].loc[user_data[k_new][0] == peak_loc[0]].index
-
-		test3 = int(round((peak2[0]+1)/2,0))
-		mid_loc = user_data[k_new].iloc[test3,:]
-		time_step.append(test3)
-		times.append(round(mid_loc[0],6))
-		values.append(mid_loc[1])
-
-		#time_step.append(peak2[0])
-		times.append(round(peak_loc[0],6))
-		values.append(peak_loc[1])
-		print(round(peak_loc[0],6))
-		print(peak_loc[1])
-		print('')
-		#%85 point
-		value_test = 0.85*peak_loc[1]
-		sort_fif = user_data[k_new].iloc[(user_data[k_new][1]-value_test).abs().argsort()[:]]
-
-		for k in range(0,sort_fif.index[0]):
-			if sort_fif.iloc[k,0] > peak_loc[0]:
-				fif_point = sort_fif.iloc[k]
-				break
-			else:
-				pass
-
-		test2 = user_data[k_new].loc[user_data[k_new][0] == fif_point[0]].index
-		time_step.append(test2[0])
-		times.append(round(fif_point[0],6))
-		values.append(fif_point[1])
-		#%20 point
-		value_test = 0.2*peak_loc[1]
-		sort_twen = user_data[k_new].iloc[(user_data[k_new][1]-value_test).abs().argsort()[:]]
-		
-		for k in range(0,sort_twen.index[0]):
-			if sort_twen.iloc[k,0] > peak_loc[0]:
-				twen_point = sort_twen.iloc[k]
-				break
-			else:
-				pass
-
-		test2 = user_data[k_new].loc[user_data[k_new][0] == twen_point[0]].index
-		time_step.append(test2[0])
-		times.append(round(twen_point[0],6))
-		values.append(twen_point[1])
-		
-
-		#times.append(peak_loc[0])
-		#values.append(peak_loc[1])
-		data = {}
-		data['time_step'] = time_step
-		data['times'] = times
-		data['values'] = values
-
-		curve_fitting[k_new] = data
-	#sys.exit()
-	return curve_fitting
-
 ###
 def read_input():
 	
@@ -543,9 +833,9 @@ def read_input():
 	kinetic_parameters = {}
 	
 	for j in range(0,len(reaction_info.index)):
-		kinetic_parameters['Ke'+str(j)] = float(reaction_info.iloc[j,1])
+		kinetic_parameters['kf'+str(j)] = float(reaction_info.iloc[j,1])
 		if str(reaction_info.iloc[j,2]) != 'nan':
-			kinetic_parameters['Kd'+str(j)] = float(reaction_info.iloc[j,2])
+			kinetic_parameters['kb'+str(j)] = float(reaction_info.iloc[j,2])
 		else:
 			pass
 	kin_in = kinetic_parameters.copy()

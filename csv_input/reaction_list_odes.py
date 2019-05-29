@@ -243,7 +243,7 @@ def display_odes(num,rate_array,reactions,reactants):
 			reaction_expression = reaction_expression + ' + ('+str(int(deriv_of_reacs_val[step]))+')*( '
 		else:
 			reaction_expression = reaction_expression + ' ('+str(int(deriv_of_reacs_val[step]))+')*( '
-		rate_constant = "ke"+str(k)
+		rate_constant = "kf"+str(k)
 		reaction_expression = reaction_expression + rate_constant
 		for v,z in enumerate(reactants):
 			if (test_value(-1,rate_array[k,v]) == True):
@@ -252,7 +252,7 @@ def display_odes(num,rate_array,reactions,reactants):
 					reaction_expression = reaction_expression + '*([' + reactants[v] + ']^'+str(int(abs(rate_array[k,v])))+')'
 				else:
 					reaction_expression = reaction_expression + '*[' + reactants[v] + ']'
-		rate_constant = " - kd"+str(k)
+		rate_constant = " - kb"+str(k)
 		reaction_expression = reaction_expression + rate_constant
 		for v,z in enumerate(reactants):
 			if (test_value(1,rate_array[k,v]) == True):
@@ -290,10 +290,10 @@ def find_partial(num,den,rate_array,reactions,reactants):
 			pass_test = False
 
 			if rate_array[k,reactants.index(den)] < 0:
-				rate_constant = "ke"+str(k)
+				rate_constant = "kf"+str(k)
 				pass_test = True
 			elif rate_array[k,reactants.index(den)] > 0 and '<->' in reactions[k]:  #!!!!
-				rate_constant = "kd"+str(k)
+				rate_constant = "kb"+str(k)
 				pass_test = True
 			reaction_expression = reaction_expression + rate_constant
 			if pass_test == True:
@@ -333,9 +333,9 @@ def find_double_partial(num,den,den2,rate_array,reactions,reactants):
 				reaction_expression = reaction_expression + ' + '
 			reaction_expression = reaction_expression +str(int(deriv_of_reacs_val[step]))+'*('
 			if rate_array[k,reactants.index(den)] < 0:
-				rate_constant = "ke"+str(k)
+				rate_constant = "kf"+str(k)
 			else:
-				rate_constant = "kd"+str(k)
+				rate_constant = "kb"+str(k)
 			reaction_expression = reaction_expression + rate_constant
 			for v,z in enumerate(reactants):
 				#Need to check to see if the appropriate 2nd derivatives are being returned
@@ -422,7 +422,6 @@ def Langmuir_rates(name_in_smiles):
 	#print(merged_reactions)
 
 	return merged_reactions
-#sys.exit()
 
 #Ammonia Sythesis
 #p_feed = ['N#N','[HH]']
@@ -447,7 +446,6 @@ def deriv_and_const(reactions,monitor):
 	#print()
 	deriv_dict = {}
 	rate_equations = []
-	#sys.exit()
 
 
 	#all_vals = 'NN'
@@ -513,8 +511,6 @@ def deriv_and_const(reactions,monitor):
 #			if why_not != ' 0':
 #				print('d(R_'+ all_vals + ')/' + 'd('+all_vals_2+' | '+all_vals_3+') =' +why_not)
 #				print(" ")
-
-#sys.exit()
 
 #Ammonia Sythesis
 #p_feed = ['N#N','[HH]']
@@ -623,8 +619,6 @@ def R_RRM_func(input_reactants,current_path,data_folder):
 	reactants = reactants.replace("'","")
 	reactants = reactants.replace(' ','')
 	
-	#sys.exit()
-	
 	arg1 = current_path+'/'+data_folder+'/'#"/home/adam/research_medford/python_code/tap_code/csv_input_sim/eley_eluc_folder/"
 	arg2 = reactants
 	arg3 = str(feed)
@@ -633,7 +627,6 @@ def R_RRM_func(input_reactants,current_path,data_folder):
 	pass_arg.append(arg1)
 	pass_arg.append(arg2)
 	pass_arg.append(arg3)
-	#sys.exit()
 	cmd = [command, path2script,arg1,arg2,arg3] # ... <- the arguments that you need to call to get the script to run properly
 	
 	subprocess.run(cmd) #Will just save the output data as a file
@@ -859,7 +852,7 @@ def petal_plots_RRM(folder_location):
 
 def MKM_graphs(kin_params,reactions_in,fold_loc,graph_display):
 	#print(kin_params)
-	ke0 = 1
+	kf0 = 1
 	gasses = 2
 	
 	folder_location = './'+fold_loc+'/'#./new_test_folder/'
@@ -1024,7 +1017,7 @@ def jacobian_visual(kin_params,reactions_in,fold_loc,graph_display,input_reactan
 	
 
 
-	ke0 = 1
+	kf0 = 1
 	gasses = 2
 	
 	folder_location = './'+fold_loc+'/'#./new_test_folder/'
@@ -1100,15 +1093,15 @@ def jacobian_visual(kin_params,reactions_in,fold_loc,graph_display,input_reactan
 								df_new = pd.read_csv(folder_location+'/'+result[k_cool]+'.csv',header=None).iloc[:,1]
 								new_df = new_df*df_new
 						if '-' in z:
-							new_df *= -kin_params[result[0].replace('k', 'K')]#ke0#str
+							new_df *= -kin_params[result[0].replace('k', 'k')]#ke0#str
 						else:
-							new_df *= kin_params[result[0].replace('k', 'K')]#kin_params[result[0]]#ke0
+							new_df *= kin_params[result[0].replace('k', 'k')]#kin_params[result[0]]#ke0
 					elif (z.split('('))[1].split(')')[0] != '':
 						new_df = pd.DataFrame(index=df_time.index,columns=range(1))
 						if '-' in z:
-							new_df.iloc[:] = -kin_params[result[0].replace('k', 'K')]#kin_params[result[0]]
+							new_df.iloc[:] = -kin_params[result[0].replace('k', 'k')]#kin_params[result[0]]
 						else:
-							new_df.iloc[:] = kin_params[result[0].replace('k', 'K')]#kin_params[result[0]]#ke0
+							new_df.iloc[:] = kin_params[result[0].replace('k', 'k')]#kin_params[result[0]]#ke0
 					else:
 						new_df.iloc[:] = 0
 				temp = df_merged 

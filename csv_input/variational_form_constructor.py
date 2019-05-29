@@ -116,10 +116,10 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,active_sites,numbe
 			
 			together = neg+pos
 	
-			new_neg = 'r_const["Ke'+str(k)+'"]'
+			new_neg = 'r_const["kf'+str(k)+'"]'
 			for j,v in enumerate(neg):
 				new_neg = new_neg+"*(u_d['u_"+str(v+1)+"']**"+str(abs(val_neg[j]))+")"#
-			new_pos = 'r_const["Kd'+str(k)+'"]'
+			new_pos = 'r_const["kb'+str(k)+'"]'
 			for j,v in enumerate(pos):
 				new_pos = new_pos+"*(u_d['u_"+str(v+1)+"']**"+str(abs(val_pos[j]))+")"#
 
@@ -159,10 +159,10 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,active_sites,numbe
 			
 			together = neg+pos
 
-			new_neg = 'r_const["Ke'+str(k)+'"]'
+			new_neg = 'r_const["kf'+str(k)+'"]'
 			for j,v in enumerate(neg):
 				new_neg = new_neg+"*(u_nd['u_n"+str(v+1)+"']**"+str(abs(val_neg[j]))+")"#
-			new_pos = 'r_const["Kd'+str(k)+'"]'
+			new_pos = 'r_const["kb'+str(k)+'"]'
 			for j,v in enumerate(pos):
 				new_pos = new_pos+"*(u_nd['u_n"+str(v+1)+"']**"+str(abs(val_pos[j]))+")"#
 			
