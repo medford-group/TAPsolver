@@ -1,5 +1,0 @@
-Reactor Length: 2.9000000000000004
-First Forward: 11108000.0
-Inert pulse size: 1.1980398460652088e+17
-rangesurface_species: [3011000000000000.0]
-reactions_test: ['A  * -> A*']
