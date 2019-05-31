@@ -1,2 +1,0 @@
-reactorLength,catalystLength,meshSize,time,timeSteps,reactionsTest,rateConstant,inertPulseSize,openSiteDensity,OAdensity,inertAMU,reactantAMU,productAMU
-2.8,0.1,280,2,1000, ['CO  O* ->  CO2  *'],11108000,1.20E+19,3.01E+20,3.01E+20,4.00E+01,3.20E+01,4.40E+01
