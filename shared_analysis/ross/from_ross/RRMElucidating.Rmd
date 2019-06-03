@@ -1,0 +1,106 @@
+---
+title: "RRM through Elucidating"
+output:
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(gridExtra)
+library(grid)
+source("supportScripts.R")
+```
+
+## Pre Processing
+
+```{r creatData, echo=F}
+dataPath = "../TAPsolver/version_0.0/simulation_output/elucidating_output_data/eley_eluc_folder/"
+solverDFE = readElucFolder(dataPath)
+TAPexperimentE = solverToObj(solverDFE)
+predMatE = createPredMat(TAPexperimentE)
+dataPath = "../TAPsolver/version_0.0/simulation_output/elucidating_output_data/lang_eluc_folder/"
+solverDFL = readElucFolder(dataPath)
+TAPexperimentL = solverToObj(solverDFL)
+predMatL = createPredMat(TAPexperimentL)
+dataPath = "../TAPsolver/version_0.0/simulation_output/elucidating_output_data/lang_eley_eluc_folder/"
+solverDFEL = readElucFolder(dataPath)
+TAPexperimentEL = solverToObj(solverDFEL)
+predMatEL = createPredMat(TAPexperimentEL)
+```
+
+This preprocessing step includes first transforming the csv information given through the TAPsolver program to a TAP object including reactor information and flux.  The original CSVs included the wrong headers for the different gas species and were corrected to show the same response as Redekop et al.  Below is an example of the dat obtained from TAPsolver for the Eley-Rideal vs Langmuir-Hinshelwood:
+
+```{r, echo=F}
+plotGas(TAPexperimentE,1, "ER ")
+plotGas(TAPexperimentEL,1, "ER+LH ")
+plotGas(TAPexperimentL, 1, "LH ")
+```
+
+
+No baseline correction is needed in this information.  Time was used from 0 to .3 seconds.
+
+This model is assuming that the $CO$ response is the reactant, the inert is $Ar$ and $CO_2$ is the product. The G-Procedure is performed on each of the gases where the $Ar$ response is transformed to look like $CO$ through Graham's law transformation based on the mass.  This is to remove any transport associated with $CO$.  Below are the rates of $CO$ and $CO_2$ with respect to each different mechanism.  These are the same rate values that were described in Redekop et al without the associated noise (assuming that a majority of the noise is due to the application of the Y-Procedure).
+
+
+```{r, echo=F}
+plotRates(TAPexperimentE,1 , "ER ")
+plotRates(TAPexperimentEL,1, "ER+LH ")
+plotRates(TAPexperimentL,1, "LH ")
+```
+
+
+After the G-Procedure, the rates of each different gas species reflect the contribution to the production of $CO_2$.  
+
+To perform the RRM we need to determine what response is important indescribing the overall reaction. Initially I thought this would be the reactant gas driving the reaction, but as it is, the product formation actually better describes how the surface of the catalyst is interacting with the reactant gas.  For initial fingerprint of the mechanism, the correlation network diagrams are given below.
+
+```{r, echo=F}
+covInfo = covTAP(TAPexperimentE, corVal = F, normalization = T)
+covInfo$plot
+#covE = covInfo$matrix
+
+covInfo = covTAP(TAPexperimentEL, corVal = F, normalization = T)
+covInfo$plot
+#covEL = covInfo$matrix
+
+covInfo = covTAP(TAPexperimentL, corVal = F, normalization = T)
+covInfo$plot
+#covL = covInfo$matrix
+```
+
+Note that time is included as an interaction term to indicate deviations.
+
+A Ordinary Least Squares model quantifies these interactions without any additional penalties.
+```{r, echo=F}
+fit = lm(r44 ~ g28 * r28 * s28 * timeVector - 1, data = predMatE)
+fitResults = data.frame("yHat" = fit$fitted.values, "response" = predMatE$r44, "timeVector" = predMatE$timeVector)
+plotFit(fitResults, "ER OLS")
+summary(fit)
+```
+
+```{r, echo=F}
+fit = lm(r44 ~ g28 * r28 * s28 * timeVector - 1, data = predMatL)
+fitResults = data.frame("yHat" = fit$fitted.values, "response" = predMatL$r44, "timeVector" = predMatE$timeVector)
+plotFit(fitResults, "LH OLS")
+summary(fit)
+```
+
+
+
+```{r, echo=F}
+fit = lm(r44 ~ g28 * r28 * s28 * timeVector - 1, data = predMatEL)
+fitResults = data.frame("yHat" = fit$fitted.values, "response" = predMatEL$r44, "timeVector" = predMatE$timeVector)
+plotFit(fitResults, "ER+LH OLS")
+summary(fit)
+```
+
+
+
+
+
+
+
+
+
+
