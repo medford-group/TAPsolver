@@ -684,7 +684,7 @@ def R_RRM_func(input_reactants,current_path,data_folder):
 		RRM_data[k] = pd.read_csv(current_path+'/'+data_folder+'/RRM_results/'+k+'_reactivities.csv',header=None)
 
 	y_proc_data = {}
-	for k in range(int(reactor_kinetics_input['number_of_pulses'])):
+	for k in range(int(reactor_kinetics_input['Number of Pulses'])):
 		y_proc_data[k+1] = pd.read_csv(current_path+'/'+data_folder+'/RRM_results/'+str(k+1)+'_y_proc.csv',header=None).iloc[1:,:]
 	#new_frame = y_proc_data[0+1].iloc[:,1+0+len(in_reactants)].copy()
 	#print(new_frame)
@@ -697,7 +697,7 @@ def R_RRM_func(input_reactants,current_path,data_folder):
 	#plt.show()
 
 	#step through the pulses
-	for z in range(int(reactor_kinetics_input['number_of_pulses'])):
+	for z in range(int(reactor_kinetics_input['Number of Pulses'])):
 		f, axarr = plt.subplots(len(in_reactants)*2, len(in_reactants))
 		f = plt.gcf()
 		f.set_size_inches(3*(len(in_reactants)), 1.5*len(rows))
