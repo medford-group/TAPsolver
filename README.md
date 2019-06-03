@@ -26,4 +26,22 @@ The current version of TAPsolver is in the 'csv input' directory. There are five
 
 When the simulator is run, an output directory will be generated with all the relevent information stored in appropriate directories. 
 
-## Example
+## User Input File Structure
+
+A csv file is used as the input to the simulator. Four main componenents of TAPSolver input are described and include "Reactor Information", "Feed and Surface Composition", "Data Storage Options", and "Reaction Information". 
+
+# Reactor Information
+
+
+
+# Feed and Surface Composition
+
+# Data Storage Options
+
+# Reaction Information
+
+## Examples
+
+# Simulating Data
+
+# Fitting Data
