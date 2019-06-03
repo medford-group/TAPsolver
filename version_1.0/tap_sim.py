@@ -1,8 +1,8 @@
 from fenics import *
 from fenics_adjoint import *
-from funs_tap_sim import *
-from variational_form_constructor import *
-from reaction_list_odes import *
+from func_sim import *
+from vari_form import *
+from reac_odes import *
 from mpmath import nsum, exp, inf
 import matplotlib.pyplot as plt
 import pandas as pd
