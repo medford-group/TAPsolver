@@ -99,8 +99,8 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 
 	### Define the dimensions of the reactor ###
 	ca = (reac_input['Reactor Radius']**2)*3.14159 
-	
-	point_volume = dx_r * ca * eb[0] ###??? Should this include the voidage?
+
+	point_volume = dx_r * ca * 0.53#eb[0] ###??? Should this include the voidage?
 	#specific_area = 1e8
 	#surface_area_at_point = point_volume*specific_area
 	#sdensity =1
@@ -380,7 +380,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 					#for kj in range(monitored_gas+1,len(necessary_values['reactants'])+1):
 					#	new_values.append(0)
 			
-					for z in range(int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])-1,int((cat_location + 0.5*frac_length)*reac_input['Mesh Size'])):
+					for z in range(mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])-1,int((cat_location + 0.5*frac_length)*reac_input['Mesh Size'])):
 						
 						try:
 							###for z_num in range(0,1+necessary_values['molecules_in_gas_phase']):#.split(',')
@@ -450,8 +450,8 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 							u_n.vector()[int((all_molecules)*(reac_input['Mesh Size']+1)-1-k_step)] = float(species_pulse_list[-1-k_step])*Inert_pulse_conc###??? Added the porosity contribution
 					
 				if k_pulse == 0:
-
-					for z in range(int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])-1,int((cat_location + 0.5*frac_length)*reac_input['Mesh Size'])):
+					##### MAJOR CHANGES!!!!!
+					for z in range(mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])-1,int((cat_location + 0.5*frac_length)*reac_input['Mesh Size'])):
 						if ',' in str(reac_input['Initial Surface Composition']):
 							###for z_num,z_sur in enumerate(reac_input['Initial Surface Composition'].split(',')):
 							for z_num,z_sur in enumerate(reac_input['Initial Surface Composition']):	

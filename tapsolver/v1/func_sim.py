@@ -167,11 +167,11 @@ def flux_generation(reactor,gasses,reactants,pulse_size,Diff,voidage,dx,radius,d
 	to_flux = []
 	if reactor == 'tap':
 		for k in range(0,gasses):
-			to_flux.append( (Diff[k][0]*voidage[0] /(dx)) * (radius**2)*3.14159/(.65*pulse_size) ) 
+			to_flux.append( (Diff[k][0]*voidage[0] /(dx)) * (radius**2)*3.14159/(pulse_size) ) 
 			#to_flux.append(2 *(dx*(radius**2)*3.14159) * (Diff[k][0] /(dx*voidage[0])))#(1/((1)*pulse_size)) *###??? changed from 1 to the new form
 			#to_flux.append(2*Diff[k][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r))#(1/((1)*pulse_size)) *
 			#to_flux.append(2*(1/((1+reactants)*pulse_size)) *Diff[k][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r))
-		to_flux.append( (Diff[gasses][0]*voidage[0] /(dx)) * (radius**2)*3.14159/(.65*pulse_size) )
+		to_flux.append( (Diff[gasses][0]*voidage[0] /(dx)) * (radius**2)*3.14159/(pulse_size) )
 		#to_flux.append((2*Diff[gasses][0] * (dx*(radius**2)*3.14159)/(dx*voidage[0])))#*(1/((1)*pulse_size)) *
 		#to_flux.append((2*(1/((1+reactants)*pulse_size)) *Diff[gasses][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r)))
 	elif reactor_type == 't_pfr' or 't_pfr_diff':
@@ -256,9 +256,9 @@ def establish_grid_system(in_1,cat,in_2,mesh_size):
 
 def establish_output_graph(reactor,gas_phase,reacs,inerts):
 	fig2, ax2 = plt.subplots()
-	ax2.set_xlabel('$t (s)$')
+	ax2.set_xlabel('$t\ (s)$')
 	if reactor == 'tap':
-		ax2.set_ylabel('$Flux (nmol/s)$')
+		ax2.set_ylabel('$Outlet\ Flux\ (1/s)$')
 	elif reactor == 't_pfr' or 't_pfr_diff':
 		ax2.set_ylabel('$Outlet Concentration (molecules/cm3)$')
 	#zef = np.linspace(dx_r, 1.-dx_r, grid_points+1)
