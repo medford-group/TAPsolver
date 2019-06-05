@@ -16,8 +16,9 @@ time_tot = float(sim_info[2][1])
 cat_frac = float(sim_info[2][5])
 reac_radius = float(sim_info[2][6])
 
+species = 'O*'
 
-thin_data = pd.read_csv('./CO.csv',header = None)
+thin_data = pd.read_csv('./'+species+'.csv',header = None)
 #print(thin_data.iloc[2].sum()*)
 
 x_length = mp.ceil(cat_frac*mesh_size)
@@ -92,4 +93,4 @@ def tap_plot(step):
 
 kwargs_write = {'fps':20.0, 'quantizer':'nq'}
 
-imageio.mimsave('./output.gif', [tap_plot(i) for i in range(curr_time_steps)], fps=20)
+imageio.mimsave('./'+species+'.gif', [tap_plot(i) for i in range(curr_time_steps)], fps=20)

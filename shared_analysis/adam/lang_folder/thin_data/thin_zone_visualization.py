@@ -17,7 +17,9 @@ cat_frac = float(sim_info[2][5])
 reac_radius = float(sim_info[2][6])
 
 
-thin_data = pd.read_csv('./*.csv',header = None)
+species = 'O*'
+
+thin_data = pd.read_csv('./'+species+'.csv',header = None)
 #print(thin_data.iloc[2].sum()*)
 
 x_length = mp.ceil(cat_frac*mesh_size)
@@ -70,7 +72,7 @@ def tap_plot(step):
 	subax1.set_ylabel('$nmol/cm3$')
 	subax1.set_xlabel('$t\ (seconds)$')
 	subax1.set_xlim(0,0.15)
-	subax1.set_ylim(0,10)
+	subax1.set_ylim(120000,139000)
 
 	ax.scatter(x_dim, thin_data.iloc[step])
 	ax.set_xlabel('$Catalyst\ Zone\ (cm)$', fontsize=16)
@@ -81,8 +83,8 @@ def tap_plot(step):
 	ax.hlines(y=av_value,xmin=(length/mesh_size),xmax=(x_length-1)*(length/mesh_size),linestyle='--',colors = 'b')
 	#ax.set_ylim()
 	ax.set_xlim(0, x_length*(length/mesh_size))
-	ax.set_ylim(0, 20)
-	#ax.set_ylim(270000, 280000)
+	#ax.set_ylim(0, 20)
+	ax.set_ylim(138750,139000)
 
 	fig.canvas.draw()       # draw the canvas, cache the renderer
 	image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
@@ -92,4 +94,4 @@ def tap_plot(step):
 
 kwargs_write = {'fps':20.0, 'quantizer':'nq'}
 
-imageio.mimsave('./output.gif', [tap_plot(i) for i in range(curr_time_steps)], fps=20)
+imageio.mimsave('./'+species+'.gif', [tap_plot(i) for i in range(curr_time_steps)], fps=20)
