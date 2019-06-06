@@ -18,12 +18,21 @@ time_tot = float(sim_info[2][1])
 cat_frac = float(sim_info[2][5])
 reac_radius = float(sim_info[2][6])
 
-species = 'O*'
+species = 'CO2'
 
 thin_data = pd.read_csv('./'+species+'.csv',header = None)
 
-for k in range(0,thin_data.shape[0]-1):
-	thin_data.iloc[k] = thin_data.iloc[k+1] - thin_data.iloc[k]  
+k1 = 0.00115
+k2 = 10
+k3 = 0.00072
+k4 = 0.001
+
+thin_data_CO = pd.read_csv('./CO.csv',header = None)
+thin_data_O_s = pd.read_csv('./O*.csv',header = None)
+thin_data_s = pd.read_csv('./*.csv',header = None)
+
+for k in range(0,thin_data.shape[0]):
+	thin_data.iloc[k] = k4*thin_data_CO.iloc[k]*thin_data_O_s.iloc[k]  
 
 #print(thin_data.iloc[2].sum()*)
 
@@ -77,19 +86,19 @@ def tap_plot(step):
 	subax1.set_ylabel('$nmol/cm3$')
 	subax1.set_xlabel('$t\ (seconds)$')
 	subax1.set_xlim(0,0.15)
-	subax1.set_ylim(-1,1)
+	subax1.set_ylim(0,2000)
 	subax1.hlines(y=0,xmin=0,xmax=0.15,linestyle='--',colors = 'k')
 
 	ax.scatter(x_dim, thin_data.iloc[step])
 	ax.set_xlabel('$Catalyst\ Zone\ (cm)$', fontsize=16)
-	ax.set_ylabel('$Concentration\ (nmol/cm3)$', fontsize=16)
+	ax.set_ylabel('$R\ (nmol/cm3/s)$', fontsize=16)
 	
 	ax.text(0.02, 0.95,'Time: '+str(round(step*(time_tot/time_steps),3))+' s',transform=ax.transAxes, fontsize=14,verticalalignment='top',bbox=props)
 	print(av_value)
 	ax.hlines(y=av_value,xmin=(length/mesh_size),xmax=(x_length-1)*(length/mesh_size),linestyle='--',colors = 'b')
 	#ax.set_ylim()
 	ax.set_xlim(0, x_length*(length/mesh_size))
-	ax.set_ylim(-1, 1)
+	ax.set_ylim(0, 2000)
 	#ax.set_ylim(270000, 280000)
 
 	fig.canvas.draw()       # draw the canvas, cache the renderer
