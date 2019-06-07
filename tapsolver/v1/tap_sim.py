@@ -66,7 +66,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	### Control the output information from FEniCS ###
 	parameters["std_out_all_processes"] = False
 	cache_params = {"cache_dir":"*","lib_dir":"*","log_dir":"*","inc_dir":"*","src_dir":"*"}
-	set_log_active(False)
+	#set_log_active(False)
 	import warnings
 	warnings.filterwarnings("ignore", category=DeprecationWarning)
 	tol = 1E-14
@@ -510,7 +510,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			print(time.time())
 			print(x)
 
-		set_log_active(False)
+		#set_log_active(False)
 		fitting_time = time.time()
 		
 		if reac_input['Fit Parameters'].lower() == 'true':

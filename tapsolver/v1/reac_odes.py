@@ -12,11 +12,11 @@ import matplotlib.pyplot as plt
 import time
 import re
 
-from imolecule.notebook import generate
-from imolecule.format_converter import convert
-import networkx.algorithms.isomorphism as iso
-from networkx import is_isomorphic
-import networkx as nx
+#from imolecule.notebook import generate
+#from imolecule.format_converter import convert
+#import networkx.algorithms.isomorphism as iso
+#from networkx import is_isomorphic
+#import networkx as nx
 #from rxn_network import scissions, recursive_scissions, get_mechanisms
 #from data_structures import MolGraph, RxnGraph
 
