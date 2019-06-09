@@ -2,7 +2,7 @@
 
 ## Installation
 
-[Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install) is the simplest way to install FEniCS (on Ubuntu systems, especially) and is highly recommended. It is possible to install FEniCS in other ways, but Conda was found to be the least intensive.
+[Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install) is the simplest way to install [FEniCS](https://fenicsproject.org/) (on Ubuntu systems, especially) and is highly recommended. It is possible to install FEniCS in other ways, but Conda was found to be the least intensive.
 
 To install FEniCS through conda, run the following:
 
