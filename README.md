@@ -1,8 +1,8 @@
 # TAPsolver
 
-![Example Flux Data]()
+![Example Flux Data](./docs/figures/flux_data.png)
 
-![Example curves]()
+![Example curves](./docs/figures/CO.gif)
 
 ## Installation
 
