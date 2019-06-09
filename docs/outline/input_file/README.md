@@ -12,18 +12,45 @@ Two forms of TAPsolver currently exist. One for FEniCS version 2017 and the othe
 
 A csv file is used as the input to the simulator. Four main componenents of TAPSolver input are described and include "Reactor Information", "Feed and Surface Composition", "Data Storage Options", and "Reaction Information". The terms in each of these components are discussed below.
 
-# Reactor Information
+### Reactor Information
 
+#### Pulse Duration
 
+#### Time Steps
 
-# Feed and Surface Composition
+#### Reactor Length
 
-# Data Storage Options
+#### Mesh Size
 
-# Reaction Information
+#### Catalyst Fraction
 
-## Examples
+#### Reactor Radius
 
-# Simulating Data
+#### Void Fraction Inert
 
-# Fitting Data
+#### Void Fraction Catalyst
+
+#### Reactor Temperature
+
+#### Reference Diffusion Inert
+
+#### Reference Diffusion Catalyst
+
+#### Reference Temperature
+
+#### Reference Mass
+
+#### Output Folder Name
+
+#### Experimental Data Folder
+
+#### Noise
+
+#### Reactor Type
+
+#### Theta
+
+#### Solver Method
+
+### Feed and Surface Composition
+
