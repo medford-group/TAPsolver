@@ -30,5 +30,5 @@ This is the current format of TAPsolver and is subject to change. Steps will be 
 
 ## Example Output
 
-![Example curves](./docs/figures/CO.gif)
+![Example curves](./docs/figures/CO.gif){:height="50%" width="50%"}
 ![Example curves](./docs/figures/flux_data.png)
