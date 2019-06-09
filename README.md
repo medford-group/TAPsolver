@@ -2,9 +2,9 @@
 
 ## Installation
 
-[Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install) is the simplest way to install [FEniCS](https://fenicsproject.org/) (on Ubuntu systems, especially) and is highly recommended. It is possible to install FEniCS in other ways, but Conda was found to be the least intensive.
+[Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install) is the simplest way to install [FEniCS](https://fenicsproject.org/) (on [Ubuntu](https://tutorials.ubuntu.com/tutorial/tutorial-ubuntu-on-windows#0) systems, especially) and is highly recommended. It is possible to install FEniCS in other ways, but Conda was found to be the quickest.
 
-To install FEniCS through conda, run the following:
+To install FEniCS through conda, run the following the terminal:
 
 	conda create -n fenicsproject -c conda-forge fenics
 
@@ -14,7 +14,7 @@ To install FEniCS through conda, run the following:
 
 	pip install matplotlib
 
-If you are having trouble installing FEniCs, contact Adam Yonge (ayonge3@gatech.edu).
+If you are having trouble installing FEniCS, contact Adam Yonge (ayonge3@gatech.edu) or the [FEniCS developers](https://fenicsproject.org/community/).
 
 ## Running TAPsolver
 
