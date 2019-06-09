@@ -1,22 +1,22 @@
-# TAPsolver
+# 
 
-## Installing Packages
+## Anaconda Installation
 
-TAPsolver is based around the python package FEniCS. Installation of this package can be challenging and it is recommended to install it on a linux operating system. To install all the necessary packages for using TAPsolver, enter the following commands in your terminal:
+For those new to python, [conda](https://docs.conda.io/projects/conda/en/latest/use
+r-guide/install/) is recommended. Conda makes it easier to install packages and man
+age environments than the basic python installation.
 
-conda create -n fenicsproject -c conda-forge fenics
+	conda create -n fenicsproject -c conda-forge fenics
+	source activate fenicsproject
+	conda install -c conda-forge dolfin-adjoint
+	pip install matplotlib
 
-source activate fenicsproject
+## Running TAPsolver
 
-conda install -c conda-forge dolfin-adjoint
+## Further Reading
 
-pip install matplotlib
+### TAP Background
 
-For those new to python, [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) is recommended. Conda makes it easier to install packages and manage environments than the basic python installation.
+### File Structure and Input Format
 
-catpsolver/v1) consists of five files, including tap_sim.py, func_sim.py, reac_odes.py, vari_form.py and input_file.csv. How these files are related to one another are shown in Figure 1.
-
-
-
-When the simulator is run, an output directory will be generated with all the relevent information stored in appropriate directories. 
 
