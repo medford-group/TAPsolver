@@ -12,7 +12,7 @@ Two forms of TAPsolver currently exist. One for FEniCS version 2017 and the othe
 
 A csv file is used as the input to the simulator. Four main componenents of TAPSolver input are described and include "Reactor Information", "Feed and Surface Composition", "Data Storage Options", and "Reaction Information". The terms in each of these components are discussed below.
 
-### Reactor Information
+## Reactor Information
 
 ### Pulse Duration
 
@@ -91,93 +91,107 @@ Desciption: The temperature at which the reference diffusion coefficient was mea
 
 Options: 0 to inf (float, though commonly an int for amu) 
 
-Desciption: 
+Desciption: Mass of the gas with known diffusion coefficients (see 'Reference Diffusion' Sections)
 
 ### Output Folder Name
 
-Options:
+Options: example or path/to/example (excluding ./ at start of path)
 
-Desciption:
+Desciption: This identifies the name of the directory and its location relative to the core TAPsolver scripts. It is important to come up with directory names with each simulation to avoid deleting previous results.
+
+Examples: 
+
+save in current directory: example
+
+save in nested directory: stored_data/example
+
+save in previous directory: ../example
 
 ### Experimental Data Folder
 
-Options:
+Options: ./example_data or ./path/to/data (including ./ at start of path)
 
-Desciption:
+Desciption: When making comparisons directly to experimental data or when fitting parameters, specify the location of these files with this parameter.
 
 ### Noise
 
-Options:
+Options: 'TRUE' or 'FALSE'
 
-Desciption:
+Desciption: Include simple tap noise in the [Flux Data](https://biblio.ugent.be/publication/8525766/file/8525861.pdf)
 
 ### Reactor Type
 
-Options:
+Options: 'tap' or 'tap-diffusion'
 
-Desciption:
+Desciption: Specify what type of reactor is being considered (including the transport). Currently need further development before 'tap-diffusion' can be properly applied.
 
 ### Theta
 
-Options:
+Options: '0', '0.5' or '1'
 
-Desciption:
+Desciption: Specify the step type fenics uses to solve 
 
 ### Solver Method
 
+Options: - - - -
+
+Desciption: Will include options for implicit and explicit time stepping.
+
 ## Feed and Surface Composition
-
-Options:
-
-Desciption:
 
 #### Number of Reactants
 
-Options:
+Options: 1 to inf (int)
 
-Desciption:
+Desciption: How many gas species are being pulsed in and directly interact with the material(excluding any inerts).
 
 #### Number of Pulses 
 
-Options:
+Options: 1 to inf (int)
 
-Desciption:
+Desciption: The total number of pulses included in the simulation, allowing for state defining or state altering experiments.
 
 #### Reference Pulse Size
 
-Options:
+Options: 0 to inf (float)
 
-Desciption:
+Desciption: A reference pulse intensity (nanomoles) for all other species being fed to be based off (see 'Pulse Ratio').
 
 #### Pulse Ratio
 
-Options:
+Options: (0 to inf (float)),(0 to inf (float)),(0 to inf (float)),...
 
-Desciption:
+Desciption: Relative to the 'Reference Pulse Size', what is the intensity of each gas species being fed to the reactor.
+
+Example: 1,0.5,1.5,0,1
 
 #### Pulse Time
 
-Options:
+Options: (0 to 'Pulse Duration' (float)),(0 to 'Pulse Duration' (float)),(0 to 'Pulse Duration' (float)),...
 
-Desciption:
+Desciption: Allows for pump-probe style simulations with a similar input to the 'Pulse Ratio'
+
+Example: 0.0,0.03,0.0,0.0
 
 #### Mass List
 
-Options:
+Options: (0 to inf (float)),(0 to inf (float)),(0 to inf (float)),...
 
-Desciption:
+Desciption: Mass of each monitored gas species (in amu).
+
+Example: 28,16,44,40
 
 #### Initial Surface Composition
 
-Options:
+Options: (0 to inf (float)),(0 to inf (float)),(0 to inf (float)),...
 
-Desciption:
+Desciption: The initial concentration of the surface species at each mesh element in the thin catalyst zone.
 
 #### Number of Active Sites
 
-Options:
+Options: 1 to 4 (int)
 
-Desciption:
+Desciption: The total number of unique active sites included in the simulation.
 
 #### Number of Inerts
 
