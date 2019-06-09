@@ -269,7 +269,12 @@ Desciption: (Subject to change) Generate simple petal plots showing the rates re
 
 ### Reaction Information
 
+Description: Used to specify the elementary reactions involved in the microkinetic model. 
 
+Example: 
+Elementary Reac.      Forward k     Backward k
+CO + * -> CO*           1
+CO* + O* <-> CO2 + 2*   1              1
 
 
 
