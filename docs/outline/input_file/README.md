@@ -10,7 +10,7 @@ Two forms of TAPsolver currently exist. One for FEniCS version 2017 and the othe
 
 ## User Input File Structure
 
-A csv file is used as the input to the simulator. Four main componenents of TAPSolver input are described and include "Reactor Information", "Feed and Surface Composition", "Data Storage Options", and "Reaction Information". The terms in each of these components are discussed below.
+A [csv file](https://github.com/medford-group/TAPsolver/blob/master/tapsolver/v1/input_file.csv) is used as the input to the simulator. Four main componenents of TAPSolver input are described and include "Reactor Information", "Feed and Surface Composition", "Data Storage Options", and "Reaction Information". The terms in each of these components are discussed below.
 
 ## Reactor Information
 
@@ -195,77 +195,77 @@ Desciption: The total number of unique active sites included in the simulation.
 
 #### Number of Inerts
 
-Options:
+Options: 1 to inf (int)
 
-Desciption:
+Desciption: The total number of inerts being pulsed in the reactor.
 
 ### Data Storage Options
 
 #### Store Outlet Flux
 
-Options:
+Options: 'TRUE' or 'FALSE'
 
-Desciption:
+Desciption: Tells the script whether to save the outlet flux data or not
 
 #### Store Graph
 
-Options:
+Options: 'TRUE' or 'FALSE'
 
-Desciption:
+Desciption: Tells the script whether to save the outlet flux graph or not.
 
 #### Display Experimental Data 
 
-Options:
+Options: 'TRUE' or 'FALSE'
 
-Desciption:
+Desciption: Tells the script whether or not to show the experimental data on the same graph as the outlet flux.
 
 #### Display Graph
 
-Options:
+Options: 'TRUE' or 'FALSE'
 
-Desciption:
+Desciption: Tells the script whether or not to display the outlet flux graph after the simulation
 
 #### Sensitivity Analysis
 
-Options:
+Options: 'TRUE' or 'FALSE'
 
-Desciption:
+Desciption: Tells the script whether or not a sensitivity analysis on the reaction mechanism should be performed.
 
 #### Fit Parameters
 
-Options:
+Options: 'TRUE' or 'FALSE'
 
-Desciption:
+Desciption: Tells the script whether or not parameter fitting should be performed on the provided experimental data.
 
 #### Optimization Method
 
-Options:
+Options: 'Newton-CG', 'BFGS', 'SLSQP', 'CG', 'basinhopping', 'COBYLA', 'TNC'
 
-Desciption:
+Desciption: See the [scipy documentation](https://docs.scipy.org/doc/scipy/reference/optimize.html) for more details on each of these methods. Recommendations will be included in future versions of the documentation.
 
 #### Objective Points
 
-Options:
+Options: - - - - (subject to change)
 
-Desciption:
+Desciption: The number and distribution of the points that will be used to fit the curves in the 'optimization method'. 
 
 #### RRM Analysis 
 
-Options:
+Options: 'TRUE' or 'FALSE'
 
-Desciption:
+Desciption: (Subject to change)
 
 #### MKM Analysis 
 
-Options:
+Options: 'TRUE' or 'FALSE'
 
-Desciption:
+Desciption: (Subject to change) Primarily used to store thin zone concentrations and rates.
 
 #### Petal Plots
 
-Options:
+Options: 'TRUE' or 'FALSE'
 
-Desciption:
+Desciption: (Subject to change) Generate simple petal plots showing the rates relative to different concentrations.
 
 ### Reaction Information
 
