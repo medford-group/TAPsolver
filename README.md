@@ -1,47 +1,34 @@
 # TAPsolver
 
-Still editing!
+## Installation
 
-## Installing Packages
+[Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install) is the simplest way to install [FEniCS](https://fenicsproject.org/) (on [Ubuntu](https://tutorials.ubuntu.com/tutorial/tutorial-ubuntu-on-windows#0) systems, especially) and is highly recommended. It is possible to install FEniCS in other ways, but Conda was found to be the quickest.
 
-TAPsolver is based around the python package FEniCS. Installation of this package can be challenging and it is recommended to install it on a linux operating system. To install all the necessary packages for using TAPsolver, enter the following commands in your terminal:
+To install FEniCS through conda, run the following the terminal:
 
-conda create -n fenicsproject -c conda-forge fenics
+	conda create -n fenicsproject -c conda-forge fenics
 
-source activate fenicsproject
+	source activate fenicsproject
 
-conda install -c conda-forge dolfin-adjoint
+	conda install -c conda-forge dolfin-adjoint
 
-pip install matplotlib
+	pip install matplotlib
 
-For those new to python, [conda!](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) is recommended. Conda makes it easier to install packages and manage environments than the basic python installation.
+If you are having trouble installing FEniCS, contact Adam Yonge (ayonge3@gatech.edu) or the [FEniCS developers](https://fenicsproject.org/community/).
 
-## File structure
+## Running TAPsolver
 
-The current version of TAPsolver is in the 'csv input' directory. There are five files that make up the simulator (four python scripts and a csv file), shown in Figure 1. These files are as follows:
+With the five core files downloaded in the working directory and with the fenicsproject environment activated, run the following command:
 
- 
+	python tap_sim.py
 
+This will call the simulation process and store all desired information in the appropriate folders. 
 
+An explanation of the input file and how to properly manipulate it can be found [here](https://github.com/medford-group/TAPsolver/tree/master/docs/outline/input_file). 
 
-When the simulator is run, an output directory will be generated with all the relevent information stored in appropriate directories. 
+This is the current format of TAPsolver and is subject to change. Steps will be taken to merge this process with other methods of TAP analysis developed by collaborators in the R programming language. 
 
-## User Input File Structure
+## Example Output
 
-A csv file is used as the input to the simulator. Four main componenents of TAPSolver input are described and include "Reactor Information", "Feed and Surface Composition", "Data Storage Options", and "Reaction Information". 
-
-# Reactor Information
-
-
-
-# Feed and Surface Composition
-
-# Data Storage Options
-
-# Reaction Information
-
-## Examples
-
-# Simulating Data
-
-# Fitting Data
+![Example curves](./docs/figures/CO.gif){:height="50%" width="50%"}
+![Example curves](./docs/figures/flux_data.png)
