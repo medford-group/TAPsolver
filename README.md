@@ -28,7 +28,7 @@ This is the current format of TAPsolver and is subject to change. Steps will be 
 
 ## Resources
 
-An EXPLANATION OF THE INPUT FILE  and how to properly manipulate it can be found [here](https://github.com/medford-group/TAPsolver/tree/master/docs/outline/input_file).
+An EXPLANATION OF THE INPUT FILE  and how to properly manipulate it can be found [here](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/input_file).
 
 A simple TUTORIAL can be found [here](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/examples/coAdsorption)
 
