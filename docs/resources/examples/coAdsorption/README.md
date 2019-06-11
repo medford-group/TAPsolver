@@ -46,9 +46,13 @@ On each side of the elementary reaction ( left (Species_1 + Species_2) or right 
 
 Examples include
 
-- 'CO + *' and not '* + CO'
-- 'CO + O*' and not 'O* + CO'
-- 'CO* + *' and not '* + CO*'
+- CO + *   and not   * + CO
+- CO + O*   and not   O* + CO
+- CO* + *   and not   * + CO*
+
+If more than one of the species is involved in the elementary reaction, it can be specified with the addition of the number before the species. For example,
+
+- 'O2 + 2* <-> 2O*'
 
 This is due to the way the program handles elementary reactions is likely to become more flexible (and accesable) in the future.
 
@@ -62,7 +66,47 @@ It should be noted that this structure must be maintained for every elementary r
 
 ### Gas and Surface Details
 
-Defining the parameters for the gasses and initial surface composition depend on the order in which species appear in the elementary reactions
+Defining the parameters for the gasses and initial surface composition depend on the order in which species appear in the elementary reactions (with the exception of active sites).
+
+It will be easier to see with the help of some examples:
+
+Example 1:
+
+CO + * -> CO*
+CO* + O* -> CO2 + 2*
+
+The order of the gases would be CO, CO2, and then any included inerts.
+
+So the gas inputs would look something like this:
+
+Pulse Ratio:     1 (*CO*), 0 (*CO2*), 1 (*Inert-1*)
+Mass List:       28 (*CO*), 44 (*CO2*), 40 (*Inert-1*)
+Pulse Time:      0 (*CO*), 0 (*CO2*), 0 (*Inert-1*)
+
+The surface species and active sites would appear as CO*, O*, and * . The Compostions would be defined as follows:
+
+Initial Surface Composition:    0 (CO*), 4999833.9 (O*), 4999833.9 (*)
+
+Example 2: 
+
+A + * -> A*
+A + ^ -> A^
+C + 2* -> 2B*
+B* + A* <-> D + 2*
+B* + A^ <-> D + 2^
+
+The order of the gases would be A, C, and D and then any included inerts.
+
+So the gas inputs would look something like this:
+
+Pulse Ratio:     1 (*A*), 1 (*C*), 0 (*D*), 1 (*Inert-1*)
+Mass List:       10 (*A*), 20 (*C*), 30 (*D*), 40 (*Inert-1*)
+Pulse Time:      0 (*A*), 0 (*C*), 0 (*D*), 0 (*Inert-1*)
+
+The surface species and active sites would appear as A*, A^, B*, * and ^. The Compostions would be defined as follows:
+
+Initial Surface Composition:    0 (A*), 0 (A^), 0 (B*), 10000 (*) and 5000 (^)
+
 
 ![Reactor Information](../../../figures/Feed_surf.png)
 
