@@ -1,12 +1,10 @@
 ## File structure
 
-The current version of [TAPsolver](https://github.com/medford-group/TAPsolver/tree/master/tapsolver/v1) consists of five files, including tap_sim.py, func_sim.py, reac_odes.py, vari_form.py and input_file.csv. How these files are related to one another are shown in Figure 1.
+The current version of [TAPsolver](https://github.com/medford-group/TAPsolver/tree/master/tapsolver/v1) consists of five files, including tap_sim.py, func_sim.py, reac_odes.py, vari_form.py and input_file.csv. 
 
+These separate scripts are actively being bundled into a single package that can be installed directly in anaconda.
 
-
-When the simulator is run, an output directory will be generated with all the relevent information stored in appropriate directories.
-
-Two forms of TAPsolver currently exist. One for FEniCS version 2017 and the other for FEniCS version 2018.
+When the simulator is run, an output directory will be generated with all the relevent information stored in appropriate directories, depending on what information is desired.
 
 ## User Input File Structure
 
