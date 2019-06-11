@@ -73,6 +73,7 @@ It will be easier to see with the help of some examples:
 Example 1:
 
 CO + * -> CO*
+
 CO* + O* -> CO2 + 2*
 
 The order of the gases would be CO, CO2, and then any included inerts.
@@ -80,7 +81,9 @@ The order of the gases would be CO, CO2, and then any included inerts.
 So the gas inputs would look something like this:
 
 Pulse Ratio:     1 (*CO*), 0 (*CO2*), 1 (*Inert-1*)
+
 Mass List:       28 (*CO*), 44 (*CO2*), 40 (*Inert-1*)
+
 Pulse Time:      0 (*CO*), 0 (*CO2*), 0 (*Inert-1*)
 
 The surface species and active sites would appear as CO*, O*, and * . The Compostions would be defined as follows:
@@ -90,9 +93,13 @@ Initial Surface Composition:    0 (CO*), 4999833.9 (O*), 4999833.9 (*)
 Example 2: 
 
 A + * -> A*
+
 A + ^ -> A^
+
 C + 2* -> 2B*
+
 B* + A* <-> D + 2*
+
 B* + A^ <-> D + 2^
 
 The order of the gases would be A, C, and D and then any included inerts.
@@ -100,7 +107,9 @@ The order of the gases would be A, C, and D and then any included inerts.
 So the gas inputs would look something like this:
 
 Pulse Ratio:     1 (*A*), 1 (*C*), 0 (*D*), 1 (*Inert-1*)
+
 Mass List:       10 (*A*), 20 (*C*), 30 (*D*), 40 (*Inert-1*)
+
 Pulse Time:      0 (*A*), 0 (*C*), 0 (*D*), 0 (*Inert-1*)
 
 The surface species and active sites would appear as A*, A^, B*, * and ^. The Compostions would be defined as follows:
