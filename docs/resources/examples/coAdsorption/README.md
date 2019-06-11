@@ -17,7 +17,7 @@ Each time the simulation is run, a folder will be generated to store the results
 
 ## Data Storage and Simulation Options
 
-It is possible to specify what processes are desired during a particular simulation and what should be stored after these processes have occured. This can be done in the 'Data Storage Options' section, where the user can enter 'TRUE' or 'FALSE' for each of the options. For example, if the user would like to perform a sensitivity analysis, but try to fit parameters, they would set 'Sensitivity Analysis' to 'TRUE' and 'Fit Parameters' to 'FALSE'. Details for the remaining options are listed [here](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/input_file) 
+It is possible to specify what processes are desired during a particular simulation and what should be stored after these processes have occured. This can be done in the 'Data Storage Options' section, where the user can enter 'TRUE' or 'FALSE' for each of the options. For example, if the user would like to perform a sensitivity analysis, but try to fit parameters, they would set 'Sensitivity Analysis' to 'TRUE' and 'Fit Parameters' to 'FALSE'. Details for the remaining options are listed [here](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/input_file). 
 
 ![Reactor Information](../../../figures/data_storage.png)
 *Section of the input_file.csv file that details data storage options*
@@ -34,13 +34,20 @@ Elementary Reactions (E.R.) follow a general trend:
 
 Where Species # can be any gas or surface species desired. There are two options for the arrow: either forward or reversible
 
-- -> : Irreversible E.R. 
-- <->: Reversible E.R.
+- ->    : Irreversible E.R. 
+- <->   : Reversible E.R.
 
 The two cells directly to the right of each elementary reaction in the input_file.csv file allow the user to specify the forward and backward rate constants, with the backward rate constan always being listed after the forward rate constant. 
 
+An example the reaction information input section is presented below.
+
+![Reactor Information](../../../figures/reac_info.png)
 
 It should be noted that this structure must be maintained for every elementary reaction. So no replacements can be made for the '+' or '->'.
+
+### Gas and Surface Details
+
+![Reactor Information](../../../figures/Feed_surf.png)
 
 ## Multi-pulse
 
