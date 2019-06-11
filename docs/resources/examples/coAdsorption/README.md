@@ -121,21 +121,3 @@ Initial Surface Composition:    0 (A*), 0 (A^), 0 (B*), 10000 (*) and 5000 (^)
 
 *Section of the input_file.csv file that details the gas and surface components*
 
-## Multi-pulse
-
-## Multi-site
-
-
-## Pump-Probe
-
-
-## Additional Reactions
-
-
-## Sensitivity Analysis
-
-
-## Parameter Fitting
-
-
-
