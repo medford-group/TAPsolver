@@ -22,13 +22,17 @@ With the five core files downloaded in the working directory and with the fenics
 
 	python tap_sim.py
 
-This will call the simulation process and store all desired information in the appropriate folders. 
-
-An explanation of the input file and how to properly manipulate it can be found [here](https://github.com/medford-group/TAPsolver/tree/master/docs/outline/input_file). 
+This will call the simulation process and store all desired information in the appropriate folders.  
 
 This is the current format of TAPsolver and is subject to change. Steps will be taken to merge this process with other methods of TAP analysis developed by collaborators in the R programming language. 
 
+## Resources
+
+An EXPLANATION OF THE INPUT FILE  and how to properly manipulate it can be found [here](https://github.com/medford-group/TAPsolver/tree/master/docs/outline/input_file).
+
+A simple TUTORIAL can be found [here](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/examples/coAdsorption)
+
 ## Example Output
 
-![Example curves](./docs/figures/CO.gif){:height="50%" width="50%"}
+![Example curves](./docs/figures/CO.gif)
 ![Example curves](./docs/figures/flux_data.png)

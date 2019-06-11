@@ -38,7 +38,7 @@ Where Species # can be any gas or surface species desired. There are two options
 - ->    : Irreversible E.R. 
 - <->   : Reversible E.R.
 
-The two cells directly to the right of each elementary reaction in the input_file.csv file allow the user to specify the forward and backward rate constants, with the backward rate constant always being listed after the forward rate constant. 
+The two cells directly to the right of each elementary reaction in the input_file.csv file allow the user to specify the forward and backward rate constants, with the backward rate constant always being listed after the forward rate constant. An error will be returned if the user defines a reversible reaction, but the backward rate constant is excluded. 
 
 On each side of the elementary reaction ( left (Species_1 + Species_2) or right (Species_3 + Species_4) ), the components must always appear in the following order:
 
@@ -46,9 +46,9 @@ On each side of the elementary reaction ( left (Species_1 + Species_2) or right 
 
 Examples include
 
-- CO + * and not * + CO
-- CO + O* and not O* + CO
-- CO* + * and not * + CO*
+- 'CO + *' and not '* + CO'
+- 'CO + O*' and not 'O* + CO'
+- 'CO* + *' and not '* + CO*'
 
 This is due to the way the program handles elementary reactions is likely to become more flexible (and accesable) in the future.
 
@@ -62,7 +62,11 @@ It should be noted that this structure must be maintained for every elementary r
 
 ### Gas and Surface Details
 
+Defining the parameters for the gasses and initial surface composition depend on the order in which species appear in the elementary reactions
+
 ![Reactor Information](../../../figures/Feed_surf.png)
+
+*Section of the input_file.csv file that details the gas and surface components*
 
 ## Multi-pulse
 
