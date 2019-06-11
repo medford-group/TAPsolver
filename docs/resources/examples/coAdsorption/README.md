@@ -9,6 +9,7 @@ Basic reactor parameters must be defined by the user, including the reactor leng
 The diffusion for each species is determined by scaling to some reference species. 
 
 ![Reactor Information](../../../figures/Reac_information.png)
+
 *Section of the input_file.csv file that details the reactor setup and some simulation details*
 
 ## Multi-pulse
