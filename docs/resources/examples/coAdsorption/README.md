@@ -20,6 +20,7 @@ Each time the simulation is run, a folder will be generated to store the results
 It is possible to specify what processes are desired during a particular simulation and what should be stored after these processes have occured. This can be done in the 'Data Storage Options' section, where the user can enter 'TRUE' or 'FALSE' for each of the options. For example, if the user would like to perform a sensitivity analysis, but try to fit parameters, they would set 'Sensitivity Analysis' to 'TRUE' and 'Fit Parameters' to 'FALSE'. Details for the remaining options are listed [here](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/input_file). 
 
 ![Reactor Information](../../../figures/data_storage.png)
+
 *Section of the input_file.csv file that details data storage options*
 
 ## Feed & Surface Composition / Reaction Information 
