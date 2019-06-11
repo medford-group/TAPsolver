@@ -38,11 +38,25 @@ Where Species # can be any gas or surface species desired. There are two options
 - ->    : Irreversible E.R. 
 - <->   : Reversible E.R.
 
-The two cells directly to the right of each elementary reaction in the input_file.csv file allow the user to specify the forward and backward rate constants, with the backward rate constan always being listed after the forward rate constant. 
+The two cells directly to the right of each elementary reaction in the input_file.csv file allow the user to specify the forward and backward rate constants, with the backward rate constant always being listed after the forward rate constant. 
+
+On each side of the elementary reaction ( left (Species_1 + Species_2) or right (Species_3 + Species_4) ), the components must always appear in the following order:
+
+- Gas Species > Surface Species > Active Site
+
+Examples include
+
+- CO + * and not * + CO
+- CO + O* and not O* + CO
+- CO* + * and not * + CO*
+
+This is due to the way the program handles elementary reactions is likely to become more flexible (and accesable) in the future.
 
 An example the reaction information input section is presented below.
 
 ![Reactor Information](../../../figures/reac_info.png)
+
+*Section of the input_file.csv file that details the elementary reactions*
 
 It should be noted that this structure must be maintained for every elementary reaction. So no replacements can be made for the '+' or '->'.
 
