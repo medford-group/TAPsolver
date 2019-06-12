@@ -18,6 +18,15 @@ import sys
 import os
 import ufl
 import scipy
+import pkg_resources
+
+fenics_version = dolfin.dolfin_version()
+if fenics_version == '2017.2.0':
+	fen_17 = True
+else:
+	fen_17 = False
+	print('You are working with a newer version of FEniCS (beyond 2017). Some methods of analysis could be limited. Dolfin methods could also be limited to a smaller number of time steps.')
+	time.sleep(2)
 
 #exp_data_fitting_2
 
@@ -66,7 +75,9 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	### Control the output information from FEniCS ###
 	parameters["std_out_all_processes"] = False
 	cache_params = {"cache_dir":"*","lib_dir":"*","log_dir":"*","inc_dir":"*","src_dir":"*"}
-	#set_log_active(False)
+	
+	if fen_17 == True:
+		set_log_active(False)
 	import warnings
 	warnings.filterwarnings("ignore", category=DeprecationWarning)
 	tol = 1E-14
@@ -100,7 +111,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	### Define the dimensions of the reactor ###
 	ca = (reac_input['Reactor Radius']**2)*3.14159 
 
-	point_volume = dx_r * ca * 0.53#eb[0] ###??? Should this include the voidage?
+	point_volume = dx_r * ca * eb[0] ###??? Should this include the voidage?
 	#specific_area = 1e8
 	#surface_area_at_point = point_volume*specific_area
 	#sdensity =1
@@ -509,8 +520,8 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			x_values.append(x.tolist())
 			print(time.time())
 			print(x)
-
-		#set_log_active(False)
+		if fen_17 == True:
+			set_log_active(False)
 		fitting_time = time.time()
 		
 		if reac_input['Fit Parameters'].lower() == 'true':
@@ -689,7 +700,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	###Current!!!
 	if reac_input['MKM Analysis'].lower() == 'true' or reac_input['RRM Analysis'].lower() == 'true' or reac_input['Petal Plots'].lower() == 'true':
 		for j_species in range(0,all_molecules-int(reac_input['Number of Inerts'])):
-			print(necessary_values['reactants'][j_species])
+			#print(necessary_values['reactants'][j_species])
 			np.savetxt('./'+reac_input['Output Folder Name']+'_folder/thin_data/'+necessary_values['reactants'][j_species]+'.csv', np.array(cat_data['conVtime_'+str(j_species)]), delimiter=",")
 
 

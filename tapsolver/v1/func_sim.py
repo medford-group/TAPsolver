@@ -167,11 +167,11 @@ def flux_generation(reactor,gasses,reactants,pulse_size,Diff,voidage,dx,radius,d
 	to_flux = []
 	if reactor == 'tap':
 		for k in range(0,gasses):
-			to_flux.append( (Diff[k][0]*voidage[0] /(dx)) * (radius**2)*3.14159/(pulse_size) ) 
+			to_flux.append( (Diff[k][0]*voidage[0] /(dx)) * (radius**2)*3.14159)#/(pulse_size) ) 
 			#to_flux.append(2 *(dx*(radius**2)*3.14159) * (Diff[k][0] /(dx*voidage[0])))#(1/((1)*pulse_size)) *###??? changed from 1 to the new form
 			#to_flux.append(2*Diff[k][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r))#(1/((1)*pulse_size)) *
 			#to_flux.append(2*(1/((1+reactants)*pulse_size)) *Diff[k][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r))
-		to_flux.append( (Diff[gasses][0]*voidage[0] /(dx)) * (radius**2)*3.14159/(pulse_size) )
+		to_flux.append( (Diff[gasses][0]*voidage[0] /(dx)) * (radius**2)*3.14159)#/(pulse_size) )
 		#to_flux.append((2*Diff[gasses][0] * (dx*(radius**2)*3.14159)/(dx*voidage[0])))#*(1/((1)*pulse_size)) *
 		#to_flux.append((2*(1/((1+reactants)*pulse_size)) *Diff[gasses][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r)))
 	elif reactor_type == 't_pfr' or 't_pfr_diff':
