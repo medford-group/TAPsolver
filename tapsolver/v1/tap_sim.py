@@ -1,4 +1,5 @@
 from fenics import *
+import dolfin
 from fenics_adjoint import *
 from func_sim import *
 from vari_form import *
@@ -18,9 +19,11 @@ import sys
 import os
 import ufl
 import scipy
+import pip
 import pkg_resources
-
-fenics_version = dolfin.dolfin_version()
+#fenics.dolfin_version()
+fenics_version = dolfin.__version__
+#fenics_version = dolfin.dolfin_version()
 if fenics_version == '2017.2.0':
 	fen_17 = True
 else:
