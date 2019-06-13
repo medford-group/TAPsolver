@@ -24,6 +24,7 @@ def call_sens_analysis(u_value,control_list,domain):
 	flux =  u_value*u_value*domain
 	sens_func = assemble(flux)
 	X = compute_gradient(sens_func,control_list)###################
+	#X = hessian(sens_func,control_list)###################
 	m = Enlist(control_list)
 	grads = [i.get_derivative(options=None) for i in m]
 	value_list = []
@@ -39,7 +40,7 @@ def call_ad_rrm_analysis(u_value,control_list,domain):
 	#print(type(u_value))
 	#sys.exit()
 	sens_func = assemble(flux)
-	X = compute_gradient(sens_func,control_list)###################
+	X = compute_hessian(sens_func,control_list)###################
 	m = Enlist(control_list)
 	grads = [i.get_derivative(options=None) for i in m]
 	value_list = []
@@ -344,6 +345,7 @@ def exp_data_fitting_1(species_list,sim_steps,folder,time):
 			else:
 				return find_experimental_point(math.ceil(approx_syn_n),exp_step) 
 
+		
 		time_step = []
 		times = []
 		values = []
@@ -363,9 +365,9 @@ def exp_data_fitting_1(species_list,sim_steps,folder,time):
 		times.append(int(near_mid)*(syn_time_step))
 		values.append(find_experimental_point(int(near_mid),exp_time_step))
 
-		time_step.append(int(near_peak))
-		times.append(int(near_peak)*(syn_time_step))
-		values.append(find_experimental_point(int(near_peak),exp_time_step))
+		#### time_step.append(int(near_peak))
+		#### times.append(int(near_peak)*(syn_time_step))
+		#### values.append(find_experimental_point(int(near_peak),exp_time_step))
 
 		value_test = 0.85*peak_loc[1]
 		sort_fif = user_data[k_new].iloc[(user_data[k_new][1]-value_test).abs().argsort()[:]]
@@ -379,9 +381,9 @@ def exp_data_fitting_1(species_list,sim_steps,folder,time):
 
 		near_fif = fif_point[0]/(time/sim_steps)
 
-		time_step.append(int(near_fif))
-		times.append(int(near_fif)*(syn_time_step))
-		values.append(find_experimental_point(int(near_peak),exp_time_step))
+		#### time_step.append(int(near_fif))
+		#### times.append(int(near_fif)*(syn_time_step))
+		#### values.append(find_experimental_point(int(near_peak),exp_time_step))
 		print()
 		data = {}
 		data['time_step'] = time_step

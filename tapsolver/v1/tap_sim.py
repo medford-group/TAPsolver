@@ -236,6 +236,18 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		
 		for j in r_const:
 			r_const[j] = Constant(r_const[j])
+
+	if reac_input['RRM Analysis'].lower() == 'true':
+		path_2 = reac_input['Output Folder Name']+'_folder/RRM_derivatives/'
+		generate_folder(path_2)
+		RRM_time_list = []
+		
+		for k_gas in necessary_values['reactants']:
+			path_molecules = path_2+k_gas+'/'
+			generate_folder(path_molecules)
+		
+		for j in r_const:
+			r_const[j] = Constant(r_const[j])		
 	
 	to_flux = flux_generation(reac_input['Reactor Type'],monitored_gas,reac_input['Number of Reactants'],reac_input['Reference Pulse Size'],D,eb,dx_r,reac_input['Reactor Radius'],dx2_r)
 	store_data_func(reac_input['Store Outlet Flux'],reac_input['Output Folder Name'])
@@ -298,9 +310,19 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		
 		### Redefine the lists tracking all the information ###
 		sensitivity_output = {}
+		RRM_der = {}
+		
 		for k_sens in range(monitored_gas):
 			sensitivity_output[k_sens] = []
-		
+
+		for k_sens in range(len(necessary_values['reactants'])):
+			RRM_der[k_sens] = []
+
+		#for j_species in range(0,all_molecules-int(reac_input['Number of Inerts'])):
+		#	#print(necessary_values['reactants'][j_species])
+		#	np.savetxt('./'+reac_input['Output Folder Name']+'_folder/thin_data/'+necessary_values['reactants'][j_species]+'.csv', np.array(cat_data['conVtime_'+str(j_species)]), delimiter=",")
+		#for k_rrm in range()
+				
 		graph_data = {}
 		for k_gasses in range(0,necessary_values['molecules_in_gas_phase']):
 			graph_data['conVtime_'+str(k_gasses)] = []
@@ -322,7 +344,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		t = 0
 		if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Sensitivity Analysis'].lower() == 'true' or reac_input['RRM Analysis'].lower() == 'true':
 			osub = integration_section()
-			domains = CellFunction("size_t", mesh)
+			domains = MeshFunction("size_t", mesh,0)
 			domains.set_all(0)
 			osub.mark(domains, 1)
 			dP = Measure('vertex',domain = mesh, subdomain_data=domains)
@@ -487,25 +509,26 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 				time_size = time.time()
 				u_final = u.split(deepcopy=False)
 				should_it = int(round(t*reac_input['Time Steps']/reac_input['Pulse Duration'],0))
-				if should_it <= 50 and should_it%5 == 0:
+				if should_it <= 6 and should_it%5 == 0:
 					for k_step in range(0,monitored_gas):
-						temp = call_sens_analysis(u_final[k_step],controls,dP(1))
+						print(to_flux[k_step])
+						temp = call_sens_analysis(to_flux[k_step]*u_final[k_step],controls,dP(1))
 						sensitivity_output[k_step].append(temp)
 					simulation_time_list.append(time.time() - time_size)
 					sens_time_list.append(t)
 
-
 			if reac_input['RRM Analysis'].lower() == 'true':
+
 				time_size = time.time()
 				u_final = u.split(deepcopy=False)
 				should_it = int(round(t*reac_input['Time Steps']/reac_input['Pulse Duration'],0))
-				if should_it <= 50 and should_it%5 == 0:
-					for k_step in range(0,monitored_gas):
-						temp = call_ad_rrm_analysis(u_final[k_step],controls,dP(1))
-						sensitivity_output[k_step].append(temp)
+				if should_it <= 6 and should_it%5 == 0:
+					for k_step in range(0,len(necessary_values['reactants'])):
+						temp = call_ad_rrm_analysis(u_final[k_step],controls,dx(1))
+						RRM_der[k_step].append(temp)
 					simulation_time_list.append(time.time() - time_size)
-					sys.exit()
-					sens_time_list.append(t)
+					#sys.exit()
+					RRM_time_list.append(t)
 
 			progressBar(t, reac_input['Pulse Duration'])
 			u_n.assign(u)
@@ -523,30 +546,45 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			x_values.append(x.tolist())
 			print(time.time())
 			print(x)
+			sys.exit()
+
+		def eval_cb(j, m):
+			print('eval')
+			print(j)
+			print(m)
+
+		def deriv_cb(j,dj,m):
+			print('deriv')
+			print(j)
+			print(type(dj))
+			print(dj)
+			print(dj[0])
+			print(type(dj[0]))
+
 		if fen_17 == True:
 			set_log_active(False)
 		fitting_time = time.time()
 		
 		if reac_input['Fit Parameters'].lower() == 'true':
-			rf_2 = ReducedFunctional(jfunc_2, controls)
+			rf_2 = ReducedFunctional(jfunc_2, controls,eval_cb_post=eval_cb,derivative_cb_post=deriv_cb)
 			low_bounds = []
 			up_bounds = []
 			try:
 				for gt in range(0,len(controls)):
 					low_bounds.append(0)
 					up_bounds.append(np.inf)
-				if reac_input['Optimization Method'] == 1 or reac_input['Optimization Method'] == '':
+				if reac_input['Optimization Method'] == 'L-BFGS-B' or reac_input['Optimization Method'] == '':
 					u_opt_2 = minimize(rf_2, callback=print_fun, bounds = (low_bounds,up_bounds),tol=1e-13, options={"ftol":1e-13,"gtol":1e-13})
-				elif reac_input['Optimization Method'] == 2:
+				elif reac_input['Optimization Method'] == 'Newton-CG':
 					u_opt_2 = minimize(rf_2, method = 'Newton-CG', callback=print_fun,tol=1e-13, options={"ftol":1e-13,"gtol":1e-13})
-				elif reac_input['Optimization Method'] == 3:
+				elif reac_input['Optimization Method'] == 'BFGS':
 					u_opt_2 = minimize(rf_2, method = 'BFGS', callback=print_fun,tol=1e-13, options={"gtol":1e-13})
-				elif reac_input['Optimization Method'] == 4:
+				elif reac_input['Optimization Method'] == 'SLSQP':
 					u_opt_2 = minimize(rf_2, method = 'SLSQP', callback=print_fun, bounds = (low_bounds,up_bounds),tol=1e-13, options={"ftol":1e-13})
-				elif reac_input['Optimization Method'] == 5:
+				elif reac_input['Optimization Method'] == 'CG':
 					u_opt_2 = minimize(rf_2, method = 'CG', callback=print_fun ,tol=1e-13, options={"gtol":1e-13})
-				#elif reac_input['Optimization Method'] == 6:
-				#	u_opt_2 = minimize(rf_2, method = 'basinhopping', callback=print_fun, bounds = (low_bounds,up_bounds),tol=1e-13, options={"ftol":1e-13,"gtol":1e-13})
+				elif reac_input['Optimization Method'] == 'basinhopping':
+					u_opt_2 = minimize(rf_2, method = 'basinhopping', callback=print_fun, bounds = (low_bounds,up_bounds),tol=1e-13, options={"ftol":1e-13,"gtol":1e-13})
 			
 				else:
 					print('Requested Optimization Method Does Not Exist')
@@ -658,6 +696,17 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			df_sens_time = pd.DataFrame(simulation_time_list)
 			df_sens_time.to_csv(reac_input['Output Folder Name']+'_folder/sensitivity/time.csv',header=None)			
 
+		if reac_input['RRM Analysis'].lower() == 'true':
+			for k_sens_step in range(len(necessary_values['reactants'])):#necessary_values['reactants']
+				RRM_time = np.asarray(RRM_time_list)
+				#sens_time = np.asarray(graph_data['timing'][0:])
+				RRM_time = RRM_time.T#np.transpose(sens_time)
+				RRM_der_2 = np.asarray(RRM_der[k_sens_step])
+				RRM_der_2 = np.append(RRM_time[:,None],RRM_der_2,axis=1)	
+				np.savetxt(reac_input['Output Folder Name']+'_folder/RRM_derivatives/'+necessary_values['reactants'][k_sens_step]+'/pulse_'+str(k_pulse+1)+'.csv',RRM_der_2,delimiter=",",header='t,'+','.join(legend_2))#
+			df_sens_time = pd.DataFrame(simulation_time_list)
+			df_sens_time.to_csv(reac_input['Output Folder Name']+'_folder/RRM_derivatives/time.csv',header=None)			
+
 		name_list = necessary_values['reactants'][monitored_gas:]
 		#for k,j in enumerate(cat_data):
 		#	#print(surf_data)
@@ -701,10 +750,11 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		dictionary_of_numpy_data[legend_label[j_species]] = np.transpose(dictionary_of_numpy_data[legend_label[j_species]])
 		np.savetxt('./'+reac_input['Output Folder Name']+'_folder/flux_data/'+legend_label[j_species]+'.csv', dictionary_of_numpy_data[legend_label[j_species]], delimiter=",")
 	###Current!!!
-	if reac_input['MKM Analysis'].lower() == 'true' or reac_input['RRM Analysis'].lower() == 'true' or reac_input['Petal Plots'].lower() == 'true':
+	if reac_input['MKM Analysis'].lower() == 'true' or reac_input['Petal Plots'].lower() == 'true':
 		for j_species in range(0,all_molecules-int(reac_input['Number of Inerts'])):
 			#print(necessary_values['reactants'][j_species])
 			np.savetxt('./'+reac_input['Output Folder Name']+'_folder/thin_data/'+necessary_values['reactants'][j_species]+'.csv', np.array(cat_data['conVtime_'+str(j_species)]), delimiter=",")
+
 
 
 		#dictionary_of_gas_cat_data[legend_label[j_species]] = np.transpose(dictionary_of_gas_cat_data[legend_label[j_species]])

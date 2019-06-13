@@ -12,8 +12,8 @@ Reference Diffusion Inert,20,,,,,385
 Reference Diffusion Catalyst,20,,,,,43.5319
 Reference Temperature,298.15,,,,,43.5319
 Reference Mass,40,,,,,423.15
-Output Folder Name,pump_probe,,,,,40
-Experimental Data Folder,./exp_data_folder,,,,,
+Output Folder Name,test,,,,,40
+Experimental Data Folder,../../../tap_analysis/tap_code_analysis/exp_data_folder,,,,,
 Noise,FALSE,,,,,
 Reactor Type,tap,,,,,
 Theta,1,,,,,
@@ -32,15 +32,15 @@ Number of Inerts,1,,,,,
 ,,,,,,
 Data_Storage_Options,,,,CO + ^ <-> CO^,0.001,15
 Store Outlet Flux,TRUE,,,,,
-Store Graph,TRUE,,,,,
+Store Graph,FALSE,,,,,
 Display Experimental Data,FALSE,,,,,
-Display Graph,TRUE,,,,,
+Display Graph,FALSE,,,,,
 Sensitivity Analysis,FALSE,,,,,
-Fit Parameters,FALSE,,,,,
-Optimization Method,2,,,,,
+Fit Parameters,TRUE,,,,,
+Optimization Method,CG,,,,,
 Objective Points,1,,,,,
 RRM Analysis,FALSE,,,,,
-MKM Analysis,TRUE,,,,,
+MKM Analysis,FALSE,,,,,
 Petal Plots,FALSE,,,,,
 ,,,,,,
 Reaction_Information,,,,,,
