@@ -90,9 +90,8 @@ def solver_iteration(time_step,method,solver,dk,dec_tim,inc_tim):
 			solver.solve()
 			return time_step
 	except RuntimeError:
-
 		print('Time Step Failure')
-		
+		sys.exit()
 
 		
 
@@ -168,11 +167,11 @@ def flux_generation(reactor,gasses,reactants,pulse_size,Diff,voidage,dx,radius,d
 	to_flux = []
 	if reactor == 'tap':
 		for k in range(0,gasses):
-			to_flux.append( (Diff[k][0]*voidage[0] /(dx)) * (radius**2)*3.14159)#/(pulse_size) ) 
+			to_flux.append( (Diff[k][0]*voidage[0] /(dx)) * (radius**2)*3.14159/(pulse_size) ) 
 			#to_flux.append(2 *(dx*(radius**2)*3.14159) * (Diff[k][0] /(dx*voidage[0])))#(1/((1)*pulse_size)) *###??? changed from 1 to the new form
 			#to_flux.append(2*Diff[k][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r))#(1/((1)*pulse_size)) *
 			#to_flux.append(2*(1/((1+reactants)*pulse_size)) *Diff[k][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r))
-		to_flux.append( (Diff[gasses][0]*voidage[0] /(dx)) * (radius**2)*3.14159)#/(pulse_size) )
+		to_flux.append( (Diff[gasses][0]*voidage[0] /(dx)) * (radius**2)*3.14159/(pulse_size) )
 		#to_flux.append((2*Diff[gasses][0] * (dx*(radius**2)*3.14159)/(dx*voidage[0])))#*(1/((1)*pulse_size)) *
 		#to_flux.append((2*(1/((1+reactants)*pulse_size)) *Diff[gasses][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r)))
 	elif reactor_type == 't_pfr' or 't_pfr_diff':
@@ -349,21 +348,29 @@ def exp_data_fitting_1(species_list,sim_steps,folder,time):
 		time_step = []
 		times = []
 		values = []
+		exp_time_step = user_data[k_new][0][1]
+		
+		time_step.append(30)
+
+		
+		near_start = round(user_data[k_new].iloc[30,0],6)/(time/sim_steps)
+		times.append(int(near_start)*(syn_time_step))
+		values.append(find_experimental_point(math.ceil(near_start),exp_time_step))
 	
+
 		#Peak point
 		peak_loc = user_data[k_new].iloc[user_data[k_new][1].idxmax()]
-
-		exp_time_step = user_data[k_new][0][1]
+		
 		near_peak = peak_loc[0]/(time/sim_steps)
-
 		peak2 = user_data[k_new].loc[user_data[k_new][0] == peak_loc[0]].index
 
 		test3 = int(round((peak2[0]+1)/2,0))
 		mid_loc = user_data[k_new].iloc[test3,:]
 		near_mid = mid_loc[0]/(time/sim_steps)
-		time_step.append(int(near_mid))
-		times.append(int(near_mid)*(syn_time_step))
-		values.append(find_experimental_point(int(near_mid),exp_time_step))
+		###time_step.append(int(near_mid))
+		###times.append(int(near_mid)*(syn_time_step))
+		
+		###values.append(find_experimental_point(int(near_mid),exp_time_step))
 
 		#### time_step.append(int(near_peak))
 		#### times.append(int(near_peak)*(syn_time_step))
@@ -384,7 +391,7 @@ def exp_data_fitting_1(species_list,sim_steps,folder,time):
 		#### time_step.append(int(near_fif))
 		#### times.append(int(near_fif)*(syn_time_step))
 		#### values.append(find_experimental_point(int(near_peak),exp_time_step))
-		print()
+		
 		data = {}
 		data['time_step'] = time_step
 		data['times'] = times

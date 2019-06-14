@@ -1,18 +1,18 @@
 Reactor_Information,,,,,,
-Pulse Duration,0.7,,,,,
-Time Steps,500,,,,,6
-Reactor Length,2.8,,,,,500
-Mesh Size,500,,,,,5.788
-Catalyst Fraction,0.0357,,,,,500
-Reactor Radius,0.24,,,,,0.029025570145128
-Void Fraction Inert,1,,,,,0.2
-Void Fraction Catalyst,1,,,,,0.4
-Reactor Temperature,473.15,,,,,0.4
-Reference Diffusion Inert,20,,,,,385
-Reference Diffusion Catalyst,20,,,,,43.5319
-Reference Temperature,298.15,,,,,43.5319
+Pulse Duration,1,,,,,
+Time Steps,500,,,,,6.0
+Reactor Length,5.788,,,,,500.0
+Mesh Size,1000,,,,,5.787999999999999
+Catalyst Fraction,0.029025570145128,,,,,500.0
+Reactor Radius,0.2,,,,,0.029025570145127997
+Void Fraction Inert,0.4,,,,,0.2
+Void Fraction Catalyst,0.4,,,,,0.4
+Reactor Temperature,385.5,,,,,0.4
+Reference Diffusion Inert,33.75,,,,,385.0
+Reference Diffusion Catalyst,33.75,,,,,43.5319
+Reference Temperature,385.5,,,,,43.5319
 Reference Mass,40,,,,,423.15
-Output Folder Name,test,,,,,40
+Output Folder Name,Test_2_folder/fitting/iter_2,,,,,40.0
 Experimental Data Folder,../../../tap_analysis/tap_code_analysis/exp_data_folder,,,,,
 Noise,FALSE,,,,,
 Reactor Type,tap,,,,,
@@ -20,23 +20,23 @@ Theta,1,,,,,
 Solver Method,None,,,,,
 ,,,,,,
 Feed_&_Surface_Composition,,,,,,
-Number of Reactants,1,,,,,
+Number of Reactants,2,,,,,
 Number of Pulses,1,,,,,
 Reference Pulse Size,10,,,,,
-Pulse Ratio,"1,0,1",,,,,
-Pulse Time,"0,0,0",,,,,
-Mass List,"28,44,40",,,,,
-Initial Surface Composition,"0,0,4999.94,4999.94,499833.94,499833.94",nmol/cm3,,,,
-Number of Active Sites,2,,,,,
-Number of Inerts,1,,,,,
+Pulse Ratio,"1.5,3,0,1.7,0.4",,,,,
+Pulse Time,"0.01,0,0,0.01,0",,,,,
+Mass List,"28,32,44,40,4",,,,,
+Initial Surface Composition,"0,0,499833.94",nmol/cm3,,,,
+Number of Active Sites,1,,,,,
+Number of Inerts,2,,,,,
 ,,,,,,
-Data_Storage_Options,,,,CO + ^ <-> CO^,0.001,15
+Data_Storage_Options,,,,CO + ^ <-> CO^,0.001,15.0
 Store Outlet Flux,TRUE,,,,,
-Store Graph,FALSE,,,,,
-Display Experimental Data,FALSE,,,,,
-Display Graph,FALSE,,,,,
+Store Graph,FALSE,,,0.001,0.5,
+Display Experimental Data,TRUE,,,1E-08,,
+Display Graph,FALSE,,,0.0001,,
 Sensitivity Analysis,FALSE,,,,,
-Fit Parameters,TRUE,,,,,
+Fit Parameters,FALSE,,,,,
 Optimization Method,CG,,,,,
 Objective Points,1,,,,,
 RRM Analysis,FALSE,,,,,
@@ -44,7 +44,6 @@ MKM Analysis,FALSE,,,,,
 Petal Plots,FALSE,,,,,
 ,,,,,,
 Reaction_Information,,,,,,
-CO + * <-> CO*,0.001,150,,,,
-CO + ^ <-> CO^,0.0001,150,,,,
-CO* + O* -> CO2 + 2*,0.00072,,,,,
-CO^ + O^ -> CO2 + 2^,0.00072,,,,,
+CO + * <-> CO*,0.0,0.0,,,,
+O2 + 2* -> 2O*,-0.33666666465875955,,,,,
+O* + CO* -> CO2 + 2*,0.0,,,,,

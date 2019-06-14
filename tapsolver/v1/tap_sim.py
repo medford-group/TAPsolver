@@ -73,8 +73,8 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 
 	### Copy and store the input_csv file in the new folder (to keep organized) ###
 	user_data = pd.read_csv('./input_file.csv',header=None)
-	user_data.to_csv(path+'input_file.csv',header=None)
-	
+	user_data.to_csv(path+'input_file.csv',header=None,index=False)
+	original_input_structure = user_data.copy()
 	### Control the output information from FEniCS ###
 	parameters["std_out_all_processes"] = False
 	cache_params = {"cache_dir":"*","lib_dir":"*","log_dir":"*","inc_dir":"*","src_dir":"*"}
@@ -382,6 +382,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			if reac_input['Fit Parameters'].lower() == 'true':
 
 				for k_fitting in range(0,len(legend_label[:-1])):
+
 					if round(t,6) in output_fitting[legend_label[k_fitting]]['times']:
 						c_exp = output_fitting[legend_label[k_fitting]]['values'][output_fitting[legend_label[k_fitting]]['times'].index(round(t,6))]
 						slope = (-c_exp)/(1/mesh_size)
@@ -399,6 +400,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 								pass
 
 						except UnboundLocalError:
+							
 							if legend_label[k_fitting] != 'Inert':
 								jfunc_2 = assemble(inner(u_n[k_fitting] - w3,u_n[k_fitting] - w3)*dP(1))
 								tot_objective += assemble(inner(u_n[k_fitting] - w3,u_n[k_fitting] - w3)*dP(1))
@@ -465,7 +467,6 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			#else:
 			#	rangesurface_species = reac_input['Initial Surface Composition']
 			
-	
 			##if t > 0:
 			if round(t,6) not in reactant_time:
 				dt = solver_iteration(dt,reac_input['Solver Method'],solver,dk,1.5,1.1)
@@ -474,6 +475,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 				if reac_input['Reactor Type'] == 'tap':
 					if ',' in str(species_pulse_list):
 						for k in range(0,int(reac_input['Number of Reactants'])):
+
 							if reactant_time[k] == round(t,6):
 							###u_n.vector()[int((all_molecules)*(reac_input['Mesh Size']+1)-1)+k-(all_molecules)] = float(species_pulse_list[k])*Inert_pulse_conc#list_species_pulse[k]
 								u_n.vector()[int((all_molecules)*(reac_input['Mesh Size']+1))+k-(all_molecules)] = float(species_pulse_list[k])*Inert_pulse_conc#list_species_pulse[k]
@@ -540,13 +542,14 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 
 		x_values = []
 		it_times = []
+		j_values = []
+		dj_values = []
 
 		def print_fun(x):
 			it_times.append(time.time())
 			x_values.append(x.tolist())
 			print(time.time())
 			print(x)
-			sys.exit()
 
 		def eval_cb(j, m):
 			print('eval')
@@ -554,25 +557,29 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			print(m)
 
 		def deriv_cb(j,dj,m):
-			print('deriv')
-			print(j)
-			print(type(dj))
-			print(dj)
-			print(dj[0])
-			print(type(dj[0]))
+			it_times.append(time.time())
+			j_values.append(j)
+			djv = [v.values()[0] for v in dj]
+			dj_values.append(djv)
+			mv = [v.values()[0] for v in m]
+			x_values.append(mv)
+			print(djv)
+			print(mv)
+
 
 		if fen_17 == True:
 			set_log_active(False)
 		fitting_time = time.time()
 		
 		if reac_input['Fit Parameters'].lower() == 'true':
-			rf_2 = ReducedFunctional(jfunc_2, controls,eval_cb_post=eval_cb,derivative_cb_post=deriv_cb)
+			rf_2 = ReducedFunctional(jfunc_2, controls,derivative_cb_post=deriv_cb)#,eval_cb_post=eval_cb
 			low_bounds = []
 			up_bounds = []
 			try:
 				for gt in range(0,len(controls)):
 					low_bounds.append(0)
 					up_bounds.append(np.inf)
+
 				if reac_input['Optimization Method'] == 'L-BFGS-B' or reac_input['Optimization Method'] == '':
 					u_opt_2 = minimize(rf_2, callback=print_fun, bounds = (low_bounds,up_bounds),tol=1e-13, options={"ftol":1e-13,"gtol":1e-13})
 				elif reac_input['Optimization Method'] == 'Newton-CG':
@@ -589,11 +596,13 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 				else:
 					print('Requested Optimization Method Does Not Exist')
 					sys.exit()
+				optimization_success = True
 			except RuntimeError:
 				print('Optimization Failed or Entered Too Stiff Region')
 				time.sleep(1.5)
 				print('Will shortly begin generating the optimization gif.')
 				time.sleep(5)
+				optimization_success = False
 			#Extra:
 			#u_opt = minimize(rf, method="COBYLA", bounds = ((0,0,0),(np.inf,np.inf,np.inf)), callback=print_fun,tol = 1e-10)#, options={"disp": True} # , method="COBYLA", bounds = ((0,0),(np.inf,np.inf), callback=print_fun,tol = 1e-5
 			#u_opt = minimize(rf, method="TNC", callback=print_fun,tol = 1e-5, options={"disp": True})#,options={'gtol': 1e-05})#  , bounds=(0,1000)  #method="L-BFGS-B" ###, , constraints={'type':'ineq', 'fun': rf}
@@ -633,7 +642,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 
 	############# Visualize/graph the data #######################################################
 		if reac_input['Display Experimental Data'].lower() == 'true':
-			data = pd.ExcelFile('../example_data/CO_oxidation_112.5_C.base_corrected.xlsx')
+			data = pd.ExcelFile('../../../tap_analysis/example_data/CO_oxidation_112.5_C.base_corrected.xlsx')
 			df3 = pd.read_excel(data,'Averaged_last_50_pulse',header=None)
 			df4 = pd.read_excel(data,'4AMU',header=None)
 			df5 = pd.read_excel(data,'40AMU',header=None)
@@ -776,7 +785,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	if reac_input['Fit Parameters'].lower() == 'true':
 	###if reac_input['Output Folder Name'] == '':
 	#if reac_input['Fit Parameters'].lower() == 'true':
-		with open('./'+reac_input['Output Folder Name']+'_folder/fitting/your_file-A.txt', 'r') as f:
+		with open('./'+reac_input['Output Folder Name']+'_folder/fitting/your_file.txt', 'r') as f:
 			lines = f.readlines()
 		f.close
 		lines = [x.strip() for x in lines]
@@ -788,6 +797,8 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		constants = constants.replace('Constants: ','')
 		constants = eval(constants)
 		things = len(times)
+		if optimization_success == False:
+			things -= 1
 
 		for k_num in range(0,things):
 			#print('what?')
@@ -836,7 +847,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		for k_num in range(0,things):
 			shutil.rmtree('./'+reac_input['Output Folder Name']+'_folder/fitting/iter_'+str(k_num)+'_folder') 
 
-
+		original_input_structure.to_csv(path+'input_file.csv',header=None,index=False)
 	return graph_data, legend_label, necessary_values['reactants']
 
 def call_sim():
