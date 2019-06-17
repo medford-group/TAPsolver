@@ -21,17 +21,15 @@ import ufl
 import scipy
 import pip
 import pkg_resources
-#fenics.dolfin_version()
+
 fenics_version = dolfin.__version__
-#fenics_version = dolfin.dolfin_version()
+
 if fenics_version == '2017.2.0':
 	fen_17 = True
 else:
 	fen_17 = False
 	print('You are working with a newer version of FEniCS (beyond 2017). Some methods of analysis could be limited. Dolfin methods could also be limited to a smaller number of time steps.')
 	time.sleep(2)
-
-#exp_data_fitting_2
 
 def tap_simulation_function(reactor_kinetics_input,constants_input):
 
@@ -205,23 +203,10 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	fig2,ax2,legend_label,header,colors = establish_output_graph(reac_input['Reactor Type'],necessary_values['molecules_in_gas_phase'],necessary_values['reactants'],int(reac_input['Number of Inerts']))
 
 	if reac_input['Fit Parameters'].lower() == 'true':
-		if reac_input['Objective Points'] == 1:
-			output_fitting = exp_data_fitting_1(legend_label,reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'])
-		
-		elif reac_input['Objective Points'] == 3:
-			output_fitting = exp_data_fitting_3(legend_label,reac_input['Time Steps'],reac_input['Experimental Data Folder'])
-
-		elif reac_input['Objective Points'] == 4:
-			output_fitting = exp_data_fitting_4(legend_label,reac_input['Time Steps'],reac_input['Experimental Data Folder'])
-
-		elif reac_input['Objective Points'] == 5:
-			output_fitting = exp_data_fitting_5(legend_label,reac_input['Experimental Data Folder'],reac_input['Time Steps'],reac_input['Pulse Duration'])
-		
-		elif type(reac_input['Objective Points']) == str:
-			points = reac_input['Objective Points'].split(',')
-			output_fitting = exp_data_fitting_user(legend_label,reac_input['Experimental Data Folder'],reac_input['Time Steps'],reac_input['Pulse Duration'])
-
-		else:
+		try:
+			output_fitting = exp_data_fitting(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'])
+			
+		except TypeError:
 			print('Objective Point Input Is Not Valid')
 			sys.exit()
 
@@ -248,8 +233,8 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		
 		for j in r_const:
 			r_const[j] = Constant(r_const[j])		
-	
-	to_flux = flux_generation(reac_input['Reactor Type'],monitored_gas,reac_input['Number of Reactants'],reac_input['Reference Pulse Size'],D,eb,dx_r,reac_input['Reactor Radius'],dx2_r)
+
+	to_flux = flux_generation(reac_input['Reactor Type'],len(legend_label),reac_input['Number of Reactants'],reac_input['Reference Pulse Size'],D,eb,dx_r,reac_input['Reactor Radius'],dx2_r)
 	store_data_func(reac_input['Store Outlet Flux'],reac_input['Output Folder Name'])
 	store_sens_analysis(reac_input['Sensitivity Analysis'],reac_input['Output Folder Name'],monitored_gas,legend_label)
 	
@@ -381,8 +366,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			### If you are trying to fit parameters, then check if the point must be defined as a part of the objective function ###
 			if reac_input['Fit Parameters'].lower() == 'true':
 
-				for k_fitting in range(0,len(legend_label[:-1])):
-
+				for k_fitting in range(0,len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])])):
 					if round(t,6) in output_fitting[legend_label[k_fitting]]['times']:
 						c_exp = output_fitting[legend_label[k_fitting]]['values'][output_fitting[legend_label[k_fitting]]['times'].index(round(t,6))]
 						slope = (-c_exp)/(1/mesh_size)
@@ -394,19 +378,23 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 
 						try:
 							if legend_label[k_fitting] != 'Inert':
-								jfunc_2 += assemble(inner(u_n[k_fitting] - w3,u_n[k_fitting] - w3)*dP(1))
-								tot_objective += assemble(inner(u_n[k_fitting] - w3,u_n[k_fitting] - w3)*dP(1))
+								jfunc_2 += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
+								tot_objective += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
+								#tot_objective += assemble(inner(u_n[k_fitting] - w3,u_n[k_fitting] - w3)*dP(1))
+								
 							else:
 								pass
 
 						except UnboundLocalError:
 							
 							if legend_label[k_fitting] != 'Inert':
-								jfunc_2 = assemble(inner(u_n[k_fitting] - w3,u_n[k_fitting] - w3)*dP(1))
-								tot_objective += assemble(inner(u_n[k_fitting] - w3,u_n[k_fitting] - w3)*dP(1))
+								jfunc_2 = assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
+								tot_objective += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
+								#tot_objective += assemble(inner(u_n[k_fitting] - w3,u_n[k_fitting] - w3)*dP(1))
 							else:
 								pass
-
+						print(tot_objective)
+						
 			if reac_input['MKM Analysis'].lower() == 'true' or reac_input['RRM Analysis'].lower() == 'true' or reac_input['Petal Plots'].lower() == 'true':
 				for jk in range(0,all_molecules):
 					new_values = [] 
@@ -513,7 +501,6 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 				should_it = int(round(t*reac_input['Time Steps']/reac_input['Pulse Duration'],0))
 				if should_it <= 6 and should_it%5 == 0:
 					for k_step in range(0,monitored_gas):
-						print(to_flux[k_step])
 						temp = call_sens_analysis(to_flux[k_step]*u_final[k_step],controls,dP(1))
 						sensitivity_output[k_step].append(temp)
 					simulation_time_list.append(time.time() - time_size)
@@ -545,12 +532,13 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		j_values = []
 		dj_values = []
 
-		def print_fun(x):
-			it_times.append(time.time())
-			x_values.append(x.tolist())
-			print(time.time())
-			print(x)
+		###def print_fun(x):
+		###	it_times.append(time.time())
+		###	x_values.append(x.tolist())
+		###	print(time.time())
+		###	print(x)
 
+			
 		def eval_cb(j, m):
 			print('eval')
 			print(j)
@@ -563,14 +551,22 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			dj_values.append(djv)
 			mv = [v.values()[0] for v in m]
 			x_values.append(mv)
+			with open('./'+reac_input['Output Folder Name']+'_folder/fitting/constantIterations.txt', 'w') as f:
+				f.write("Contents: "+str(it_times))
+				f.write('\n')
+				f.write("Constants: "+str(x_values))
+				f.write('\n')
+				f.write("Constants: "+str(x_values))
+
+				f.close
+			print(j)
 			print(djv)
 			print(mv)
-
-
+		
 		if fen_17 == True:
 			set_log_active(False)
 		fitting_time = time.time()
-		
+				
 		if reac_input['Fit Parameters'].lower() == 'true':
 			rf_2 = ReducedFunctional(jfunc_2, controls,derivative_cb_post=deriv_cb)#,eval_cb_post=eval_cb
 			low_bounds = []
@@ -581,17 +577,17 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 					up_bounds.append(np.inf)
 
 				if reac_input['Optimization Method'] == 'L-BFGS-B' or reac_input['Optimization Method'] == '':
-					u_opt_2 = minimize(rf_2, callback=print_fun, bounds = (low_bounds,up_bounds),tol=1e-13, options={"ftol":1e-13,"gtol":1e-13})
+					u_opt_2 = minimize(rf_2, bounds = (low_bounds,up_bounds),tol=1e-13, options={"ftol":1e-13,"gtol":1e-13})
 				elif reac_input['Optimization Method'] == 'Newton-CG':
-					u_opt_2 = minimize(rf_2, method = 'Newton-CG', callback=print_fun,tol=1e-13, options={"ftol":1e-13,"gtol":1e-13})
+					u_opt_2 = minimize(rf_2, method = 'Newton-CG',tol=1e-13, options={"ftol":1e-13,"gtol":1e-13})
 				elif reac_input['Optimization Method'] == 'BFGS':
-					u_opt_2 = minimize(rf_2, method = 'BFGS', callback=print_fun,tol=1e-13, options={"gtol":1e-13})
+					u_opt_2 = minimize(rf_2, method = 'BFGS',tol=1e-13, options={"gtol":1e-13})
 				elif reac_input['Optimization Method'] == 'SLSQP':
-					u_opt_2 = minimize(rf_2, method = 'SLSQP', callback=print_fun, bounds = (low_bounds,up_bounds),tol=1e-13, options={"ftol":1e-13})
+					u_opt_2 = minimize(rf_2, method = 'SLSQP', bounds = (low_bounds,up_bounds),tol=1e-13, options={"ftol":1e-13})
 				elif reac_input['Optimization Method'] == 'CG':
-					u_opt_2 = minimize(rf_2, method = 'CG', callback=print_fun ,tol=1e-13, options={"gtol":1e-13})
+					u_opt_2 = minimize(rf_2,bounds = (low_bounds,up_bounds), method = 'CG',tol=1e-13, options={"gtol":1e-13})
 				elif reac_input['Optimization Method'] == 'basinhopping':
-					u_opt_2 = minimize(rf_2, method = 'basinhopping', callback=print_fun, bounds = (low_bounds,up_bounds),tol=1e-13, options={"ftol":1e-13,"gtol":1e-13})
+					u_opt_2 = minimize(rf_2, method = 'basinhopping', bounds = (low_bounds,up_bounds),tol=1e-13, options={"ftol":1e-13,"gtol":1e-13})
 			
 				else:
 					print('Requested Optimization Method Does Not Exist')
@@ -608,12 +604,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			#u_opt = minimize(rf, method="TNC", callback=print_fun,tol = 1e-5, options={"disp": True})#,options={'gtol': 1e-05})#  , bounds=(0,1000)  #method="L-BFGS-B" ###, , constraints={'type':'ineq', 'fun': rf}
 				
 
-			with open('./'+reac_input['Output Folder Name']+'_folder/fitting/your_file.txt', 'w') as f:
-				f.write("Contents: "+str(it_times))
-				f.write('\n')
-				f.write("Constants: "+str(x_values))
-
-				f.close
+			
 
 	############# Store the output data #######################################################
 		if k_pulse == 0:
@@ -785,7 +776,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	if reac_input['Fit Parameters'].lower() == 'true':
 	###if reac_input['Output Folder Name'] == '':
 	#if reac_input['Fit Parameters'].lower() == 'true':
-		with open('./'+reac_input['Output Folder Name']+'_folder/fitting/your_file.txt', 'r') as f:
+		with open('./'+reac_input['Output Folder Name']+'_folder/fitting/constantIterations.txt', 'r') as f:
 			lines = f.readlines()
 		f.close
 		lines = [x.strip() for x in lines]
@@ -839,8 +830,11 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			
 			#sys.exit()
 			
-			
-			call_sim()
+			try:
+				call_sim()
+
+			except:
+				k_num = things
 
 		#generate_gif(legend_label[:len(legend_label)], reac_input['Experimental Data Folder']+'/flux_data', './'+reac_input['Output Folder Name']+'_folder/fitting/', len(constants), constants, reactor_kinetics_input['reactions_test'], times)
 		
