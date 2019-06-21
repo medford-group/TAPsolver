@@ -7,7 +7,7 @@ import sys
 import os
 
 sim_info = pd.read_csv('../input_file.csv',header = None)
-curr_time_steps = 1000
+curr_time_steps = 2001
 
 length = float(sim_info[1][3])
 mesh_size = float(sim_info[1][4])
