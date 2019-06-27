@@ -222,8 +222,70 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,active_sites,numbe
 	necessary_dictionary = {'F': F,'gas_num': gas_num, 'surf_num': (len(reactants)-gas_num-1),'element': element,'gas_molecules': gas_molecules,'reactants_number':reactants_number,'reactants':reactants,'molecules_in_gas_phase':molecules_in_gas_phase}
 	#print(F)
 	#sys.exit()
-	return necessary_dictionary
+	return necessary_dictionary, rate_array, rev_irr
 
 #test_new_again = make_f_equation(reactions_test)
 
 #print(test_new_again['reactants'])
+
+def rateEqs(rate_array,rev_irr):
+
+###########################################################################################################
+	# Calls the array and 
+	rateStrings = {}
+	for z in range(0, rate_array.shape[1]):
+		rateStrings[z] = ''
+
+	for k,z in enumerate(rate_array):
+		
+		F = ''
+
+
+		neg = []
+		val_neg = []
+		pos = []
+		val_pos = []
+		for j,v in enumerate(z):
+			if v < 0:
+				neg.append(j)
+				val_neg.append(v)
+			elif v > 0:
+				pos.append(j)
+				val_pos.append(v)
+		
+		together = neg+pos
+
+		new_neg = 'kVals["kf'+str(k)+'"]'
+		for j,v in enumerate(neg):
+			#new_neg = new_neg+"*(cat_data['conVtime_"+str(v)+"']**"+str(abs(val_neg[j]))+")"#
+			new_neg = new_neg+"*np.power(cat_data['conVtime_"+str(v)+"'],"+str(abs(val_neg[j]))+")"#
+		new_pos = 'kVals["kb'+str(k)+'"]'
+		for j,v in enumerate(pos):
+			#new_pos = new_pos+"*(cat_data['conVtime_"+str(v)+"']**"+str(abs(val_pos[j]))+")"#
+			new_pos = new_pos+"*np.power(cat_data['conVtime_"+str(v)+"'],"+str(abs(val_pos[j]))+")"#
+		for j,v in enumerate(together):
+			F = rateStrings[v]#''
+			if j < len(neg):
+				#print("neg")
+				if rev_irr[k] == 1:
+					F = F+"-"+str(abs(val_neg[j]))+" * "+new_pos+" + "+str(abs(val_neg[j]))+"* "+new_neg
+					#print("- dk*("+str(abs(val_neg[j]))+"* "+new_pos+"*v_d['v_"+str(v+1)+"']*dx(1))"+"+ dk*("+str(abs(val_neg[j]))+"* "+new_neg+"*v_d['v_"+str(v+1)+"']*dx(1))")
+					#print("")
+				else:
+					F = F+"+"+str(abs(val_neg[j]))+"* "+new_neg
+					#print("+ dk*("+str(abs(val_neg[j]))+"* "+new_neg+"*v_d['v_"+str(v+1)+"']*dx(1))")
+					#print("")
+			else:
+				#print("pos")
+				if rev_irr[k] == 1:
+					F = F+"+"+str(abs(val_pos[j-len(neg)]))+" * "+new_pos+" - "+str(abs(val_pos[j-len(neg)]))+"* "+new_neg
+					#print("+ dk*("+str(abs(val_pos[j-len(neg)]))+"* "+new_pos+"*v_d['v_"+str(v+1)+"']*dx(1))"+"- dk*("+str(abs(val_pos[j-len(neg)]))+"* "+new_neg+"*v_d['v_"+str(v+1)+"']*dx(1))")
+					#print("")
+				else:
+					F = F+"-"+str(abs(val_pos[j-len(neg)]))+" * "+new_neg
+					#print("- dk*("+str(abs(val_pos[j-len(neg)]))+"* "+new_neg+"*v_d['v_"+str(v+1)+"']*dx(1))")
+					#print("")
+			
+			rateStrings[v] = F
+
+	return rateStrings

@@ -35,10 +35,10 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 
 	### Initial forms for storing results and reading in the information ###
 	simulation_time_list = []
-	float_constants = constants_input.copy()
+	kVals = constants_input.copy()
 	reac_input = reactor_kinetics_input
 	r_const = constants_input
-	
+
 	### Generate the folders for information storage ###
 	path = './'+reac_input['Output Folder Name']+'_folder/'
 	generate_folder(path)
@@ -131,8 +131,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	#Length = np.sum(r_param)**2
 
 	### Construct the reaction equation in a form that Fenics can understand ###
-	necessary_values = make_f_equation(reac_input['reactions_test'],reac_input['Number of Reactants'],reac_input['Reactor Type'],reac_input['Number of Active Sites'],reac_input['Number of Inerts'],False)
-	
+	necessary_values, rate_array, rev_irr = make_f_equation(reac_input['reactions_test'],reac_input['Number of Reactants'],reac_input['Reactor Type'],reac_input['Number of Active Sites'],reac_input['Number of Inerts'],False)
 	
 	### Declaring the trial / test functions in fenics and defining the finite elements ###
 	mesh = UnitIntervalMesh(int(reac_input['Mesh Size']))  ###??? Swap the mesh size here
@@ -276,6 +275,16 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	### Begin simulation for each desired pulse ###
 	current_reac_set = 1
 	tot_objective = 0
+
+	if reac_input['MKM Analysis'].lower():
+		rateStrings = rateEqs(rate_array,rev_irr)
+	
+
+	if reac_input['Fit Parameters'].lower() == 'true':
+		for k_fitting in range(0,len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])])):
+			for timeStep in range(0,len(output_fitting[legend_label[0]]['times'])):
+				output_fitting[legend_label[k_fitting]]['times'][timeStep] = round(output_fitting[legend_label[k_fitting]]['times'][timeStep],6)
+
 
 	for k_pulse in range(0,int(reac_input['Number of Pulses'])):
 
@@ -538,7 +547,23 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		###	print(time.time())
 		###	print(x)
 
-			
+		###Current!!!
+		if reac_input['MKM Analysis'].lower() == 'true' or reac_input['Petal Plots'].lower() == 'true':
+			if int(reac_input['Number of Pulses']) == 1:
+				for j_species in range(0,all_molecules-int(reac_input['Number of Inerts'])):
+					#print(necessary_values['reactants'][j_species])
+					np.savetxt('./'+reac_input['Output Folder Name']+'_folder/thin_data/'+necessary_values['reactants'][j_species]+'.csv', np.array(cat_data['conVtime_'+str(j_species)]), delimiter=",")
+					rateTest = eval(rateStrings[j_species])
+					np.savetxt('./'+reac_input['Output Folder Name']+'_folder/thin_data/r_'+necessary_values['reactants'][j_species]+'.csv', np.array(rateTest), delimiter=",")
+			else:
+				pulse_path = './'+reac_input['Output Folder Name']+'_folder/thin_data/pulse_'+str(k_pulse+1)+'/'
+				generate_folder(pulse_path)
+				for j_species in range(0,all_molecules-int(reac_input['Number of Inerts'])):
+					#print(necessary_values['reactants'][j_species])
+					np.savetxt(pulse_path+necessary_values['reactants'][j_species]+'.csv', np.array(cat_data['conVtime_'+str(j_species)]), delimiter=",")
+					rateTest = eval(rateStrings[j_species])
+					np.savetxt(pulse_path+'r_'+necessary_values['reactants'][j_species]+'.csv', np.array(rateTest), delimiter=",")
+
 		def eval_cb(j, m):
 			print('eval')
 			print(j)
@@ -603,7 +628,6 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			#u_opt = minimize(rf, method="COBYLA", bounds = ((0,0,0),(np.inf,np.inf,np.inf)), callback=print_fun,tol = 1e-10)#, options={"disp": True} # , method="COBYLA", bounds = ((0,0),(np.inf,np.inf), callback=print_fun,tol = 1e-5
 			#u_opt = minimize(rf, method="TNC", callback=print_fun,tol = 1e-5, options={"disp": True})#,options={'gtol': 1e-05})#  , bounds=(0,1000)  #method="L-BFGS-B" ###, , constraints={'type':'ineq', 'fun': rf}
 				
-
 			
 
 	############# Store the output data #######################################################
@@ -618,8 +642,8 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 				dictionary_of_numpy_data[necessary_values['reactants'][k_species-1]] = np.empty(shape=[0, len(graph_data['timing'])])
 				new_data = np.asarray(graph_data['timing'])
 				dictionary_of_numpy_data[necessary_values['reactants'][k_species-1]] = np.vstack((dictionary_of_numpy_data[necessary_values['reactants'][k_species-1]],new_data))
-			
-			#dictionary_of_gas_cat_data = {}
+		
+
 			
 			#for z_species in range(0,all_molecules):
 			#	dictionary_of_gas_cat_data[necessary_values['reactants'][z_species]] = np.empty(shape=[0, len(graph_data['timing'])])
@@ -749,14 +773,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	for j_species in range(0,monitored_gas+int(reac_input['Number of Inerts'])):
 		dictionary_of_numpy_data[legend_label[j_species]] = np.transpose(dictionary_of_numpy_data[legend_label[j_species]])
 		np.savetxt('./'+reac_input['Output Folder Name']+'_folder/flux_data/'+legend_label[j_species]+'.csv', dictionary_of_numpy_data[legend_label[j_species]], delimiter=",")
-	###Current!!!
-	if reac_input['MKM Analysis'].lower() == 'true' or reac_input['Petal Plots'].lower() == 'true':
-		for j_species in range(0,all_molecules-int(reac_input['Number of Inerts'])):
-			#print(necessary_values['reactants'][j_species])
-			np.savetxt('./'+reac_input['Output Folder Name']+'_folder/thin_data/'+necessary_values['reactants'][j_species]+'.csv', np.array(cat_data['conVtime_'+str(j_species)]), delimiter=",")
-
-
-
+			#dictionary_of_gas_cat_data = {}
 		#dictionary_of_gas_cat_data[legend_label[j_species]] = np.transpose(dictionary_of_gas_cat_data[legend_label[j_species]])
 		#np.savetxt('./'+reac_input['output_file_name']+'_folder/thin_data/'+legend_label[j_species]+'.csv', dictionary_of_gas_cat_data[legend_label[j_species]], delimiter=",")
 
@@ -807,7 +824,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 						value = 1
 						current_rate = k+1
 						kz = 0
-						while kz < len(float_constants):
+						while kz < len(kVals):
 							if value == 1:
 								alter.iloc[current_rate,value] = constants[k_num][kz]
 								
