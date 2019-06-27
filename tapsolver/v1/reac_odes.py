@@ -20,8 +20,6 @@ import re
 #from rxn_network import scissions, recursive_scissions, get_mechanisms
 #from data_structures import MolGraph, RxnGraph
 
-
-#### change this TODO
 def variational_list_parsing(reactions,active_sites):
 
 	active_site_names = ['*','^','@','#']
