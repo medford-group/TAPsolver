@@ -11,52 +11,42 @@ import math
 import os
 
 
+##### change this TODO
+
 def read_input():
-	
 	"""
 	Returns a dictionary of simulation parameters from 
 	"""
-
 	user_data = pd.read_csv('./input_file.csv',header=None)
-	
 	rows_1, cols_1 = np.where(user_data == 'Reactor_Information')
 	rows_2, cols_2 = np.where(user_data == 'Feed_&_Surface_Composition')
 	rows_3, cols_3 = np.where(user_data == 'Data_Storage_Options')
 	rows_4, cols_4 = np.where(user_data == 'Reaction_Information')
-
 	reactor_info = user_data.iloc[(1+rows_1[0]):(rows_2[0]-1),:] 
 	feed_surf_info = user_data.iloc[1+rows_2[0]:rows_3[0]-1,:]
 	data_storage = user_data.iloc[1+rows_3[0]:rows_4[0]-1,:]
 	reaction_info = user_data.iloc[1+rows_4[0]:,:]
-
 	reactor_kinetics_input = {}
-	
 	for k in range(0,len(reactor_info.index)):
 		try:
 			reactor_kinetics_input[reactor_info.iloc[k,0]] = float(reactor_info.iloc[k,1]) 
 		except ValueError:
 			reactor_kinetics_input[reactor_info.iloc[k,0]] = reactor_info.iloc[k,1]
-
 	for k in range(0,len(data_storage.index)):
 		try:
 			reactor_kinetics_input[data_storage.iloc[k,0]] = float(data_storage.iloc[k,1]) 
 		except ValueError:
 			reactor_kinetics_input[data_storage.iloc[k,0]] = data_storage.iloc[k,1]
-
 	for k in range(0,len(feed_surf_info.index)):
 		try:
 			reactor_kinetics_input[feed_surf_info.iloc[k,0]] = float(feed_surf_info.iloc[k,1]) 
 		except ValueError:
 			reactor_kinetics_input[feed_surf_info.iloc[k,0]] = feed_surf_info.iloc[k,1]
-
 	reactor_kinetics_input['len_inert_1'] = reactor_kinetics_input['Reactor Length']/2 -  0.5*(reactor_kinetics_input['Catalyst Fraction'])*reactor_kinetics_input['Reactor Length']
 	reactor_kinetics_input['len_cat'] = (reactor_kinetics_input['Catalyst Fraction'])*reactor_kinetics_input['Reactor Length'] 
 	reactor_kinetics_input['len_inert_2'] =  reactor_kinetics_input['Reactor Length']/2 -  0.5*(reactor_kinetics_input['Catalyst Fraction'])*reactor_kinetics_input['Reactor Length']
-
 	reactor_kinetics_input['reactions_test'] = reaction_info.iloc[:,0].tolist()
-
 	kinetic_parameters = {}
-	
 	for j in range(0,len(reaction_info.index)):
 		kinetic_parameters['kf'+str(j)] = float(reaction_info.iloc[j,1])
 		if str(reaction_info.iloc[j,2]) != 'nan':
@@ -64,7 +54,17 @@ def read_input():
 		else:
 			pass
 	kin_in = kinetic_parameters.copy()
-
+	#kinetic_parameters.to_json("kineticParameters.json")
+	#reactor_kinetics_input.to_json("reactorKinetics.json")
+	#kin_in.to_json("kinIn.json")
+	inputDict = {
+		"reactor_kinetics_input":reactor_kinetics_input,
+		"kinetic_parameters":kinetic_parameters,
+		"kin_in":kin_in
+	}
+	#print(kinetic_parameters)
+	with open("inputFile.txt", "w") as json_file:
+		json.dump(inputDict, json_file)
 	return reactor_kinetics_input,kinetic_parameters,kin_in
 
 def call_sens_analysis(u_value,control_list,domain):
