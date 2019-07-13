@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 import math
 import os
+import fenics_adjoint
 
 
 def read_input():
@@ -67,13 +68,17 @@ def read_input():
 
 	return reactor_kinetics_input,kinetic_parameters,kin_in
 
-def call_sens_analysis(u_value,control_list,domain):
+def call_sens_analysis(u_value,control_list,domain,direction):
 
 	""" Perform the sensitivty analysis"""
 
 	flux =  u_value*u_value*domain
 	sens_func = assemble(flux)
-	X = compute_gradient(sens_func,control_list)###################
+	#X = compute_gradient(sens_func,control_list)###################
+
+	X = compute_hessian(sens_func,control_list,direction)
+	print('test')
+	#X = compute_tlm(control_list)###################
 	#X = hessian(sens_func,control_list)###################
 	m = Enlist(control_list)
 	grads = [i.get_derivative(options=None) for i in m]
@@ -146,7 +151,7 @@ def flux_generation(reactor,gasses,reactants,pulse_size,Diff,voidage,dx,radius,d
 	if reactor == 'tap':
 
 		for k in range(0,gasses):
-			to_flux.append( (Diff[k][0]*voidage[0] /(dx)) * (radius**2)*3.14159/(pulse_size) ) 
+			to_flux.append( (Diff[k][0]*voidage[0] /(dx)) * (radius**2)*3.14159/(pulse_size) ) #0.53*
 			#to_flux.append(2 *(dx*(radius**2)*3.14159) * (Diff[k][0] /(dx*voidage[0])))#(1/((1)*pulse_size)) *###??? changed from 1 to the new form
 			#to_flux.append(2*Diff[k][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r))#(1/((1)*pulse_size)) *
 			#to_flux.append(2*(1/((1+reactants)*pulse_size)) *Diff[k][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r))

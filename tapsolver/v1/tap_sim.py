@@ -296,12 +296,15 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 
 		species_pulse_list = reactant_feed[current_reac_set-1]
 		species_time = reactant_time[current_reac_set-1]
+
 		### Incase the time step was altered during a previous pulse, just reset to the original values ### 
 		dk = Constant(reac_input['Pulse Duration']/reac_input['Time Steps'])
 		dt = reac_input['Pulse Duration']/reac_input['Time Steps']
-		
+
 		start_time = time.time()
-		
+		for kTimeStep,kTime in enumerate(reactant_time.copy()):
+			tNew = dt*round(kTime/dt)
+			reactant_time[kTimeStep] = tNew
 		### Redefine the lists tracking all the information ###
 		sensitivity_output = {}
 		RRM_der = {}
@@ -426,6 +429,8 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 							#surf_data['conVtime_'+str(z_num+monitored_gas)] += value_new*dx_r
 						except AttributeError:
 							value_cat = u_n.vector().get_local()[z*(all_molecules)]# = float(z_sur)
+							print('How are you?')
+							sys.exit()
 							cat_values[0] += value_cat*dx_r
 						#value_cat = u_n.vector().get_local()[z*(all_molecules+1)-all_molecules]
 						#cat_values[necessary_values['molecules_in_gas_phase']] += value_cat*dx_r
@@ -465,6 +470,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			#	rangesurface_species = reac_input['Initial Surface Composition']
 			
 			##if t > 0:
+
 			if round(t,6) not in reactant_time:
 				dt = solver_iteration(dt,reac_input['Solver Method'],solver,dk,1.5,1.1)
 				
@@ -509,8 +515,11 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 				u_final = u.split(deepcopy=False)
 				should_it = int(round(t*reac_input['Time Steps']/reac_input['Pulse Duration'],0))
 				if should_it <= 6 and should_it%5 == 0:
+					direction = project(Constant(1),V_du)
+					all_together = [direction,direction,direction,direction]
 					for k_step in range(0,monitored_gas):
-						temp = call_sens_analysis(to_flux[k_step]*u_final[k_step],controls,dP(1))
+						testAgain = [Control(Constant(1)),Control(Constant(1)),Control(Constant(1)),Control(Constant(1))]
+						temp = call_sens_analysis(to_flux[k_step]*u_final[k_step],controls,dP(1),all_together)
 						sensitivity_output[k_step].append(temp)
 					simulation_time_list.append(time.time() - time_size)
 					sens_time_list.append(t)
