@@ -799,7 +799,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	plt.clf()
 	plt.close()
 
-	if reac_input['Fit Parameters'].lower() == 'true':
+	if reac_input['Fit Parameters'].lower() == 'true' and True == False:
 	###if reac_input['Output Folder Name'] == '':
 	#if reac_input['Fit Parameters'].lower() == 'true':
 		with open('./'+reac_input['Output Folder Name']+'_folder/fitting/constantIterations.txt', 'r') as f:
@@ -862,12 +862,14 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			except:
 				k_num = things
 
-		#generate_gif(legend_label[:len(legend_label)], reac_input['Experimental Data Folder']+'/flux_data', './'+reac_input['Output Folder Name']+'_folder/fitting/', len(constants), constants, reactor_kinetics_input['reactions_test'], times)
+		generate_gif(legend_label[:len(legend_label)], reac_input['Experimental Data Folder']+'/flux_data', './'+reac_input['Output Folder Name']+'_folder/fitting/', len(constants), constants, reactor_kinetics_input['reactions_test'], times)
 		
 		for k_num in range(0,things):
 			shutil.rmtree('./'+reac_input['Output Folder Name']+'_folder/fitting/iter_'+str(k_num)+'_folder') 
-
-		original_input_structure.to_csv(path+'input_file.csv',header=None,index=False)
+	
+		user_data = pd.read_csv('./'+reac_input['Output Folder Name']+'_folder/input_file.csv',header=None)
+		user_data.to_csv('./input_file.csv',header=None,index=False)
+	#original_input_structure.to_csv(path+'input_file.csv',header=None,index=False)
 	return graph_data, legend_label, necessary_values['reactants']
 
 def call_sim():

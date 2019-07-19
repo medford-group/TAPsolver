@@ -74,9 +74,9 @@ def call_sens_analysis(u_value,control_list,domain,direction):
 
 	flux =  u_value*u_value*domain
 	sens_func = assemble(flux)
-	#X = compute_gradient(sens_func,control_list)###################
+	X = compute_gradient(sens_func,control_list)###################
 
-	X = compute_hessian(sens_func,control_list,direction)
+	#X = compute_hessian(sens_func,control_list,direction)
 	print('test')
 	#X = compute_tlm(control_list)###################
 	#X = hessian(sens_func,control_list)###################
@@ -388,7 +388,7 @@ def exp_data_fitting(species_list,sim_steps,folder,time,points):
 			values.append(find_experimental_point(int(near_peak),exp_time_step))
 
 		if points > 2:
-			value_test = 0.85*peak_loc[1]
+			value_test = 0.9*peak_loc[1]
 			sort_3 = user_data[k_new].iloc[(user_data[k_new][1]-value_test).abs().argsort()[:]]
 
 			for k in range(0,sort_3.index[0]):
@@ -510,20 +510,20 @@ def generate_gif(molecules,exp_loc,fit_loc,all_steps,constants,reactions,time_da
 		ax.text(0.15, 0.95,'Iteration: '+str(step),transform=ax.transAxes, fontsize=14,verticalalignment='top',bbox=props)
 		peak_peak = 0
 
-		for k_names in molecules[:-1]:
-			peak_loc = exp_data[k_names].iloc[exp_data[k_names][1].idxmax()]
-			plt.plot(peak_loc[0], peak_loc[1], 'ro')
-			if peak_loc[1] > peak_peak:
-				peak_peak = peak_loc[1]
-
-			peak2 = exp_data[k_names].loc[exp_data[k_names][0] == exp_data[0]].index
-			test3 = int(round((peak2[0]+1)/2,0))
-			mid_loc = exp_data[k_names].iloc[test3,:]
-			plt.plot(mid_loc[0], mid_loc[1], 'ro')
-
-			#peak_loc = exp_data_2.iloc[exp_data_2[1].idxmax()]
-			#peak2 = exp_data_2.loc[exp_data_2[0] == peak_loc[0]].index
-			#plt.plot(peak_loc[0], peak_loc[1], 'ro')
+		#for k_names in molecules[:-1]:
+#		#	peak_loc = exp_data[k_names].iloc[exp_data[k_names][1].idxmax()]
+#		#	plt.plot(peak_loc[0], peak_loc[1], 'ro')
+#		#	if peak_loc[1] > peak_peak:
+#		#		peak_peak = peak_loc[1]
+#
+#		#	peak2 = exp_data[k_names].loc[exp_data[k_names][0] == exp_data[0]].index
+#		#	test3 = int(round((peak2[0]+1)/2,0))
+#		#	mid_loc = exp_data[k_names].iloc[test3,:]
+#		#	plt.plot(mid_loc[0], mid_loc[1], 'ro')
+#
+		#	#peak_loc = exp_data_2.iloc[exp_data_2[1].idxmax()]
+		#	#peak2 = exp_data_2.loc[exp_data_2[0] == peak_loc[0]].index
+		#	#plt.plot(peak_loc[0], peak_loc[1], 'ro')
 
 		ax.set_ylim(0,peak_peak*1.1)
 		
