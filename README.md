@@ -6,13 +6,15 @@
 
 To install FEniCS through conda, run the following the terminal:
 
-	conda create -n fenicsproject -c conda-forge fenics
+	conda create -n fenicsproject -c conda-forge dolfin-adjoint
 
 	source activate fenicsproject
 
-	conda install -c conda-forge dolfin-adjoint
-
 	pip install matplotlib
+
+	conda install imageio
+
+	conda install pandas
 
 If you are having trouble installing FEniCS, contact Adam Yonge (ayonge3@gatech.edu) or the [FEniCS developers](https://fenicsproject.org/community/).
 
