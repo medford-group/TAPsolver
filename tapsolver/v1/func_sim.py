@@ -122,6 +122,7 @@ def solver_iteration(time_step,method,solver,dk,dec_tim,inc_tim):
 			uout_3 = call_solver(dk.assign(time_step*inc_tim),u_temp,u,u_3,solver)
 			uout_2 = call_solver(dk.assign(time_step),u_temp,u,u_2,solver,keep_sol=True)
 			time_step = norm_comp(uout_1,uout_2,uout_3,dec_tim,inc_tim)
+
 			return time_step
 		
 		elif method == 'None':
@@ -129,6 +130,9 @@ def solver_iteration(time_step,method,solver,dk,dec_tim,inc_tim):
 			return time_step
 	except RuntimeError:
 		print('Time Step Failure')
+		fenics_version = dolfin.__version__
+		if fenics_version != '2017.2.0':
+			print('Since the version of fenics >2017, the choice of time steps might be limited. Try running with a smaller number of time steps.')
 		sys.exit()
 
 	#except RuntimeError:
@@ -151,7 +155,8 @@ def flux_generation(reactor,gasses,reactants,pulse_size,Diff,voidage,dx,radius,d
 	if reactor == 'tap':
 
 		for k in range(0,gasses):
-			to_flux.append( (Diff[k][0]*voidage[0] /(dx)) * (radius**2)*3.14159/(pulse_size) ) #0.53*
+			#to_flux.append( (Diff[k][0]/(dx*Diff[4][0])) ) 
+			to_flux.append( 3.3*(Diff[k][0]*voidage[0] /(dx)) * (radius**2)*3.14159/(pulse_size) ) #0.53*
 			#to_flux.append(2 *(dx*(radius**2)*3.14159) * (Diff[k][0] /(dx*voidage[0])))#(1/((1)*pulse_size)) *###??? changed from 1 to the new form
 			#to_flux.append(2*Diff[k][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r))#(1/((1)*pulse_size)) *
 			#to_flux.append(2*(1/((1+reactants)*pulse_size)) *Diff[k][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r))

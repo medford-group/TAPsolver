@@ -108,7 +108,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	for k,j in enumerate(reac_input['Mass List'].split(',')):
 		for k_2,j_2 in enumerate(ref_rate):
 			D[k,k_2] = Constant(diff_func(reac_input['Reference Mass'],reac_input['Reference Temperature'],float(j),j_2)) ###??? should this (np.sum(r_param)**2) be here? This puts it in dimensional form!
-
+	
 	### Define the dimensions of the reactor ###
 	ca = (reac_input['Reactor Radius']**2)*3.14159 
 
@@ -300,11 +300,11 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		### Incase the time step was altered during a previous pulse, just reset to the original values ### 
 		dk = Constant(reac_input['Pulse Duration']/reac_input['Time Steps'])
 		dt = reac_input['Pulse Duration']/reac_input['Time Steps']
-
+		#!#!print(reactant_time)
 		start_time = time.time()
 		for kTimeStep,kTime in enumerate(reactant_time.copy()):
 			tNew = dt*round(kTime/dt)
-			reactant_time[kTimeStep] = tNew
+			reactant_time[kTimeStep] = round(tNew,6)
 		### Redefine the lists tracking all the information ###
 		sensitivity_output = {}
 		RRM_der = {}
@@ -471,6 +471,8 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			
 			##if t > 0:
 
+
+
 			if round(t,6) not in reactant_time:
 				dt = solver_iteration(dt,reac_input['Solver Method'],solver,dk,1.5,1.1)
 				
@@ -478,7 +480,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 				if reac_input['Reactor Type'] == 'tap':
 					if ',' in str(species_pulse_list):
 						for k in range(0,int(reac_input['Number of Reactants'])):
-
+							
 							if reactant_time[k] == round(t,6):
 							###u_n.vector()[int((all_molecules)*(reac_input['Mesh Size']+1)-1)+k-(all_molecules)] = float(species_pulse_list[k])*Inert_pulse_conc#list_species_pulse[k]
 								u_n.vector()[int((all_molecules)*(reac_input['Mesh Size']+1))+k-(all_molecules)] = float(species_pulse_list[k])*Inert_pulse_conc#list_species_pulse[k]
@@ -509,7 +511,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 								u_n.vector()[z*(all_molecules)-(2)] = float(species_pulse_list)
 
 				dt = solver_iteration(dt,reac_input['Solver Method'],solver,dk,1.5,1.1)
-
+				
 			if reac_input['Sensitivity Analysis'].lower() == 'true':
 				time_size = time.time()
 				u_final = u.split(deepcopy=False)
