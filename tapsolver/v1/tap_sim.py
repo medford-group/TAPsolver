@@ -94,7 +94,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	
 	### Initialize the grid system, time step size, pulse size and diffusion coefficients ###
 	r_param, dx_r, dx2_r, frac_length, cat_location = establish_grid_system(reac_input['len_inert_1'],reac_input['len_cat'],reac_input['len_inert_2'],reac_input['Mesh Size'])
-
+	cat_location = reac_input['Catalyst Location']
 	dk = Constant(reac_input['Pulse Duration']/reac_input['Time Steps'])
 	eb = np.array((reac_input['Void Fraction Inert'],reac_input['Void Fraction Catalyst'],reac_input['Void Fraction Inert']))
 

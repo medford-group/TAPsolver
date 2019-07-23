@@ -257,7 +257,6 @@ def establish_grid_system(in_1,cat,in_2,mesh_size):
 
 	frac_length = r_param[1]/(np.sum(r_param))
 	cat_location = (r_param[1]*0.5+r_param[0])/(np.sum(r_param))
-
 	return r_param,dx_r,dx2_r,frac_length,cat_location
 
 
