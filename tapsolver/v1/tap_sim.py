@@ -25,7 +25,7 @@ import pkg_resources
 fenics_version = dolfin.__version__
 
 if fenics_version == '2017.2.0':
-	fen_17 = True
+	fen_17 = False#True
 else:
 	fen_17 = False
 	print('You are working with a newer version of FEniCS (beyond 2017). Some methods of analysis could be limited. Dolfin methods could also be limited to a smaller number of time steps.')
@@ -207,8 +207,13 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 
 	if reac_input['Fit Parameters'].lower() == 'true':
 		try:
-			output_fitting = exp_data_fitting(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'])
-			
+			if type(reac_input['Objective Points']) == float:
+				output_fitting = exp_data_fitting(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'])
+			elif reac_input['Objective Points'] == 'all':
+				output_fitting = every_point_fitting(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'])
+			else:
+				print('Objective Points defined incorrectly')
+				sys.exit()
 		except TypeError:
 			print('Objective Point Input Is Not Valid')
 			sys.exit()
@@ -683,17 +688,17 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 					up_bounds.append(np.inf)
 
 				if reac_input['Optimization Method'] == 'L-BFGS-B' or reac_input['Optimization Method'] == '':
-					u_opt_2 = minimize(rf_2, bounds = (low_bounds,up_bounds),tol=1e-13, options={"ftol":1e-13,"gtol":1e-13})
+					u_opt_2 = minimize(rf_2, bounds = (low_bounds,up_bounds),tol=1e-10, options={"ftol":1e-10,"gtol":1e-10})
 				elif reac_input['Optimization Method'] == 'Newton-CG':
-					u_opt_2 = minimize(rf_2, method = 'Newton-CG',tol=1e-13, options={"ftol":1e-13,"gtol":1e-13})
+					u_opt_2 = minimize(rf_2, method = 'Newton-CG',tol=1e-10, options={"ftol":1e-10,"gtol":1e-10})
 				elif reac_input['Optimization Method'] == 'BFGS':
-					u_opt_2 = minimize(rf_2, method = 'BFGS',tol=1e-13, options={"gtol":1e-13})
+					u_opt_2 = minimize(rf_2, method = 'BFGS',tol=1e-10, options={"gtol":1e-10})
 				elif reac_input['Optimization Method'] == 'SLSQP':
-					u_opt_2 = minimize(rf_2, method = 'SLSQP', bounds = (low_bounds,up_bounds),tol=1e-13, options={"ftol":1e-13})
+					u_opt_2 = minimize(rf_2, method = 'SLSQP', bounds = (low_bounds,up_bounds),tol=1e-10, options={"ftol":1e-10})
 				elif reac_input['Optimization Method'] == 'CG':
-					u_opt_2 = minimize(rf_2,bounds = (low_bounds,up_bounds), method = 'CG',tol=1e-13, options={"gtol":1e-13})
+					u_opt_2 = minimize(rf_2,bounds = (low_bounds,up_bounds), method = 'CG',tol=1e-10, options={"gtol":1e-10})
 				elif reac_input['Optimization Method'] == 'basinhopping':
-					u_opt_2 = minimize(rf_2, method = 'basinhopping', bounds = (low_bounds,up_bounds),tol=1e-13, options={"ftol":1e-13,"gtol":1e-13})
+					u_opt_2 = minimize(rf_2, method = 'basinhopping', bounds = (low_bounds,up_bounds),tol=1e-10, options={"ftol":1e-10,"gtol":1e-10})
 			
 				else:
 					print('Requested Optimization Method Does Not Exist')
