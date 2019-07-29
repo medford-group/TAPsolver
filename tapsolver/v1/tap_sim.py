@@ -24,8 +24,11 @@ import pkg_resources
 
 fenics_version = dolfin.__version__
 
+rrmProof = True
+
 if fenics_version == '2017.2.0':
 	fen_17 = False#True
+
 else:
 	fen_17 = False
 	print('You are working with a newer version of FEniCS (beyond 2017). Some methods of analysis could be limited. Dolfin methods could also be limited to a smaller number of time steps.')
@@ -48,7 +51,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	path_3 = './'+reac_input['Output Folder Name']+'_folder/flux_data/'
 	generate_folder(path_3)
 	
-	if reac_input['MKM Analysis'].lower() == 'true' or reac_input['RRM Analysis'].lower() == 'true' or reac_input['Petal Plots'].lower() == 'true':
+	if reac_input['Thin-Zone Analysis'].lower() == 'true':
 		path_4 = './'+reac_input['Output Folder Name']+'_folder/thin_data/'
 		generate_folder(path_4)
 
@@ -64,7 +67,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		r_const[j] = Constant(r_const[j])
 
 	### Define controls only if needed for differentiation based analysis ###
-	if reac_input['Fit Parameters'].lower() == 'true' or reac_input['RRM Analysis'].lower() == 'true':  ### or reac_input['Sensitivity Analysis'].lower() == 'true' 
+	if reac_input['Fit Parameters'].lower() == 'true':
 		controls = []
 		legend_2 = []
 		for j in r_const:
@@ -223,28 +226,24 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		generate_folder(path_2)
 		sens_time_list = []
 		
-		for k_gas in legend_label[:-1]:
-			path_molecules = path_2+k_gas+'/'
-			generate_folder(path_molecules)
-		
-		##for j in r_const:
-		##	r_const[j] = Constant(r_const[j])
-		##	print(r_const)
-		##	print(type(r_const["kf0"]))
-		##sys.exit()
+		path_molecules = path_2+reac_input['Sensitivity Parameter']
+		generate_folder(path_molecules)
+		sensFolder = path_molecules
+
 
 	if reac_input['RRM Analysis'].lower() == 'true':
-		path_2 = reac_input['Output Folder Name']+'_folder/RRM_derivatives/'
+		path_2 = reac_input['Output Folder Name']+'_folder/RRM_analysis/'
 		generate_folder(path_2)
-		RRM_time_list = []
+		sens_time_list = []
 		
-		for k_gas in necessary_values['reactants']:
-			path_molecules = path_2+k_gas+'/'
-			generate_folder(path_molecules)
-		
-		for j in r_const:
-			r_const[j] = Constant(r_const[j])		
+		path_molecules = path_2+reac_input['Sensitivity Parameter']
+		generate_folder(path_molecules)
+		rrmFolder = path_molecules
 
+		generate_folder(path_molecules+'/pointValue')
+		generate_folder(path_molecules+'/thinValue')
+
+		
 	to_flux = flux_generation(reac_input['Reactor Type'],len(legend_label),reac_input['Number of Reactants'],reac_input['Reference Pulse Size'],D,eb,dx_r,reac_input['Reactor Radius'],dx2_r)
 	store_data_func(reac_input['Store Outlet Flux'],reac_input['Output Folder Name'])
 	store_sens_analysis(reac_input['Sensitivity Analysis'],reac_input['Output Folder Name'],monitored_gas,legend_label)
@@ -288,43 +287,55 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	current_reac_set = 1
 	tot_objective = 0
 
-	if reac_input['MKM Analysis'].lower():
+	if reac_input['Thin-Zone Analysis'].lower() == 'true':
 		rateStrings = rateEqs(rate_array,rev_irr)
 	
+	if reac_input['RRM Analysis'].lower() == 'true':
+		rrmStringsThin = rrmEqs(rate_array,rev_irr,'dx(1)')	
+		rrmStringsPoint = rrmEqs(rate_array,rev_irr,'dT(1)')
 
 	if reac_input['Fit Parameters'].lower() == 'true':
 		for k_fitting in range(0,len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])])):
 			for timeStep in range(0,len(output_fitting[legend_label[0]]['times'])):
 				output_fitting[legend_label[k_fitting]]['times'][timeStep] = round(output_fitting[legend_label[k_fitting]]['times'][timeStep],6)
 
-	if reac_input['Sensitivity Analysis'].lower() == 'true':
 
-		sensFuncs = {}
-		
-		thinSensFunc = {}
-		pointSensFunc = {}
-		
-		thinSensFuncRate = {}
-		pointSensFuncRate = {}
+	if reac_input['Sensitivity Analysis'].lower() == 'true' or reac_input['RRM Analysis'].lower() == 'true':
 
-		c = r_const["kf0"]
-		c.tlm_value = r_const["kf0"]
-
+		c = r_const[reac_input['Sensitivity Parameter']]
+		c.tlm_value = r_const[reac_input['Sensitivity Parameter']]
 
 		SV_du = FunctionSpace(mesh,P1)
 		Sw_new = Expression('A',A=Constant(1),degree=0)#Expression("1", degree=0)
 		Sw_new2 = interpolate(Sw_new,SV_du)
 		Sw3 = project(Sw_new2,SV_du)
 
-		for k_gasses in range(0,necessary_values['molecules_in_gas_phase']+3):
-			sensFuncs[str(k_gasses)] = []
+
+	if reac_input['Sensitivity Analysis'].lower() == 'true':
+
+		sensFuncs = {}
+
+		for k_gasses in range(0,len(necessary_values['reactants'])):
+			sensFuncs[str(k_gasses)] = []	
+	
+
+	if reac_input['RRM Analysis'].lower() == 'true':
+		thinSensFunc = {}
+		pointSensFunc = {}
+		
+		thinSensFuncRate = {}
+		pointSensFuncRate = {}
+
+		for k_gasses in range(0,len(necessary_values['reactants'])):
 			thinSensFunc[str(k_gasses)] = []
 			pointSensFunc[str(k_gasses)] = []
+			thinSensFuncRate[str(k_gasses)] = []
+			pointSensFuncRate[str(k_gasses)] = []
 
-		thinSensFuncRate['CO'] = []
-		pointSensFuncRate['CO'] = []
-		thinSensFuncRate['CO2'] = []
-		pointSensFuncRate['CO2'] = []
+		#thinSensFuncRate['CO'] = []
+		#pointSensFuncRate['CO'] = []
+		#thinSensFuncRate['CO2'] = []
+		#pointSensFuncRate['CO2'] = []
 
 	sensAll = []
 	sensAll2 = []
@@ -385,7 +396,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			cat_data['conVtime_'+str(z_gasses)] = []
 
 		t = 0
-		if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Sensitivity Analysis'].lower() == 'true' or reac_input['RRM Analysis'].lower() == 'true':
+		if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Sensitivity Analysis'].lower() == 'true':
 			osub = integration_section()
 			domains = MeshFunction("size_t", mesh,0)
 			domains.set_all(0)
@@ -453,7 +464,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 								pass
 						print(tot_objective)
 						
-			if reac_input['MKM Analysis'].lower() == 'true' or reac_input['RRM Analysis'].lower() == 'true' or reac_input['Petal Plots'].lower() == 'true':
+			if reac_input['Thin-Zone Analysis'].lower() == 'true':
 				for jk in range(0,all_molecules):
 					new_values = [] 
 					cat_values = []
@@ -513,23 +524,33 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 				#sensAll.append(assemble(inner(u_final[k_step],u_final[k_step]))*dx)
 				### #Js.append(assemble( ( inner(u[0], w3) )* dx))		
 				#sensAll.append(assemble(inner(u, u) * dx))
-				for kGasses in range(0,necessary_values['molecules_in_gas_phase']+3):
-					sensFuncs[str(kGasses)].append(assemble( ( inner(u[kGasses], Sw3) )* dP(1)))
-					thinSensFunc[str(kGasses)].append(assemble( ( inner(u[kGasses], Sw3) )* dx(1)))
-					pointSensFunc[str(kGasses)].append(assemble( ( inner(u[kGasses], Sw3) )* dT(1)))
-					
+				
+				#Store the actual value of the concentration
 				for k in range(0,monitored_gas):
 					new_val = (( u.vector().get_local()[(all_molecules)+k]))
 					u_graph_data['conVtime_'+str(k)].append((new_val))
+
+				#Store the 
+				for kGasses in range(0,len(necessary_values['reactants'])):
+					sensFuncs[str(kGasses)].append(assemble( ( inner(u[kGasses], Sw3) )* dP(1)))
+					
 				#for kGasses in range(0,necessary_values['molecules_in_gas_phase']):
+			if reac_input['RRM Analysis'].lower() == 'true':
+				## Store the values of the thin zone analysis
+				for kGasses in range(0,len(necessary_values['reactants'])):
+					thinSensFunc[str(kGasses)].append(assemble( ( inner(u[kGasses], Sw3) )* dx(1)))
+					pointSensFunc[str(kGasses)].append(assemble( ( inner(u[kGasses], Sw3) )* dT(1)))
 
 				#Js.append(assemble((inner(ufl.ln(ufl.exp(-dG)*u_n[0] - ufl.exp(-dG)*u_n[1]), w3) )* dx))
-
-				thinSensFuncRate['CO'].append(assemble( ( inner(-r_const["kf0"]*u[0]*u[4] + r_const["kb0"]*u[2], Sw3) )* dx(1)))
-				pointSensFuncRate['CO'].append(assemble( ( inner(-r_const["kf0"]*u[0]*u[4] + r_const["kb0"]*u[2], Sw3) )* dT(1)))
-				thinSensFuncRate['CO2'].append(assemble( ( inner(r_const["kf1"]*u[2]*u[3], Sw3) )* dx(1)))
-				pointSensFuncRate['CO2'].append(assemble( ( inner(r_const["kf1"]*u[2]*u[3], Sw3) )* dT(1)))
-
+				#sys.exit()
+				for kGasses in range(0,len(necessary_values['reactants'])):
+					thinSensFuncRate[str(kGasses)].append(eval(rrmStringsThin[kGasses]))
+					pointSensFuncRate[str(kGasses)].append(eval(rrmStringsPoint[kGasses]))
+				
+				#thinSensFuncRate['CO'].append(assemble( ( inner(-r_const["kf0"]*u[0]*u[4] + r_const["kb0"]*u[2], Sw3) )* dx(1)))
+				#pointSensFuncRate['CO'].append(assemble( ( inner(-r_const["kf0"]*u[0]*u[4] + r_const["kb0"]*u[2], Sw3) )* dT(1)))
+				#thinSensFuncRate['CO2'].append(assemble( ( inner(r_const["kf1"]*u[2]*u[3], Sw3) )* dx(1)))
+				#pointSensFuncRate['CO2'].append(assemble( ( inner(r_const["kf1"]*u[2]*u[3], Sw3) )* dT(1)))
 
 				#print(type(assemble((to_flux[k_step]*u_final[k_step])*(to_flux[k_step]*u_final[k_step])*dP(1))))
 				#if should_it <= 6 and should_it%5 == 0:
@@ -540,88 +561,63 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 				#		temp = call_sens_analysis(to_flux[k_step]*u_final[k_step],controls,dP(1),all_together)
 				#		sensitivity_output[k_step].append(temp)
 				#	simulation_time_list.append(time.time() - time_size)
-				sens_time_list.append(t)
-
-			if reac_input['RRM Analysis'].lower() == 'true':
-
-				time_size = time.time()
-				u_final = u.split(deepcopy=False)
-				should_it = int(round(t*reac_input['Time Steps']/reac_input['Pulse Duration'],0))
-				if should_it <= 6 and should_it%5 == 0:
-					for k_step in range(0,len(necessary_values['reactants'])):
-						temp = call_ad_rrm_analysis(u_final[k_step],controls,dx(1))
-						RRM_der[k_step].append(temp)
-					simulation_time_list.append(time.time() - time_size)
-					#sys.exit()
-					RRM_time_list.append(t)
+			sens_time_list.append(t)
 
 			progressBar(t, reac_input['Pulse Duration'])
 			u_n.assign(u)
 			t += dt
-		if reac_input['Sensitivity Analysis'].lower() == 'true':
-			print('copy complete')
-		
-			tape.evaluate_tlm()
-			
-			for eachSens in u_graph_data:
-				np.savetxt(reac_input['Output Folder Name']+'_folder/sensitivity/conc_'+str(eachSens)+'.csv',u_graph_data[eachSens],delimiter=",")#
 
-			for eachSens in sensFuncs:
+		if reac_input['Sensitivity Analysis'].lower() == 'true' or reac_input['RRM Analysis'].lower() == 'true':
+			print()
+			print()
+			print('Evaluating Tape with Tangent Linear Method. Could take some time.')
+			tape.evaluate_tlm()
+
+		if reac_input['Sensitivity Analysis'].lower() == 'true':
+			
+			for numEachSens,eachSens in enumerate(u_graph_data):
+				np.savetxt(sensFolder+'/c_'+legend_label[numEachSens]+'.csv',u_graph_data[eachSens],delimiter=",")#
+
+			for numEachSens,eachSens in enumerate(sensFuncs):
 				newList = []
 				for kSensNum, kSens in enumerate(sensFuncs[eachSens]):
 					newValue = kSens.block_variable.tlm_value
 					newList.append(newValue)
-					print(newValue)
-				np.savetxt(reac_input['Output Folder Name']+'_folder/sensitivity/sensFuncs_'+str(eachSens)+'.csv',newList,delimiter=",")#
-				
-			print('end conc done')
+				np.savetxt(sensFolder+'/dc_'+necessary_values['reactants'][numEachSens]+'.csv',newList,delimiter=",")#
 			
+		if reac_input['RRM Analysis'].lower() == 'true':
 
-			for eachSens in thinSensFunc:
+			for numEachSens,eachSens in enumerate(thinSensFunc):
 				newList = []
 				for kSensNum, kSens in enumerate(thinSensFunc[eachSens]):
 					newValue = kSens.block_variable.tlm_value
 					newList.append(newValue)
-					print(newValue)
-				np.savetxt(reac_input['Output Folder Name']+'_folder/sensitivity/thinSensFunc_'+str(eachSens)+'.csv',newList,delimiter=",")#
-				
-			print('thin conc done')
-			
+				np.savetxt(rrmFolder+'/thinValue'+'/dc_'+necessary_values['reactants'][numEachSens]+'.csv',newList,delimiter=",")#
 
-			for eachSens in pointSensFunc:
+			for numEachSens,eachSens in enumerate(pointSensFunc):
 				newList = []
 				for kSensNum, kSens in enumerate(pointSensFunc[eachSens]):
 					newValue = kSens.block_variable.tlm_value
 					newList.append(newValue)
-					print(newValue)
-				print(eachSens)
-				np.savetxt(reac_input['Output Folder Name']+'_folder/sensitivity/pointSensFunc_'+str(eachSens)+'.csv',newList,delimiter=",")
-				
-			print('point conc done')
+
+				np.savetxt(rrmFolder+'/pointValue'+'/dc_'+necessary_values['reactants'][numEachSens]+'.csv',newList,delimiter=",")
 			
 
-			for eachSens in thinSensFuncRate:
+			for numEachSens,eachSens in enumerate(thinSensFuncRate):
 				newList = []
 				for kSensNum, kSens in enumerate(thinSensFuncRate[eachSens]):
 					newValue = kSens.block_variable.tlm_value
 					newList.append(newValue)
-					print(newValue)
-				print(eachSens)
-				np.savetxt(reac_input['Output Folder Name']+'_folder/sensitivity/thinSensFuncRate_'+str(eachSens)+'.csv',newList,delimiter=",")
-				
-			print('thin rate done')
-			
 
-			for eachSens in pointSensFuncRate:
+				np.savetxt(rrmFolder+'/thinValue'+'/dr_'+necessary_values['reactants'][numEachSens]+'.csv',newList,delimiter=",")
+		
+			for numEachSens,eachSens in enumerate(pointSensFuncRate):
 				newList = []
 				for kSensNum, kSens in enumerate(pointSensFuncRate[eachSens]):
 					newValue = kSens.block_variable.tlm_value
 					newList.append(newValue)
-					print(newValue)
-				print(eachSens)
-				np.savetxt(reac_input['Output Folder Name']+'_folder/sensitivity/pointSensFuncRate_'+str(eachSens)+'.csv',newList,delimiter=",")
-				
-			print('point rate done')
+
+				np.savetxt(rrmFolder+'/pointValue'+'/dr_'+necessary_values['reactants'][numEachSens]+'.csv',newList,delimiter=",")
 			
 			#sys.exit()
 		
@@ -634,7 +630,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		j_values = []
 		dj_values = []
 
-		if reac_input['MKM Analysis'].lower() == 'true' or reac_input['Petal Plots'].lower() == 'true':
+		if reac_input['Thin-Zone Analysis'].lower() == 'true':
 			if int(reac_input['Number of Pulses']) == 1:
 				for j_species in range(0,all_molecules-int(reac_input['Number of Inerts'])):
 					#print(necessary_values['reactants'][j_species])
@@ -756,26 +752,26 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			else:
 				pass
 		
-		if reac_input['Sensitivity Analysis'].lower() == 0:#'true':
-			for k_sens_step in range(monitored_gas):
-				sens_time = np.asarray(sens_time_list)
-				sens_time = sens_time.T#np.transpose(sens_time)
-				sensitivity_output_2 = np.asarray(sensitivity_output[k_sens_step])
-				sensitivity_output_2 = np.append(sens_time[:,None],sensitivity_output_2,axis=1)	
-				np.savetxt(reac_input['Output Folder Name']+'_folder/sensitivity/'+legend_label[k_sens_step]+'/pulse_'+str(k_pulse+1)+'.csv',sensitivity_output_2,delimiter=",",header='t,'+','.join(legend_2))#
-			df_sens_time = pd.DataFrame(simulation_time_list)
-			df_sens_time.to_csv(reac_input['Output Folder Name']+'_folder/sensitivity/time.csv',header=None)			
-
-		if reac_input['RRM Analysis'].lower() == 'true':
-			for k_sens_step in range(len(necessary_values['reactants'])):#necessary_values['reactants']
-				RRM_time = np.asarray(RRM_time_list)
-				#sens_time = np.asarray(graph_data['timing'][0:])
-				RRM_time = RRM_time.T#np.transpose(sens_time)
-				RRM_der_2 = np.asarray(RRM_der[k_sens_step])
-				RRM_der_2 = np.append(RRM_time[:,None],RRM_der_2,axis=1)	
-				np.savetxt(reac_input['Output Folder Name']+'_folder/RRM_derivatives/'+necessary_values['reactants'][k_sens_step]+'/pulse_'+str(k_pulse+1)+'.csv',RRM_der_2,delimiter=",",header='t,'+','.join(legend_2))#
-			df_sens_time = pd.DataFrame(simulation_time_list)
-			df_sens_time.to_csv(reac_input['Output Folder Name']+'_folder/RRM_derivatives/time.csv',header=None)			
+#		if reac_input['Sensitivity Analysis'].lower() == 0:#'true':
+#			for k_sens_step in range(monitored_gas):
+#				sens_time = np.asarray(sens_time_list)
+#				sens_time = sens_time.T#np.transpose(sens_time)
+#				sensitivity_output_2 = np.asarray(sensitivity_output[k_sens_step])
+#				sensitivity_output_2 = np.append(sens_time[:,None],sensitivity_output_2,axis=1)	
+#				np.savetxt(reac_input['Output Folder Name']+'_folder/sensitivity/'+legend_label[k_sens_step]+'/pulse_'+str(k_pulse+1)+'.csv',sensitivity_output_2,delimiter=",",header='t,'+','.join(legend_2))#
+#			df_sens_time = pd.DataFrame(simulation_time_list)
+#			df_sens_time.to_csv(reac_input['Output Folder Name']+'_folder/sensitivity/time.csv',header=None)			
+#
+#		if reac_input['RRM Analysis'].lower() == 'true':
+#			for k_sens_step in range(len(necessary_values['reactants'])):#necessary_values['reactants']
+#				RRM_time = np.asarray(RRM_time_list)
+#				#sens_time = np.asarray(graph_data['timing'][0:])
+#				RRM_time = RRM_time.T#np.transpose(sens_time)
+#				RRM_der_2 = np.asarray(RRM_der[k_sens_step])
+#				RRM_der_2 = np.append(RRM_time[:,None],RRM_der_2,axis=1)	
+#				np.savetxt(reac_input['Output Folder Name']+'_folder/RRM_derivatives/'+necessary_values['reactants'][k_sens_step]+'/pulse_'+str(k_pulse+1)+'.csv',RRM_der_2,delimiter=",",header='t,'+','.join(legend_2))#
+#			df_sens_time = pd.DataFrame(simulation_time_list)
+#			df_sens_time.to_csv(reac_input['Output Folder Name']+'_folder/RRM_derivatives/time.csv',header=None)			
 
 		name_list = necessary_values['reactants'][monitored_gas:]
 
@@ -876,17 +872,21 @@ def call_sim():
 	
 	reactor_kinetics_input,kinetic_parameters,kin_in = read_input()
 
-	graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters)
+	if reactor_kinetics_input['Sensitivity Analysis'].lower() == 'true' or reactor_kinetics_input['RRM Analysis'].lower() == 'true':
+		for parameters in kinetic_parameters:
+			reactor_kinetics_input,kinetic_parameters,kin_in = read_input()
+			reactor_kinetics_input['Sensitivity Parameter'] = parameters
+			reactor_kinetics_input['Display Graph'] = 'FALSE'
+			if reactor_kinetics_input['Fit Parameters'].lower() == 'true':
+				print('')
+				print('')
+				
+				print('Running the Sensitivity/RRM Analysis and Parameter Fitting methods simultaniously is not possible due to conflicts between the tangent linear and adjoint methods.')
+				print('Please run again with one of these methods excluded.')
+				sys.exit()
 
-	###if reactor_kinetics_input['MKM Analysis'].lower() == 'true':
-	###	MKM_graphs(kin_in,reactor_kinetics_input['reactions_test'],reactor_kinetics_input['Output Folder Name']+'_folder/thin_data',reactor_kinetics_input['Display Graph'].lower())
-	###if reactor_kinetics_input['Petal Plots'].lower() == 'true':
-	###		print('true_mkm')
-	###if reactor_kinetics_input['RRM Analysis'].lower() == 'true':
-	###	R_RRM_func(legend_label[0:len(legend_label)-1],os.getcwd(),reactor_kinetics_input['Output Folder Name']+'_folder')
-	###	if reactor_kinetics_input['Petal Plots'].lower() == 'true':
-	###		print('true_RRM')
-	###if reactor_kinetics_input['MKM Analysis'].lower() == 'true' and reactor_kinetics_input['RRM Analysis'].lower() == 'true':
-	###	jacobian_visual(kin_in,reactor_kinetics_input['reactions_test'],reactor_kinetics_input['Output Folder Name']+'_folder/thin_data',reactor_kinetics_input['Display Graph'].lower(),legend_label[0:len(legend_label)-1],os.getcwd(),reactor_kinetics_input['output_file_name']+'_folder',legend_label[:-1],reactor_kinetics_input['Number of Pulses'])
+			graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters)
+	else:
+		graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters)
 
 call_sim()

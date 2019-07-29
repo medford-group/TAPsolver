@@ -91,27 +91,6 @@ def call_sens_analysis(u_value,control_list,domain,direction):
 	temp = np.array((value_list))
 	
 	return temp
-	
-
-def call_ad_rrm_analysis(u_value,control_list,domain):
-
-	"""Similar to call_sens_analysis, calculates the derivatives for thin zone"""
-
-	flux =  u_value*u_value*domain
-	sens_func = assemble(flux)
-	X = compute_hessian(sens_func,control_list)###################
-	m = Enlist(control_list)
-	grads = [i.get_derivative(options=None) for i in m]
-	value_list = []
-	Z = np.array(len(control_list))
-	
-	for nu in grads:
-		value_list.append(nu.values().item(0))
-	
-	temp = np.array((value_list))
-	
-	return temp
-	#sensitivity_output[k_step].append(temp)
 
 def solver_iteration(time_step,method,solver,dk,dec_tim,inc_tim):
 	try:

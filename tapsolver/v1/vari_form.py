@@ -289,3 +289,68 @@ def rateEqs(rate_array,rev_irr):
 			rateStrings[v] = F
 
 	return rateStrings
+
+def rrmEqs(rate_array,rev_irr,domain):
+
+###########################################################################################################
+	# Calls the array and 
+	rateStrings = {}
+	for z in range(0, rate_array.shape[1]):
+		rateStrings[z] = ''
+
+	for k,z in enumerate(rate_array):
+		
+		F = ''
+
+		neg = []
+		val_neg = []
+		pos = []
+		val_pos = []
+		for j,v in enumerate(z):
+			if v < 0:
+				neg.append(j)
+				val_neg.append(v)
+			elif v > 0:
+				pos.append(j)
+				val_pos.append(v)
+		
+		together = neg+pos
+
+		new_neg = 'r_const["kf'+str(k)+'"]'
+		for j,v in enumerate(neg):
+			#new_neg = new_neg+"*(cat_data['conVtime_"+str(v)+"']**"+str(abs(val_neg[j]))+")"#
+			new_neg = new_neg+"*(u["+str(v)+"]**"+str(abs(val_neg[j]))+")"#
+		new_pos = 'r_const["kb'+str(k)+'"]'
+		for j,v in enumerate(pos):
+			#new_pos = new_pos+"*(cat_data['conVtime_"+str(v)+"']**"+str(abs(val_pos[j]))+")"#
+			new_pos = new_pos+"*(u["+str(v)+"]**"+str(abs(val_pos[j]))+")"#
+		
+		for j,v in enumerate(together):
+			F = F+rateStrings[v]
+			if j < len(neg):
+				#print("neg")
+				if rev_irr[k] == 1:
+					F = F+"-"+str(abs(val_neg[j]))+" * "+new_pos+" + "+str(abs(val_neg[j]))+"* "+new_neg
+					#print("- dk*("+str(abs(val_neg[j]))+"* "+new_pos+"*v_d['v_"+str(v+1)+"']*dx(1))"+"+ dk*("+str(abs(val_neg[j]))+"* "+new_neg+"*v_d['v_"+str(v+1)+"']*dx(1))")
+					#print("")
+				else:
+					F = F+"+"+str(abs(val_neg[j]))+"* "+new_neg
+					#print("+ dk*("+str(abs(val_neg[j]))+"* "+new_neg+"*v_d['v_"+str(v+1)+"']*dx(1))")
+					#print("")
+			else:
+				#print("pos")
+				if rev_irr[k] == 1:
+					F = F+"+"+str(abs(val_pos[j-len(neg)]))+" * "+new_pos+" - "+str(abs(val_pos[j-len(neg)]))+"* "+new_neg
+					#print("+ dk*("+str(abs(val_pos[j-len(neg)]))+"* "+new_pos+"*v_d['v_"+str(v+1)+"']*dx(1))"+"- dk*("+str(abs(val_pos[j-len(neg)]))+"* "+new_neg+"*v_d['v_"+str(v+1)+"']*dx(1))")
+					#print("")
+				else:
+					F = F+"-"+str(abs(val_pos[j-len(neg)]))+" * "+new_neg
+					#print("- dk*("+str(abs(val_pos[j-len(neg)]))+"* "+new_neg+"*v_d['v_"+str(v+1)+"']*dx(1))")
+					#print("")
+		
+			rateStrings[v] = F
+
+	for allEquations in rateStrings:
+		rateStrings[allEquations] = 'assemble( ( inner(' + rateStrings[allEquations] + ', Sw3) )* '+domain+')'
+
+	return rateStrings
