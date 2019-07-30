@@ -11,7 +11,6 @@ import math
 import os
 import fenics_adjoint
 
-
 def read_input():
 	
 	"""
@@ -34,7 +33,7 @@ def read_input():
 	
 	for k in range(0,len(reactor_info.index)):
 		try:
-			reactor_kinetics_input[reactor_info.iloc[k,0]] = float(reactor_info.iloc[k,1]) 
+			reactor_kinetics_input[reactor_info.iloc[k,0]] = float(reactor_info.iloc[k,1])
 		except ValueError:
 			reactor_kinetics_input[reactor_info.iloc[k,0]] = reactor_info.iloc[k,1]
 
@@ -50,9 +49,16 @@ def read_input():
 		except ValueError:
 			reactor_kinetics_input[feed_surf_info.iloc[k,0]] = feed_surf_info.iloc[k,1]
 
-	reactor_kinetics_input['len_inert_1'] = reactor_kinetics_input['Reactor Length']/2 -  0.5*(reactor_kinetics_input['Catalyst Fraction'])*reactor_kinetics_input['Reactor Length']
+
+	### Change this set of code!
+	#reactor_kinetics_input['len_inert_1'] = reactor_kinetics_input['Reactor Length']/2 -  0.5*(reactor_kinetics_input['Catalyst Fraction'])*reactor_kinetics_input['Reactor Length']
+	#reactor_kinetics_input['len_cat'] = (reactor_kinetics_input['Catalyst Fraction'])*reactor_kinetics_input['Reactor Length'] 
+	#reactor_kinetics_input['len_inert_2'] =  reactor_kinetics_input['Reactor Length']/2 -  0.5*(reactor_kinetics_input['Catalyst Fraction'])*reactor_kinetics_input['Reactor Length']
+
+	reactor_kinetics_input['len_inert_1'] = reactor_kinetics_input['Reactor Length']*(reactor_kinetics_input['Catalyst Location'] - 0.5*(reactor_kinetics_input['Catalyst Fraction']))#reactor_kinetics_input['Reactor Length']/2 -  0.5*(reactor_kinetics_input['Catalyst Fraction'])*reactor_kinetics_input['Reactor Length']
 	reactor_kinetics_input['len_cat'] = (reactor_kinetics_input['Catalyst Fraction'])*reactor_kinetics_input['Reactor Length'] 
-	reactor_kinetics_input['len_inert_2'] =  reactor_kinetics_input['Reactor Length']/2 -  0.5*(reactor_kinetics_input['Catalyst Fraction'])*reactor_kinetics_input['Reactor Length']
+	reactor_kinetics_input['len_inert_2'] =  reactor_kinetics_input['Reactor Length'] - (reactor_kinetics_input['len_cat'] + reactor_kinetics_input['len_inert_1'])#reactor_kinetics_input['Reactor Length']/2 -  0.5*(reactor_kinetics_input['Catalyst Fraction'])*reactor_kinetics_input['Reactor Length']
+
 
 	reactor_kinetics_input['reactions_test'] = reaction_info.iloc[:,0].tolist()
 

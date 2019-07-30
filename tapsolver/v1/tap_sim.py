@@ -99,7 +99,9 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	
 	### Initialize the grid system, time step size, pulse size and diffusion coefficients ###
 	r_param, dx_r, dx2_r, frac_length, cat_location = establish_grid_system(reac_input['len_inert_1'],reac_input['len_cat'],reac_input['len_inert_2'],reac_input['Mesh Size'])
+	
 	cat_location = reac_input['Catalyst Location']
+	
 	dk = Constant(reac_input['Pulse Duration']/reac_input['Time Steps'])
 	eb = np.array((reac_input['Void Fraction Inert'],reac_input['Void Fraction Catalyst'],reac_input['Void Fraction Inert']))
 
@@ -154,14 +156,14 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	### Define the subdomain for the catalyst region
 	class thin_zone(SubDomain):
 		def inside(self, x, on_boundary):
-			return between(x[0], ((cat_location - 0.5*frac_length), (cat_location + 0.5*frac_length)))
+			return between(x[0], (((1-cat_location) - 0.5*frac_length), ((1-cat_location) + 0.5*frac_length)))
 
 	class singlePoint(SubDomain):
 		def inside(self,x,on_boundary):
-			return between(x[0], ((cat_location - 1/reac_input['Mesh Size']), (cat_location + 1/reac_input['Mesh Size'])))
+			return between(x[0], (((1-cat_location) - 1/reac_input['Mesh Size']), ((1-cat_location) + 1/reac_input['Mesh Size'])))
 
 
-
+	
 	thin_zone = thin_zone()
 	domains = MeshFunction("size_t", mesh,0)
 	domains.set_all(0)
@@ -467,7 +469,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 				for jk in range(0,all_molecules):
 					new_values = [] 
 					cat_values = []
-			
+
 					for z in range(mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])-1,int((cat_location + 0.5*frac_length)*reac_input['Mesh Size'])):
 						
 						try:
@@ -476,7 +478,6 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 							
 						except AttributeError:
 							value_cat = u_n.vector().get_local()[z*(all_molecules)]
-							print('How are you?')
 							sys.exit()
 							cat_values[0] += value_cat*dx_r
 
@@ -508,12 +509,14 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 									u_n.vector()[(all_molecules)-(int(reac_input['Number of Inerts'])+z_num+1)] = float(z_sur)
 								else:
 									u_n.vector()[z*(all_molecules)-(int(reac_input['Number of Inerts'])+z_num+1)] = float(z_sur)
+
 						else:
 							if int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])-1 <= 0:
 								u_n.vector()[(all_molecules)-(2)] = float(species_pulse_list)
 							else:
 								u_n.vector()[z*(all_molecules)-(2)] = float(species_pulse_list)
 
+				
 				dt = solver_iteration(dt,reac_input['Solver Method'],solver,dk,1.5,1.1)
 				
 			if reac_input['Sensitivity Analysis'].lower() == 'true':
