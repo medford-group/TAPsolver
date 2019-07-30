@@ -220,11 +220,11 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		except TypeError:
 			print('Objective Point Input Is Not Valid')
 			sys.exit()
-
+	sens_time_list = []
 	if reac_input['Sensitivity Analysis'].lower() == 'true':
 		path_2 = reac_input['Output Folder Name']+'_folder/sensitivity/'
 		generate_folder(path_2)
-		sens_time_list = []
+		
 		
 		path_molecules = path_2+reac_input['Sensitivity Parameter']
 		generate_folder(path_molecules)
@@ -234,7 +234,6 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	if reac_input['RRM Analysis'].lower() == 'true':
 		path_2 = reac_input['Output Folder Name']+'_folder/RRM_analysis/'
 		generate_folder(path_2)
-		sens_time_list = []
 		
 		path_molecules = path_2+reac_input['Sensitivity Parameter']
 		generate_folder(path_molecules)
