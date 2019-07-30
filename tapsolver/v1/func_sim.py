@@ -543,19 +543,19 @@ def generate_gif(molecules,exp_loc,fit_loc,all_steps,constants,reactions,time_da
 	
 		ax.set_xlabel('Time (s)', fontsize=16)
 		ax.set_ylabel('Flux (nmol/s)', fontsize=16)
-		textstr = 'Rate Constants: '
+		#textstr = 'Rate Constants: '
 		
-		for k_len in range(0,len(constants[0])):
-			textstr = '\n'.join((textstr,'k'+str(1+k_len)+': '+'{:0.3e}'.format(constants[step][k_len])))
+		#for k_len in range(0,len(constants[0])):
+		#	textstr = '\n'.join((textstr,'k'+str(1+k_len)+': '+'{:0.3e}'.format(constants[step][k_len])))
 
 		props = dict(facecolor='white')
-		ax.text(0.8, 0.95, textstr, transform=ax.transAxes, fontsize=14,verticalalignment='top',bbox=props,ha='center')
-		textstr = 'Elementary Reactions:'
+		#ax.text(0.8, 0.95, textstr, transform=ax.transAxes, fontsize=14,verticalalignment='top',bbox=props,ha='center')
+		#textstr = 'Elementary Reactions:'
 		
-		for k_reacs in range(0,len(reactions)):
-			textstr = '\n'.join((textstr,reactions[k_reacs]))
+		#for k_reacs in range(0,len(reactions)):
+		#	textstr = '\n'.join((textstr,reactions[k_reacs]))
 
-		ax.text(0.5, 0.95, textstr, transform=ax.transAxes, fontsize=14,verticalalignment='top',bbox=props,ha='center')
+		#ax.text(0.5, 0.95, textstr, transform=ax.transAxes, fontsize=14,verticalalignment='top',bbox=props,ha='center')
 		ax.text(0.15, 0.95,'Iteration: '+str(step),transform=ax.transAxes, fontsize=14,verticalalignment='top',bbox=props)
 		peak_peak = 0
 
@@ -574,16 +574,16 @@ def generate_gif(molecules,exp_loc,fit_loc,all_steps,constants,reactions,time_da
 		#	#peak2 = exp_data_2.loc[exp_data_2[0] == peak_loc[0]].index
 		#	#plt.plot(peak_loc[0], peak_loc[1], 'ro')
 
-		ax.set_ylim(0,peak_peak*1.1)
+		#ax.set_ylim(0,peak_peak*1.1)
 		
-		subpos = [0.4,0.13,0.5,0.4]
-		subax1 = add_subplot_axes(ax,subpos)
-		subax1.plot(x_data[:step],y_data[:step])
-		subax1.set_title('Time per Iteration')
-		subax1.set_ylabel('Time (minutes)')
-		subax1.set_xlabel('Iteration #')
-		subax1.set_xlim(0,all_steps)
-		subax1.set_ylim(0,max(y_data)*1.1)
+		#subpos = [0.4,0.13,0.5,0.4]
+		#subax1 = add_subplot_axes(ax,subpos)
+		#subax1.plot(x_data[:step],y_data[:step])
+		#subax1.set_title('Time per Iteration')
+		#subax1.set_ylabel('Time (minutes)')
+		#subax1.set_xlabel('Iteration #')
+		#subax1.set_xlim(0,all_steps)
+		#subax1.set_ylim(0,max(y_data)*1.1)
 		
 		fig.canvas.draw()
 		image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')

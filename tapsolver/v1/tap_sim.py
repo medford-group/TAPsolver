@@ -657,7 +657,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			dj_values.append(djv)
 			mv = [v.values()[0] for v in m]
 			x_values.append(mv)
-			with open('./'+reac_input['Output Folder Name']+'_folder/fitting/constantIterations.txt', 'w') as f:
+			with open('./'+reac_input['Output Folder Name']+'_folder/fitting/optIter.txt', 'w') as f:
 				f.write("Contents: "+str(it_times))
 				f.write('\n')
 				f.write("Change: "+str(dj_values))
@@ -797,71 +797,70 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	plt.clf()
 	plt.close()
 
-	if reac_input['Fit Parameters'].lower() == 'true' and True == False:
-		with open('./'+reac_input['Output Folder Name']+'_folder/fitting/constantIterations.txt', 'r') as f:
-			lines = f.readlines()
-		f.close
-		lines = [x.strip() for x in lines]
-		times = lines[0]
-		times = times.replace('Contents: ','')
-		times = eval(times)
+	if reac_input['Fitting Gif'].lower() == 'true':
+		if os.path.exists('./'+reac_input['Output Folder Name']+'_folder/fitting/optIter.txt') == True:
+			with open('./'+reac_input['Output Folder Name']+'_folder/fitting/optIter.txt', 'r') as f:
+				lines = f.readlines()
+			f.close
+			lines = [x.strip() for x in lines]
+			times = lines[0]
+			times = times.replace('Contents: ','')
+			times = eval(times)
 
-		constants = lines[1]
-		constants = constants.replace('Constants: ','')
-		constants = eval(constants)
-		things = len(times)
-		if optimization_success == False:
-			things -= 1
+			constants = lines[2]
+			constants = constants.replace('Constants: ','')
+			constants = eval(constants)
+			things = len(times)
+			#if optimization_success == False:
+			#things -= 1
 
-		for k_num in range(0,things):
-			#print('what?')
-			alter = pd.read_csv('./input_file.csv',header=None)
+			for k_num in range(0,things):
+				#print('what?')
+				alter = pd.read_csv('./input_file.csv',header=None)
 
-			variables_to_change = ['Display Graph','Fit Parameters','Sensitivity Analysis','Store Outlet Flux','Output Folder Name','Reaction_Information']
+				variables_to_change = ['Display Graph','Fit Parameters','Sensitivity Analysis','Store Outlet Flux','Output Folder Name','Reaction_Information']
 			
-			for k in range(alter.shape[0]):
-				if alter[0][k] in variables_to_change:
-					if alter[0][k] == 'Store Outlet Flux':
-						alter.iloc[k,1] = 'TRUE'
-					elif alter[0][k] == 'Output Folder Name':
-						alter.iloc[k,1] = reac_input['Output Folder Name']+'_folder/fitting/iter_'+str(k_num)
-					elif alter[0][k] == 'Reaction_Information':
-						value = 1
-						current_rate = k+1
-						kz = 0
-						while kz < len(kVals):
-							if value == 1:
-								alter.iloc[current_rate,value] = constants[k_num][kz]
-								
-								value = 2
-								kz+=1
-							elif value == 2:
-								if str(alter.iloc[current_rate,value]) != 'nan':
+				for k in range(alter.shape[0]):
+					if alter[0][k] in variables_to_change:
+						if alter[0][k] == 'Store Outlet Flux':
+							alter.iloc[k,1] = 'TRUE'
+						elif alter[0][k] == 'Output Folder Name':
+							alter.iloc[k,1] = reac_input['Output Folder Name']+'_folder/fitting/iter_'+str(k_num)
+						elif alter[0][k] == 'Reaction_Information':
+							value = 1
+							current_rate = k+1
+							kz = 0
+							while kz < len(kVals):
+								if value == 1:
 									alter.iloc[current_rate,value] = constants[k_num][kz]
+									
+									value = 2
 									kz+=1
-								else:
-									pass
-								current_rate += 1
-								value = 1
-							
+								elif value == 2:
+									if str(alter.iloc[current_rate,value]) != 'nan':
+										alter.iloc[current_rate,value] = constants[k_num][kz]
+										kz+=1
+									else:
+										pass
+									current_rate += 1
+									value = 1
 
-					else:
-						alter.iloc[k,1] = 'FALSE'
+						else:
+							alter.iloc[k,1] = 'FALSE'
 
-			alter.to_csv('./input_file.csv',header=None,index=False)
+				alter.to_csv('./input_file.csv',header=None,index=False)	
 			
-			
-			try:
-				call_sim()
+				try:
+					call_sim()
 
-			except:
-				k_num = things
-
-		generate_gif(legend_label[:len(legend_label)], reac_input['Experimental Data Folder']+'/flux_data', './'+reac_input['Output Folder Name']+'_folder/fitting/', len(constants), constants, reactor_kinetics_input['reactions_test'], times)
+				except:
+					k_num = things
 		
-		for k_num in range(0,things):
-			shutil.rmtree('./'+reac_input['Output Folder Name']+'_folder/fitting/iter_'+str(k_num)+'_folder') 
-	
+			generate_gif(legend_label[:len(legend_label)], reac_input['Experimental Data Folder']+'/flux_data', './'+reac_input['Output Folder Name']+'_folder/fitting', len(constants), constants, reactor_kinetics_input['reactions_test'], times)
+		
+			for k_num in range(0,things):
+				shutil.rmtree('./'+reac_input['Output Folder Name']+'_folder/fitting/iter_'+str(k_num)+'_folder') 
+
 		user_data = pd.read_csv('./'+reac_input['Output Folder Name']+'_folder/input_file.csv',header=None)
 		user_data.to_csv('./input_file.csv',header=None,index=False)
 
