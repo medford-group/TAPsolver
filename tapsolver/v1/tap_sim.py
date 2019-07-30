@@ -58,7 +58,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	path_5 = './'+reac_input['Output Folder Name']+'_folder/graphs/'
 	generate_folder(path_5)
 
-	if reac_input['Fit Parameters'].lower() == 'true':
+	if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true':
 		path_6 = './'+reac_input['Output Folder Name']+'_folder/fitting/'
 		generate_folder(path_6)
 
@@ -222,7 +222,22 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		except TypeError:
 			print('Objective Point Input Is Not Valid')
 			sys.exit()
+
+	if reac_input['Fit Inert'].lower() == 'true':
+		try:
+			if type(reac_input['Objective Points']) == float:
+				output_fitting = exp_data_fitting(legend_label[int(reac_input['Number of Inerts']):],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'])
+			elif reac_input['Objective Points'] == 'all':
+				output_fitting = every_point_fitting(legend_label[int(reac_input['Number of Inerts']):],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'])
+			else:
+				print('Objective Points defined incorrectly')
+				sys.exit()
+		except TypeError:
+			print('Objective Point Input Is Not Valid')
+			sys.exit()
 	sens_time_list = []
+	
+
 	if reac_input['Sensitivity Analysis'].lower() == 'true':
 		path_2 = reac_input['Output Folder Name']+'_folder/sensitivity/'
 		generate_folder(path_2)
@@ -300,7 +315,23 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			for timeStep in range(0,len(output_fitting[legend_label[0]]['times'])):
 				output_fitting[legend_label[k_fitting]]['times'][timeStep] = round(output_fitting[legend_label[k_fitting]]['times'][timeStep],6)
 
+	### legend_label[int(reac_input['Number of Inerts']):]
+	if reac_input['Fit Inert'].lower() == 'true':
+		for k_fitting in range(len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])]),len(legend_label[int(reac_input['Number of Inerts']):])):
+			for timeStep in range(0,len(output_fitting[legend_label[0]]['times'])):
+				output_fitting[legend_label[k_fitting]]['times'][timeStep] = round(output_fitting[legend_label[k_fitting]]['times'][timeStep],6)
 
+	### Define controls only if needed for differentiation based analysis ###
+	if reac_input['Fit Inert'].lower() == 'true':
+		controls = []
+		legend_2 = []
+		print(len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])]))
+		print(len(legend_label[int(reac_input['Number of Inerts']):]))
+		for j in range(len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])]),len(legend_label[int(reac_input['Number of Inerts']):])):
+			print(D[j,0])
+			#controls.append(Control(r_const[j]))
+			#legend_2.append(j)
+	
 	if reac_input['Sensitivity Analysis'].lower() == 'true' or reac_input['RRM Analysis'].lower() == 'true':
 
 		c = r_const[reac_input['Sensitivity Parameter']]
@@ -397,7 +428,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			cat_data['conVtime_'+str(z_gasses)] = []
 
 		t = 0
-		if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Sensitivity Analysis'].lower() == 'true':
+		if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Sensitivity Analysis'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true':
 			osub = integration_section()
 			domains = MeshFunction("size_t", mesh,0)
 			domains.set_all(0)
@@ -464,7 +495,41 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 							else:
 								pass
 						print(tot_objective)
-						
+
+			### len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])]),len(legend_label[int(reac_input['Number of Inerts']):]
+
+
+			if reac_input['Fit Inert'].lower() == 'true':
+
+				for k_fitting in range(len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])]),len(legend_label[int(reac_input['Number of Inerts']):])):
+					if round(t,6) in output_fitting[legend_label[k_fitting]]['times']:
+						c_exp = output_fitting[legend_label[k_fitting]]['values'][output_fitting[legend_label[k_fitting]]['times'].index(round(t,6))]
+						slope = (-c_exp)/(1/mesh_size)
+						intercept = c_exp - ((1-(1/mesh_size))*slope)
+						w_new = Expression('A*x[0]+B',A=Constant(slope),B=Constant(intercept),degree=0)#Expression("1", degree=0)
+						w_new2 = interpolate(w_new,V_du)
+						w3 = project(w_new2,V_du)#output_fitting[legend_label[k_fitting]]['values'][output_fitting[legend_label[k_fitting]]['times'].index(round(t,6))]*
+						#test_meaning = assemble(inner(u_n[k_fitting] + output_fitting[legend_label[k_fitting]]['values'][output_fitting[legend_label[k_fitting]]['times'].index(round(t,6))] ,u_n[k_fitting] + output_fitting[legend_label[k_fitting]]['values'][output_fitting[legend_label[k_fitting]]['times'].index(round(t,6))])*ds(1))
+
+						try:
+							if legend_label[k_fitting] != 'Inert':
+								jfunc_2 += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
+								tot_objective += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
+								#tot_objective += assemble(inner(u_n[k_fitting] - w3,u_n[k_fitting] - w3)*dP(1))
+								
+							else:
+								pass
+
+						except UnboundLocalError:
+							
+							if legend_label[k_fitting] != 'Inert':
+								jfunc_2 = assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
+								tot_objective += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
+								#tot_objective += assemble(inner(u_n[k_fitting] - w3,u_n[k_fitting] - w3)*dP(1))
+							else:
+								pass
+
+					
 			if reac_input['Thin-Zone Analysis'].lower() == 'true':
 				for jk in range(0,all_molecules):
 					new_values = [] 
@@ -676,7 +741,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			set_log_active(False)
 		fitting_time = time.time()
 				
-		if reac_input['Fit Parameters'].lower() == 'true':
+		if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true':
 			rf_2 = ReducedFunctional(jfunc_2, controls,derivative_cb_post=deriv_cb)
 			low_bounds = []
 			up_bounds = []
