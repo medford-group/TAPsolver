@@ -111,11 +111,17 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	D = np.empty((len(reac_input['Mass List'].split(',')),3))
 	def diff_func(ref_mass,ref_T,mol_mass,ref_r):     	
 		return ref_r*(mp.sqrt(ref_mass*reac_input['Reactor Temperature'])/mp.sqrt(ref_T*mol_mass))
-
+	Dout = []
+	Din = []
 	for k,j in enumerate(reac_input['Mass List'].split(',')):
 		for k_2,j_2 in enumerate(ref_rate):
 			D[k,k_2] = Constant(diff_func(reac_input['Reference Mass'],reac_input['Reference Temperature'],float(j),j_2)) ###??? should this (np.sum(r_param)**2) be here? This puts it in dimensional form!
-	
+			testControl = Constant(D[k,k_2])
+			if k_2 == 0:
+				Dout.append(Constant(D[k,k_2]))
+			if k_2 == 1:
+				Din.append(Constant(D[k,k_2]))
+
 	### Define the dimensions of the reactor ###
 	ca = (reac_input['Reactor Radius']**2)*3.14159 
 
@@ -127,7 +133,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	dt = reac_input['Pulse Duration']/reac_input['Time Steps']
 
 	### Construct the reaction equation in a form that Fenics can understand ###
-	necessary_values, rate_array, rev_irr = make_f_equation(reac_input['reactions_test'],reac_input['Number of Reactants'],reac_input['Reactor Type'],reac_input['Number of Active Sites'],reac_input['Number of Inerts'],False)
+	necessary_values, rate_array, rev_irr = make_f_equation(reac_input['reactions_test'],reac_input['Number of Reactants'],reac_input['Reactor Type'],reac_input['Number of Active Sites'],reac_input['Number of Inerts'],reac_input['Advection'],False)
 	
 	### Declaring the trial / test functions in fenics and defining the finite elements ###
 	mesh = UnitIntervalMesh(int(reac_input['Mesh Size'])) 
@@ -151,6 +157,11 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	u_2 = Function(V)
 	u_3 = Function(V)
 	
+	if reac_input['Advection'].lower() == 'true':
+		W = VectorFunctionSpace(mesh, 'P', 1)
+		advTerm = Function(W)
+		advTerm.vector()[:] = reac_input['Advection Value']
+
 	graph_data,v_d,u_d,u_nd,sens_data,surf_data,cat_data = initialize_variable_dictionaries(necessary_values,all_molecules,V,u,u_n)
 
 	### Define the subdomain for the catalyst region
@@ -197,12 +208,6 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	right.mark(boundary_parts, 1)
 	#ds = Measure("ds", subdomain_data=boundary_parts)
 	
-	### Evaluate the reaction/diffusion expression for FEniCS to use ###
-	try:
-		F = eval(necessary_values['F'])
-	except NameError:
-		error_output(reac_input['reactions_test'])
-	
 	monitored_gas = necessary_values['molecules_in_gas_phase']
 	
 	bcs = define_boundary_conditions(reac_input['Reactor Type'],reac_input['reactions_test'],necessary_values['molecules_in_gas_phase'],V,reac_input['Number of Reactants'],all_molecules,reac_input['Pulse Ratio'],boundary_L,boundary_R,reac_input['Number of Inerts'])
@@ -210,6 +215,23 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	### Initialize the graphs and set the graphical parameters ###
 	fig2,ax2,legend_label,header,colors = establish_output_graph(reac_input['Reactor Type'],necessary_values['molecules_in_gas_phase'],necessary_values['reactants'],int(reac_input['Number of Inerts']))
 
+	### Evaluate the reaction/diffusion expression for FEniCS to use ###
+
+
+	### Define controls only if needed for differentiation based analysis ###
+	if reac_input['Fit Inert'].lower() == 'true':
+		controls = []
+		legend_2 = []
+		for j in range(len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])]),len(legend_label)):
+			controls.append(Control(Dout[j]))
+			legend_2.append(j)
+
+
+	try:
+		F = eval(necessary_values['F'])
+	except NameError:
+		error_output(reac_input['reactions_test'])
+	
 	if reac_input['Fit Parameters'].lower() == 'true':
 		try:
 			if type(reac_input['Objective Points']) == float:
@@ -317,21 +339,10 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 
 	### legend_label[int(reac_input['Number of Inerts']):]
 	if reac_input['Fit Inert'].lower() == 'true':
-		for k_fitting in range(len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])]),len(legend_label[int(reac_input['Number of Inerts']):])):
-			for timeStep in range(0,len(output_fitting[legend_label[0]]['times'])):
+		for k_fitting in range(len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])]),len(legend_label)):
+			for timeStep in range(0,len(output_fitting[legend_label[-1]]['times'])):
 				output_fitting[legend_label[k_fitting]]['times'][timeStep] = round(output_fitting[legend_label[k_fitting]]['times'][timeStep],6)
 
-	### Define controls only if needed for differentiation based analysis ###
-	if reac_input['Fit Inert'].lower() == 'true':
-		controls = []
-		legend_2 = []
-		print(len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])]))
-		print(len(legend_label[int(reac_input['Number of Inerts']):]))
-		for j in range(len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])]),len(legend_label[int(reac_input['Number of Inerts']):])):
-			print(D[j,0])
-			#controls.append(Control(r_const[j]))
-			#legend_2.append(j)
-	
 	if reac_input['Sensitivity Analysis'].lower() == 'true' or reac_input['RRM Analysis'].lower() == 'true':
 
 		c = r_const[reac_input['Sensitivity Parameter']]
@@ -441,9 +452,9 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		### Used to define the function to be minimized between the experimental points and synthetic points ###
 		w_new = Expression("1", degree=0)
 		w_new2 = interpolate(w_new,V_du)
-		W = VectorFunctionSpace(mesh, 'P', 1)
-		w = Function(W)
-		w.vector()[:] = 10
+		#W = VectorFunctionSpace(mesh, 'P', 1)
+		#w = Function(W)
+		#w.vector()[:] = 10
 
 		x_dim = list(range(0, int(reac_input['Mesh Size'])+1))
 		
@@ -501,7 +512,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 
 			if reac_input['Fit Inert'].lower() == 'true':
 
-				for k_fitting in range(len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])]),len(legend_label[int(reac_input['Number of Inerts']):])):
+				for k_fitting in range(len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])]),len(legend_label)):
 					if round(t,6) in output_fitting[legend_label[k_fitting]]['times']:
 						c_exp = output_fitting[legend_label[k_fitting]]['values'][output_fitting[legend_label[k_fitting]]['times'].index(round(t,6))]
 						slope = (-c_exp)/(1/mesh_size)
@@ -742,7 +753,10 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		fitting_time = time.time()
 				
 		if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true':
+			#if reac_input['Fit Parameters'].lower() == 'true':
 			rf_2 = ReducedFunctional(jfunc_2, controls,derivative_cb_post=deriv_cb)
+			#else:
+			#	rf_2 = ReducedFunctional(jfunc_2, controls,derivative_cb_post=deriv_inert)
 			low_bounds = []
 			up_bounds = []
 			try:
@@ -795,7 +809,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 					if k_pulse > 0:
 						pass
 					else:
-						dfNew = pd.read_csv(reac_input['Experimental Data Folder']+'/flux_data/'+legend_label[k]+'.csv',header=None)						
+						dfNew = pd.read_csv(reac_input['Experimental Data Folder']+'/flux_data/'+legend_label[k]+'.csv',header=None)
 						ax2.plot(dfNew[0][:],dfNew[1][:],color=colors[k],label='exp '+legend_label[k], alpha=0.7)
 				else:
 					pass
@@ -943,7 +957,7 @@ def call_sim():
 			reactor_kinetics_input,kinetic_parameters,kin_in = read_input()
 			reactor_kinetics_input['Sensitivity Parameter'] = parameters
 			reactor_kinetics_input['Display Graph'] = 'FALSE'
-			if reactor_kinetics_input['Fit Parameters'].lower() == 'true':
+			if reactor_kinetics_input['Fit Parameters'].lower() == 'true' or reactor_kinetics_input['Fit Inert'].lower() == 'true':
 				print('')
 				print('')
 				
