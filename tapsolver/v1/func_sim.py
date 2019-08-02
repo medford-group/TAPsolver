@@ -3,6 +3,7 @@ from fenics_adjoint import *
 from pyadjoint.enlisting import Enlist
 #import matplotlib
 #matplotlib.use('agg')
+import time
 import matplotlib.pyplot as plt
 import imageio
 import pandas as pd
@@ -131,7 +132,7 @@ def solver_iteration(time_step,method,solver,dk,dec_tim,inc_tim):
 	#	time_step=solver_iteration(time_step,method,solver,dk,1.5,1.1)
 	#	return time_step
 
-def flux_generation(reactor,gasses,reactants,pulse_size,Diff,voidage,dx,radius,dx2_r):
+def flux_generation(reactor,gasses,reactants,pulse_size,Diff,voidage,dx,radius,dx2_r,outScale):
 	
 	"""Scale the output values of flux with the constant found here (messy now due to different trials)"""
 
@@ -141,7 +142,13 @@ def flux_generation(reactor,gasses,reactants,pulse_size,Diff,voidage,dx,radius,d
 
 		for k in range(0,gasses):
 			#to_flux.append( (Diff[k][0]/(dx*Diff[4][0])) ) 
-			to_flux.append( 3.3*(Diff[k][0]*voidage[0] /(dx)) * (radius**2)*3.14159/(pulse_size) ) #0.53*
+			if outScale.lower() == 'true':
+
+				#!#!#!#!#!#!#!#to_flux.append( (Diff[k][0]*voidage[0] /(dx)) * (radius**2)*3.14159 / pulse_size ) #0.53*
+				to_flux.append( 2*(Diff[k][0] /(dx)) * (radius**2)*3.14159 / pulse_size ) #0.53*   ## 
+			else:
+				#!#!#!#!#!#!#!#to_flux.append((Diff[k][0]*voidage[0] /(dx)) * (radius**2)*3.14159)
+				to_flux.append(2*(Diff[k][0] /(dx)) * (radius**2)*3.14159 )
 			#to_flux.append(2 *(dx*(radius**2)*3.14159) * (Diff[k][0] /(dx*voidage[0])))#(1/((1)*pulse_size)) *###??? changed from 1 to the new form
 			#to_flux.append(2*Diff[k][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r))#(1/((1)*pulse_size)) *
 			#to_flux.append(2*(1/((1+reactants)*pulse_size)) *Diff[k][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r))
@@ -245,14 +252,17 @@ def establish_grid_system(in_1,cat,in_2,mesh_size):
 	return r_param,dx_r,dx2_r,frac_length,cat_location
 
 
-def establish_output_graph(reactor,gas_phase,reacs,inerts):
+def establish_output_graph(reactor,gas_phase,reacs,inerts,scaleGraph):
 
 	"""Generate the outlet flux graph (initialize, anyway)"""
 
 	fig2, ax2 = plt.subplots()
 	ax2.set_xlabel('$t\ (s)$')
 	if reactor == 'tap':
-		ax2.set_ylabel('$Outlet\ Flux\ (1/s)$')
+		if scaleGraph.lower() == 'true':
+			ax2.set_ylabel('$Outlet\ Flux\ (1/s)$')
+		else:
+			ax2.set_ylabel('$Outlet\ Flux\ (nmol/s)$')
 	elif reactor == 't_pfr' or 't_pfr_diff':
 		ax2.set_ylabel('$Outlet Concentration (molecules/cm3)$')
 	

@@ -4,7 +4,7 @@ from fenics_adjoint import *
 from func_sim import *
 from vari_form import *
 from reac_odes import *
-from mpmath import nsum, exp, inf
+import mpmath
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -213,8 +213,9 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	bcs = define_boundary_conditions(reac_input['Reactor Type'],reac_input['reactions_test'],necessary_values['molecules_in_gas_phase'],V,reac_input['Number of Reactants'],all_molecules,reac_input['Pulse Ratio'],boundary_L,boundary_R,reac_input['Number of Inerts'])
 	
 	### Initialize the graphs and set the graphical parameters ###
-	fig2,ax2,legend_label,header,colors = establish_output_graph(reac_input['Reactor Type'],necessary_values['molecules_in_gas_phase'],necessary_values['reactants'],int(reac_input['Number of Inerts']))
-
+	fig2,ax2,legend_label,header,colors = establish_output_graph(reac_input['Reactor Type'],necessary_values['molecules_in_gas_phase'],necessary_values['reactants'],int(reac_input['Number of Inerts']),reac_input['Scale Output'])
+	#ax2.set_ylim(0,1.75)
+	ax2.set_xlim(0,reac_input['Pulse Duration'])
 	### Evaluate the reaction/diffusion expression for FEniCS to use ###
 
 
@@ -282,7 +283,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		generate_folder(path_molecules+'/thinValue')
 
 		
-	to_flux = flux_generation(reac_input['Reactor Type'],len(legend_label),reac_input['Number of Reactants'],reac_input['Reference Pulse Size'],D,eb,dx_r,reac_input['Reactor Radius'],dx2_r)
+	to_flux = flux_generation(reac_input['Reactor Type'],len(legend_label),reac_input['Number of Reactants'],reac_input['Reference Pulse Size'],D,eb,dx_r,reac_input['Reactor Radius'],dx2_r,reac_input['Scale Output'])
 	store_data_func(reac_input['Store Outlet Flux'],reac_input['Output Folder Name'])
 	store_sens_analysis(reac_input['Sensitivity Analysis'],reac_input['Output Folder Name'],monitored_gas,legend_label)
 	
@@ -469,7 +470,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 				graph_data['conVtime_'+str(k)].append((new_val))
 			#for kjc in range(all_molecules-int(reac_input['Number of Inerts']),all_molecules):
 			for kjc in range(0,int(reac_input['Number of Inerts'])):
-				new_val = ((to_flux[monitored_gas]*u.vector().get_local()[2*(all_molecules+1)-2-(int(reac_input['Number of Inerts'])-kjc)]))
+				new_val = ((to_flux[monitored_gas+kjc]*u.vector().get_local()[2*(all_molecules+1)-2-(int(reac_input['Number of Inerts'])-kjc)]))
 				graph_data['conVtime_'+str(all_molecules-(int(reac_input['Number of Inerts'])-kjc))].append((new_val))
 			
 
@@ -803,23 +804,63 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 
 	############# Visualize/graph the data #######################################################
 		if reac_input['Display Experimental Data'].lower() == 'true':
-			
 			for k,j in enumerate(graph_data):
-				if j != 'timing':
+				if j != 'timing': #and j != 'conVtime_1' and j != 'conVtime_2' and j != 'conVtime_3' and j != 'conVtime_0' 
+					print(j)
+					print(k)
 					if k_pulse > 0:
 						pass
 					else:
 						dfNew = pd.read_csv(reac_input['Experimental Data Folder']+'/flux_data/'+legend_label[k]+'.csv',header=None)
-						ax2.plot(dfNew[0][:],dfNew[1][:],color=colors[k],label='exp '+legend_label[k], alpha=0.7)
+						ax2.plot(dfNew[0][:],dfNew[1][:],color=colors[k],label='exp '+legend_label[k], ls = '--', alpha=0.7)
 				else:
 					pass
+		
+		if reac_input['Infinite Inert'].lower() == 'true':
+			outlet = []
+			outlet.append(0)
+		
+		
+			zAnalytical = 1
+			while zAnalytical*dt < 0.01:
+				#print(zAnalytical*dt) 
+				outlet.append(0)
+				zAnalytical+=1	
+			outlet.append(0)
+			for k in range(zAnalytical+1,int(reac_input['Time Steps'])+1):
+				analyticalValue = 0
+				#print(k*dt-0.01)
+				#time.sleep(1)
+				for n in range(0,50):
+					analyticalValue += ((-1)**n)*(2*n+1)*np.exp((-(n+0.5)**2)*(3.14159**2)*(((k*dt-0.01))*(D[3][0]/(eb[0]*(np.sum(r_param)**2)))))
+					#outlet.append((Dout[3]*3.14159/(eb[0]*(np.sum(r_param)**2)))*nsum(lambda x: ((-1)**x)*(2*x+1)*exp((-(x+0.5)**2)*(3.14159**2)*((k*dt)*(Dout[3]/(eb[0]*(np.sum(r_param)**2))))) ,[0, inf]))
+				outlet.append((D[3][0]*3.14159/(eb[0]*(np.sum(r_param)**2)))*analyticalValue)
+			#print(dfNew[0][:].tolist())
+			#print(outlet)
+			#sys.exit()
+			ax2.plot(graph_data['timing'],outlet,color='r',label='Analytical Inert-1', alpha=0.7)
+				
+			outlet = []
+			outlet.append(0)
+			#print(np.sum(r_param))
+			#sys.exit()
+			for k in range(1,int(reac_input['Time Steps'])+1):
+				analyticalValue = 0
+				for n in range(0,50):
+					analyticalValue += ((-1)**n)*(2*n+1)*np.exp((-(n+0.5)**2)*(3.14159**2)*((k*dt)*(D[4][0]/(eb[0]*(np.sum(r_param)**2)))))
+					#outlet.append((Dout[3]*3.14159/(eb[0]*(np.sum(r_param)**2)))*nsum(lambda x: ((-1)**x)*(2*x+1)*exp((-(x+0.5)**2)*(3.14159**2)*((k*dt)*(Dout[3]/(eb[0]*(np.sum(r_param)**2))))) ,[0, inf]))
+				outlet.append((D[4][0]*3.14159/(eb[0]*(np.sum(r_param)**2)))*analyticalValue)
+			#print(dfNew[0][:].tolist())
+			#print(outlet)
+			#sys.exit()
+			ax2.plot(graph_data['timing'],outlet,color='k',label='Analytical Inert-1', alpha=0.7)
 
 		sig = 0.05
 		beta_2 = 0.00270
 		w_2 = 2*3.14159*70
 
 		for k,j in enumerate(graph_data):
-			if j != 'timing':
+			if j != 'timing': #and j != 'conVtime_1' and j != 'conVtime_2' and j != 'conVtime_3' and j != 'conVtime_0' 
 				if reac_input['Noise'].lower() == 'true':
 					
 					for z in range(0,int(reac_input['Time Steps'])):
@@ -856,7 +897,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 
 		name_list = necessary_values['reactants'][monitored_gas:]
 
-	ax2.legend(title="Gas Species")
+	ax2.legend(title="Gas Species")#!#!#!#!#
 	plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 	
 	if reac_input['Store Graph'].lower() == 'true':
