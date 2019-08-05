@@ -317,10 +317,28 @@ def exp_data_fitting_all(species_list,time,folder):
 
 	return curve_fitting
 
+def knudsenTest(species_list,sim_steps,folder,time,points,intensity,fraction):
+
+	user_data = {}
+	species_list = species_list[:len(species_list)]#'./experimental_data/'
+
+	for k in range(0,len(species_list)):
+		user_data[species_list[k]] = pd.read_csv(folder+'/flux_data/'+species_list[k]+'.csv',header=None)
+	print()
+	print('Knudsen Regime Fingerprint Test (should be ~ 0.31):')
+	curve_fitting = {}
+	exp_data = user_data
+	for k_num_new, k_new in enumerate(species_list):
+		peak_loc = user_data[k_new].iloc[user_data[k_new][1].idxmax()]
+		near_peak = peak_loc[0]/(time/sim_steps)
+		peak2 = user_data[k_new].loc[user_data[k_new][0] == peak_loc[0]].index
+
+		print(k_new+': '+str(peak_loc[0]*peak_loc[1]/(intensity*float(fraction[k_num_new]))))
+		print()
 
 ####Fit every point
 def every_point_fitting(species_list,sim_steps,folder,time,points):
-
+	frequency = 3
 	"""Define the objective function for optimizing kinetic parameters"""
 
 	syn_time_step = time/sim_steps
@@ -369,7 +387,7 @@ def every_point_fitting(species_list,sim_steps,folder,time,points):
 		exp_time_step = user_data[k_new][0][1]
 		near_start = round(user_data[k_new].iloc[30,0],6)/(time/sim_steps)
 		
-		for k in range(0,int(sim_steps)):
+		for k in range(0,int(sim_steps),frequency):
 			time_step.append(k)
 			times.append(k*(syn_time_step))
 			values.append(find_experimental_point(k*(syn_time_step),exp_time_step))

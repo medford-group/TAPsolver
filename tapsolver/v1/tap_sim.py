@@ -396,6 +396,11 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		species_pulse_list = reactant_feed[current_reac_set-1]
 		species_time = reactant_time[current_reac_set-1]
 
+		if reac_input['Knudsen Test'].lower() == 'true':
+			knudsenTest(legend_label[(int(len(legend_label))-int(reac_input['Number of Inerts'])):],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],reac_input['Reference Pulse Size'],species_pulse_list[(int(len(legend_label))-int(reac_input['Number of Inerts'])):])
+			time.sleep(3)
+
+
 		### Incase the time step was altered during a previous pulse, just reset to the original values ### 
 		dk = Constant(reac_input['Pulse Duration']/reac_input['Time Steps'])
 		dt = reac_input['Pulse Duration']/reac_input['Time Steps']
@@ -755,39 +760,40 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 				
 		if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true':
 			#if reac_input['Fit Parameters'].lower() == 'true':
+
 			rf_2 = ReducedFunctional(jfunc_2, controls,derivative_cb_post=deriv_cb)
 			#else:
 			#	rf_2 = ReducedFunctional(jfunc_2, controls,derivative_cb_post=deriv_inert)
 			low_bounds = []
 			up_bounds = []
-			try:
-				for gt in range(0,len(controls)):
-					low_bounds.append(0)
-					up_bounds.append(np.inf)
-
-				if reac_input['Optimization Method'] == 'L-BFGS-B' or reac_input['Optimization Method'] == '':
-					u_opt_2 = minimize(rf_2, bounds = (low_bounds,up_bounds),tol=1e-10, options={"ftol":1e-10,"gtol":1e-10})
-				elif reac_input['Optimization Method'] == 'Newton-CG':
-					u_opt_2 = minimize(rf_2, method = 'Newton-CG',tol=1e-10, options={"ftol":1e-10,"gtol":1e-10})
-				elif reac_input['Optimization Method'] == 'BFGS':
-					u_opt_2 = minimize(rf_2, method = 'BFGS',tol=1e-10, options={"gtol":1e-10})
-				elif reac_input['Optimization Method'] == 'SLSQP':
-					u_opt_2 = minimize(rf_2, method = 'SLSQP', bounds = (low_bounds,up_bounds),tol=1e-10, options={"ftol":1e-10})
-				elif reac_input['Optimization Method'] == 'CG':
-					u_opt_2 = minimize(rf_2,bounds = (low_bounds,up_bounds), method = 'CG',tol=1e-10, options={"gtol":1e-10})
-				elif reac_input['Optimization Method'] == 'basinhopping':
-					u_opt_2 = minimize(rf_2, method = 'basinhopping', bounds = (low_bounds,up_bounds),tol=1e-10, options={"ftol":1e-10,"gtol":1e-10})
+			#try:
+			for gt in range(0,len(controls)):
+				low_bounds.append(0)
+				up_bounds.append(np.inf)
 			
-				else:
-					print('Requested Optimization Method Does Not Exist')
-					sys.exit()
-				optimization_success = True
-			except RuntimeError:
-				print('Optimization Failed or Entered Too Stiff Region')
-				time.sleep(1.5)
-				print('Will shortly begin generating the optimization gif.')
-				time.sleep(5)
-				optimization_success = False
+			if reac_input['Optimization Method'] == 'L-BFGS-B' or reac_input['Optimization Method'] == '':
+				u_opt_2 = minimize(rf_2, bounds = (low_bounds,up_bounds),tol=1e-10, options={"ftol":1e-10,"gtol":1e-10})
+			elif reac_input['Optimization Method'] == 'Newton-CG':
+				u_opt_2 = minimize(rf_2, method = 'Newton-CG',tol=1e-10, options={"ftol":1e-10,"gtol":1e-10})
+			elif reac_input['Optimization Method'] == 'BFGS':
+				u_opt_2 = minimize(rf_2, method = 'BFGS',tol=1e-10, options={"gtol":1e-10})
+			elif reac_input['Optimization Method'] == 'SLSQP':
+				u_opt_2 = minimize(rf_2, method = 'SLSQP', bounds = (low_bounds,up_bounds),tol=1e-10, options={"ftol":1e-10})
+			elif reac_input['Optimization Method'] == 'CG':
+				u_opt_2 = minimize(rf_2,bounds = (low_bounds,up_bounds), method = 'CG',tol=1e-10, options={"gtol":1e-10})
+			elif reac_input['Optimization Method'] == 'basinhopping':
+				u_opt_2 = minimize(rf_2, method = 'basinhopping', bounds = (low_bounds,up_bounds),tol=1e-10, options={"ftol":1e-10,"gtol":1e-10})
+			
+			else:
+				print('Requested Optimization Method Does Not Exist')
+				sys.exit()
+			optimization_success = True
+			#except RuntimeError:
+			#	print('Optimization Failed or Entered Too Stiff Region')
+			#	time.sleep(1.5)
+			#	print('Will shortly begin generating the optimization gif.')
+			#	time.sleep(5)
+			#	optimization_success = False
 
 	############# Store the output data #######################################################
 		if k_pulse == 0:
@@ -812,48 +818,128 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 						pass
 					else:
 						dfNew = pd.read_csv(reac_input['Experimental Data Folder']+'/flux_data/'+legend_label[k]+'.csv',header=None)
-						ax2.plot(dfNew[0][:],dfNew[1][:],color=colors[k],label='exp '+legend_label[k], ls = '--', alpha=0.7)
+						ax2.scatter(dfNew[0][:],dfNew[1][:],color=colors[k],label='exp '+legend_label[k], alpha=0.3) #, ls = '--'
 				else:
 					pass
+
+
+
+
+
+
+
+
 		
 		if reac_input['Infinite Inert'].lower() == 'true':
-			outlet = []
-			outlet.append(0)
 		
-		
-			zAnalytical = 1
-			while zAnalytical*dt < 0.01:
-				#print(zAnalytical*dt) 
+			for kjc in range(0,monitored_gas):
+				outlet = []
 				outlet.append(0)
-				zAnalytical+=1	
-			outlet.append(0)
-			for k in range(zAnalytical+1,int(reac_input['Time Steps'])+1):
-				analyticalValue = 0
-				#print(k*dt-0.01)
-				#time.sleep(1)
-				for n in range(0,50):
-					analyticalValue += ((-1)**n)*(2*n+1)*np.exp((-(n+0.5)**2)*(3.14159**2)*(((k*dt-0.01))*(D[3][0]/(eb[0]*(np.sum(r_param)**2)))))
-					#outlet.append((Dout[3]*3.14159/(eb[0]*(np.sum(r_param)**2)))*nsum(lambda x: ((-1)**x)*(2*x+1)*exp((-(x+0.5)**2)*(3.14159**2)*((k*dt)*(Dout[3]/(eb[0]*(np.sum(r_param)**2))))) ,[0, inf]))
-				outlet.append((D[3][0]*3.14159/(eb[0]*(np.sum(r_param)**2)))*analyticalValue)
-			#print(dfNew[0][:].tolist())
-			#print(outlet)
-			#sys.exit()
-			ax2.plot(graph_data['timing'],outlet,color='r',label='Analytical Inert-1', alpha=0.7)
 				
-			outlet = []
-			outlet.append(0)
-			#print(np.sum(r_param))
-			#sys.exit()
-			for k in range(1,int(reac_input['Time Steps'])+1):
-				analyticalValue = 0
-				for n in range(0,50):
-					analyticalValue += ((-1)**n)*(2*n+1)*np.exp((-(n+0.5)**2)*(3.14159**2)*((k*dt)*(D[4][0]/(eb[0]*(np.sum(r_param)**2)))))
-					#outlet.append((Dout[3]*3.14159/(eb[0]*(np.sum(r_param)**2)))*nsum(lambda x: ((-1)**x)*(2*x+1)*exp((-(x+0.5)**2)*(3.14159**2)*((k*dt)*(Dout[3]/(eb[0]*(np.sum(r_param)**2))))) ,[0, inf]))
-				outlet.append((D[4][0]*3.14159/(eb[0]*(np.sum(r_param)**2)))*analyticalValue)
-			#print(dfNew[0][:].tolist())
-			#print(outlet)
-			#sys.exit()
-			ax2.plot(graph_data['timing'],outlet,color='k',label='Analytical Inert-1', alpha=0.7)
+				zAnalytical = 1
+				while zAnalytical*dt < reactant_time[kjc]:#!!!!!!!!!!!!!!Need the actual time at this point
+					#print(zAnalytical*dt) 
+					outlet.append(0)
+					zAnalytical+=1	
+				outlet.append(0)
+				
+				if reac_input['Scale Output'].lower() == 'true':
+					factor = 1
+				else:
+					factor = float(species_pulse_list[kjc])*reac_input['Reference Pulse Size']
+
+				for k in range(zAnalytical+1,int(reac_input['Time Steps'])+1):
+					analyticalValue = 0
+					for n in range(0,50):
+						analyticalValue += ((-1)**n)*(2*n+1)*np.exp((-(n+0.5)**2)*(3.14159**2)*((k*dt - reactant_time[kjc])*(D[kjc][0]/(eb[0]*(np.sum(r_param)**2)))))
+						#outlet.append((Dout[3]*3.14159/(eb[0]*(np.sum(r_param)**2)))*nsum(lambda x: ((-1)**x)*(2*x+1)*exp((-(x+0.5)**2)*(3.14159**2)*((k*dt)*(Dout[3]/(eb[0]*(np.sum(r_param)**2))))) ,[0, inf]))
+					outlet.append(factor*(D[kjc][0]*3.14159/(eb[0]*(np.sum(r_param)**2)))*analyticalValue)
+				#print(dfNew[0][:].tolist())
+				#print(outlet)
+				#sys.exit()
+				ax2.plot(graph_data['timing'],outlet,color=colors[kjc],label='Analytical'+legend_label[kjc], alpha=0.7)
+			#for kjc in range(all_molecules-int(reac_input['Number of Inerts']),all_molecules):
+			for kjc in range(0,int(reac_input['Number of Inerts'])):
+			
+				outlet = []
+				outlet.append(0)
+				
+				zAnalytical = 1
+
+				while zAnalytical*dt < reactant_time[monitored_gas+kjc]:#!!!!!!!!!!!!!!Need the actual time at this point
+					#print(zAnalytical*dt) 
+					outlet.append(0)
+					zAnalytical+=1	
+				outlet.append(0)
+
+
+				if reac_input['Scale Output'].lower() == 'true':
+					factor = 1
+				else:
+					factor = float(species_pulse_list[monitored_gas+kjc])*reac_input['Reference Pulse Size']
+
+
+				for k in range(zAnalytical+1,int(reac_input['Time Steps'])+1):
+					analyticalValue = 0
+					for n in range(0,50):
+						analyticalValue += ((-1)**n)*(2*n+1)*np.exp((-(n+0.5)**2)*(3.14159**2)*((k*dt - reactant_time[monitored_gas+kjc])*(D[monitored_gas+kjc][0]/(eb[0]*(np.sum(r_param)**2)))))
+						#outlet.append((Dout[3]*3.14159/(eb[0]*(np.sum(r_param)**2)))*nsum(lambda x: ((-1)**x)*(2*x+1)*exp((-(x+0.5)**2)*(3.14159**2)*((k*dt)*(Dout[3]/(eb[0]*(np.sum(r_param)**2))))) ,[0, inf]))
+					outlet.append(factor*(D[monitored_gas+kjc][0]*3.14159/(eb[0]*(np.sum(r_param)**2)))*analyticalValue)
+				#print(dfNew[0][:].tolist())
+				#print(outlet)
+				#sys.exit()
+				ax2.plot(graph_data['timing'],outlet,color=colors[monitored_gas+kjc],label='Analytical'+legend_label[monitored_gas+kjc], alpha=0.7)
+				
+
+			###outlet = []
+			###outlet.append(0)
+		
+		
+			###zAnalytical = 1
+			###while zAnalytical*dt < 0.01:
+			###	#print(zAnalytical*dt) 
+			###	outlet.append(0)
+			###	zAnalytical+=1	
+			###outlet.append(0)
+			###for k in range(zAnalytical+1,int(reac_input['Time Steps'])+1):
+			###	analyticalValue = 0
+			###	#print(k*dt-0.01)
+			###	#time.sleep(1)
+			###	for n in range(0,50):
+			###		analyticalValue += ((-1)**n)*(2*n+1)*np.exp((-(n+0.5)**2)*(3.14159**2)*(((k*dt-0.01))*(D[3][0]/(eb[0]*(np.sum(r_param)**2)))))
+			###		#outlet.append((Dout[3]*3.14159/(eb[0]*(np.sum(r_param)**2)))*nsum(lambda x: ((-1)**x)*(2*x+1)*exp((-(x+0.5)**2)*(3.14159**2)*((k*dt)*(Dout[3]/(eb[0]*(np.sum(r_param)**2))))) ,[0, inf]))
+			###	outlet.append((D[3][0]*3.14159/(eb[0]*(np.sum(r_param)**2)))*analyticalValue)
+			####print(dfNew[0][:].tolist())
+			####print(outlet)
+			####sys.exit()
+			###ax2.plot(graph_data['timing'],outlet,color='r',label='Analytical Inert-1', alpha=0.7)
+				
+			###outlet = []
+			###outlet.append(0)
+			####print(np.sum(r_param))
+			####sys.exit()
+			###for k in range(1,int(reac_input['Time Steps'])+1):
+			###	analyticalValue = 0
+			###	for n in range(0,50):
+			###		analyticalValue += ((-1)**n)*(2*n+1)*np.exp((-(n+0.5)**2)*(3.14159**2)*((k*dt)*(D[4][0]/(eb[0]*(np.sum(r_param)**2)))))
+			###		#outlet.append((Dout[3]*3.14159/(eb[0]*(np.sum(r_param)**2)))*nsum(lambda x: ((-1)**x)*(2*x+1)*exp((-(x+0.5)**2)*(3.14159**2)*((k*dt)*(Dout[3]/(eb[0]*(np.sum(r_param)**2))))) ,[0, inf]))
+			###	outlet.append((D[4][0]*3.14159/(eb[0]*(np.sum(r_param)**2)))*analyticalValue)
+			####print(dfNew[0][:].tolist())
+			####print(outlet)
+			####sys.exit()
+			###ax2.plot(graph_data['timing'],outlet,color='k',label='Analytical Inert-1', alpha=0.7)
+
+
+
+
+
+
+
+
+
+
+
+
 
 		sig = 0.05
 		beta_2 = 0.00270
