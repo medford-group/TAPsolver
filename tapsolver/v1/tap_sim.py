@@ -239,6 +239,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 				output_fitting = exp_data_fitting(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'])
 			elif reac_input['Objective Points'] == 'all':
 				output_fitting = every_point_fitting(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'])
+
 			else:
 				print('Objective Points defined incorrectly')
 				sys.exit()
@@ -333,7 +334,8 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		rrmStringsThin = rrmEqs(rate_array,rev_irr,'dx(1)')	
 		rrmStringsPoint = rrmEqs(rate_array,rev_irr,'dT(1)')
 
-	if reac_input['Fit Parameters'].lower() == 'true':
+	#if reac_input['Fit Parameters'].lower() == 'true':
+	if 'true' == 'true':
 		for k_fitting in range(0,len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])])):
 			for timeStep in range(0,len(output_fitting[legend_label[0]]['times'])):
 				output_fitting[legend_label[k_fitting]]['times'][timeStep] = round(output_fitting[legend_label[k_fitting]]['times'][timeStep],6)
@@ -772,17 +774,17 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 				up_bounds.append(np.inf)
 			
 			if reac_input['Optimization Method'] == 'L-BFGS-B' or reac_input['Optimization Method'] == '':
-				u_opt_2 = minimize(rf_2, bounds = (low_bounds,up_bounds),tol=1e-10, options={"ftol":1e-10,"gtol":1e-10})
+				u_opt_2 = minimize(rf_2, bounds = (low_bounds,up_bounds),tol=1e-9, options={"ftol":1e-9,"gtol":1e-9})
 			elif reac_input['Optimization Method'] == 'Newton-CG':
-				u_opt_2 = minimize(rf_2, method = 'Newton-CG',tol=1e-10, options={"ftol":1e-10,"gtol":1e-10})
+				u_opt_2 = minimize(rf_2, method = 'Newton-CG',tol=1e-9, options={"ftol":1e-9,"gtol":1e-9})
 			elif reac_input['Optimization Method'] == 'BFGS':
-				u_opt_2 = minimize(rf_2, method = 'BFGS',tol=1e-10, options={"gtol":1e-10})
+				u_opt_2 = minimize(rf_2, method = 'BFGS',tol=1e-9, options={"gtol":1e-9})
 			elif reac_input['Optimization Method'] == 'SLSQP':
-				u_opt_2 = minimize(rf_2, method = 'SLSQP', bounds = (low_bounds,up_bounds),tol=1e-10, options={"ftol":1e-10})
+				u_opt_2 = minimize(rf_2, method = 'SLSQP', bounds = (low_bounds,up_bounds),tol=1e-9, options={"ftol":1e-9})
 			elif reac_input['Optimization Method'] == 'CG':
-				u_opt_2 = minimize(rf_2,bounds = (low_bounds,up_bounds), method = 'CG',tol=1e-10, options={"gtol":1e-10})
+				u_opt_2 = minimize(rf_2,bounds = (low_bounds,up_bounds), method = 'CG',tol=1e-9, options={"gtol":1e-9})
 			elif reac_input['Optimization Method'] == 'basinhopping':
-				u_opt_2 = minimize(rf_2, method = 'basinhopping', bounds = (low_bounds,up_bounds),tol=1e-10, options={"ftol":1e-10,"gtol":1e-10})
+				u_opt_2 = minimize(rf_2, method = 'basinhopping', bounds = (low_bounds,up_bounds),tol=1e-9, options={"ftol":1e-9,"gtol":1e-9})
 			
 			else:
 				print('Requested Optimization Method Does Not Exist')
@@ -935,7 +937,15 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 
 
 
-
+		#if reac_input['Fit Parameters'].lower() == 'true':
+		if reac_input['Display Objective Points'].lower() == 'true' and reac_input['Fit Parameters'].lower() == 'true':
+			for k_fitting in range(0,len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])])):
+				ax2.scatter(output_fitting[legend_label[k_fitting]]['times'],output_fitting[legend_label[k_fitting]]['values'],marker='^',color='r',label='Fitting'+legend_label[k_fitting], alpha=0.3)
+		
+		#if reac_input['Fit Parameters'].lower() == 'true':
+		if reac_input['Display Objective Points'].lower() == 'true' and reac_input['Fit Inert'].lower() == 'true':
+			for k_fitting in range( int(len(legend_label)-reac_input['Number of Inerts']) ,len(legend_label[int(len(legend_label)+reac_input['Number of Inerts'])])):
+				ax2.scatter(output_fitting[legend_label[monitored_gas+k_fitting]]['times'],output_fitting[legend_label[monitored_gas+k_fitting]]['values'],marker='^',color='r',label='Fitting'+legend_label[monitored_gas+k_fitting], alpha=0.3)
 
 
 

@@ -337,12 +337,12 @@ def knudsenTest(species_list,sim_steps,folder,time,points,intensity,fraction):
 		print()
 
 ####Fit every point
-def every_point_fitting(species_list,sim_steps,folder,time,points):
+def every_point_fitting(species_list,sim_steps,folder,timeTot,points):
 	frequency = 3
 	"""Define the objective function for optimizing kinetic parameters"""
 
-	syn_time_step = time/sim_steps
-	
+	syn_time_step = timeTot/sim_steps
+
 	def interp(y2,y1,x2,x1,xn):
 		"""Simple linear interpolation function"""
 		return ((y2 - y1)/(x2 - x1))*(xn - x1) + y1
@@ -361,13 +361,12 @@ def every_point_fitting(species_list,sim_steps,folder,time,points):
 		def find_experimental_point(n,exp_step):
 			""" Find an appropriate intensity point for the fitting process """
 			approx_exp_n = n*(syn_time_step)/exp_step
-			#print(n*(syn_time_step))
 			
 			if approx_exp_n != n:
 				high = math.ceil(approx_exp_n)
 				low = int(approx_exp_n)
 				#print(interp(user_data[k_new][1][high],user_data[k_new][1][low],user_data[k_new][0][high],user_data[k_new][0][low],n*(syn_time_step)))
-				return interp(user_data[k_new][1][high],user_data[k_new][1][low],user_data[k_new][0][high],user_data[k_new][0][low],n*(syn_time_step))
+				return interp(user_data[k_new][1][high-1],user_data[k_new][1][low-1],user_data[k_new][0][high-1],user_data[k_new][0][low-1],n*(syn_time_step))
 
 			else:
 				return user_data[k_new][1][n]
@@ -384,13 +383,16 @@ def every_point_fitting(species_list,sim_steps,folder,time,points):
 		time_step = []
 		times = []
 		values = []
-		exp_time_step = user_data[k_new][0][1]
-		near_start = round(user_data[k_new].iloc[30,0],6)/(time/sim_steps)
+		exp_time_step = user_data[k_new][0][1] - user_data[k_new][0][0]
+		near_start = round(user_data[k_new].iloc[30,0],6)/(timeTot/sim_steps)
 		
-		for k in range(0,int(sim_steps),frequency):
+		for k in range(2,int(sim_steps),frequency):
 			time_step.append(k)
 			times.append(k*(syn_time_step))
-			values.append(find_experimental_point(k*(syn_time_step),exp_time_step))
+			
+			#print(exp_time_step)
+			values.append(find_experimental_point(k,exp_time_step))#k*(syn_time_step)
+			#print(find_experimental_point(k*(syn_time_step),exp_time_step))
 
 		data = {}
 		data['time_step'] = time_step
@@ -398,7 +400,7 @@ def every_point_fitting(species_list,sim_steps,folder,time,points):
 		data['values'] = values
 
 		curve_fitting[k_new] = data
-
+		
 	return curve_fitting
 
 
@@ -449,7 +451,8 @@ def exp_data_fitting(species_list,sim_steps,folder,time,points):
 		time_step = []
 		times = []
 		values = []
-		exp_time_step = user_data[k_new][0][1]
+		exp_time_step = user_data[k_new][0][1] - user_data[k_new][0][0]
+
 		near_start = round(user_data[k_new].iloc[30,0],6)/(time/sim_steps)
 	
 		peak_loc = user_data[k_new].iloc[user_data[k_new][1].idxmax()]
@@ -465,6 +468,10 @@ def exp_data_fitting(species_list,sim_steps,folder,time,points):
 
 		values.append(find_experimental_point(int(near_mid),exp_time_step))
 		
+		print(near_mid)
+		print(near_peak)
+		sys.exit()
+
 		if points > 1:
 			time_step.append(int(near_peak))
 			times.append(int(near_peak)*(syn_time_step))
@@ -485,7 +492,7 @@ def exp_data_fitting(species_list,sim_steps,folder,time,points):
 
 			time_step.append(int(near_3))
 			times.append(int(near_3)*(syn_time_step))
-			values.append(find_experimental_point(int(near_peak),exp_time_step))
+			values.append(find_experimental_point(int(near_3),exp_time_step))
 		
 		if points > 3:
 			value_test = 0.75*peak_loc[1]
@@ -502,7 +509,7 @@ def exp_data_fitting(species_list,sim_steps,folder,time,points):
 
 			time_step.append(int(near_4))
 			times.append(int(near_4)*(syn_time_step))
-			values.append(find_experimental_point(int(near_peak),exp_time_step))
+			values.append(find_experimental_point(int(near_4),exp_time_step))
 			
 
 		data = {}
