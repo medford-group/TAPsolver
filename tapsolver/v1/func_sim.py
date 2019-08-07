@@ -25,6 +25,10 @@ def read_input():
 	rows_3, cols_3 = np.where(user_data == 'Data_Storage_Options')
 	rows_4, cols_4 = np.where(user_data == 'Reaction_Information')
 
+	#print(rows_4)
+	#print(cols_4)
+	#sys.exit()
+
 	reactor_info = user_data.iloc[(1+rows_1[0]):(rows_2[0]-1),:] 
 	feed_surf_info = user_data.iloc[1+rows_2[0]:rows_3[0]-1,:]
 	data_storage = user_data.iloc[1+rows_3[0]:rows_4[0]-1,:]
@@ -386,7 +390,7 @@ def every_point_fitting(species_list,sim_steps,folder,timeTot,points):
 		exp_time_step = user_data[k_new][0][1] - user_data[k_new][0][0]
 		near_start = round(user_data[k_new].iloc[30,0],6)/(timeTot/sim_steps)
 		
-		for k in range(2,int(sim_steps),frequency):
+		for k in range(30,int(sim_steps),frequency):
 			time_step.append(k)
 			times.append(k*(syn_time_step))
 			
@@ -400,7 +404,7 @@ def every_point_fitting(species_list,sim_steps,folder,timeTot,points):
 		data['values'] = values
 
 		curve_fitting[k_new] = data
-		
+
 	return curve_fitting
 
 
@@ -468,10 +472,6 @@ def exp_data_fitting(species_list,sim_steps,folder,time,points):
 
 		values.append(find_experimental_point(int(near_mid),exp_time_step))
 		
-		print(near_mid)
-		print(near_peak)
-		sys.exit()
-
 		if points > 1:
 			time_step.append(int(near_peak))
 			times.append(int(near_peak)*(syn_time_step))
@@ -577,7 +577,7 @@ def generate_gif(molecules,exp_loc,fit_loc,all_steps,constants,reactions,time_da
 			sim_data[k_names] = pd.read_csv(fit_loc+'/iter_'+str(step)+'_folder/flux_data/'+k_names+'.csv',header=None)
 		
 		for k_names in molecules:
-			ax.plot(exp_data[k_names][0], exp_data[k_names][1])
+			ax.scatter(exp_data[k_names][0], exp_data[k_names][1],alpha=0.3)
 		
 		for k_names in molecules:
 			ax.plot(sim_data[k_names][0], sim_data[k_names][1],ls='--')

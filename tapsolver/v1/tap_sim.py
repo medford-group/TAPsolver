@@ -32,11 +32,12 @@ if fenics_version == '2017.2.0':
 else:
 	fen_17 = False
 	print('You are working with a newer version of FEniCS (beyond 2017). Some methods of analysis could be limited. Dolfin methods could also be limited to a smaller number of time steps.')
+	print('If "fit gif" has been called, it might not properly generate a gif')
 	time.sleep(2)
 
 def tap_simulation_function(reactor_kinetics_input,constants_input):
 	tape = Tape()
-	tape.clear_tape()
+	#tape.clear_tape()
 	set_working_tape(tape)
 	### Initial forms for storing results and reading in the information ###
 	simulation_time_list = []
@@ -73,6 +74,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		for j in r_const:
 			controls.append(Control(r_const[j]))
 			legend_2.append(j)
+
 
 	### Copy and store the input_csv file in the new folder (to keep organized) ###
 	user_data = pd.read_csv('./input_file.csv',header=None)
@@ -233,7 +235,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	except NameError:
 		error_output(reac_input['reactions_test'])
 	
-	if reac_input['Fit Parameters'].lower() == 'true':
+	if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or reac_input['Display Objective Points'].lower() == 'true':
 		try:
 			if type(reac_input['Objective Points']) == float:
 				output_fitting = exp_data_fitting(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'])
@@ -271,7 +273,10 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		generate_folder(path_molecules)
 		sensFolder = path_molecules
 
-
+	if reac_input['Uncertainty Quantification'].lower() == 'true':
+		path_2 = reac_input['Output Folder Name']+'_folder/UQ/'
+		generate_folder(path_2)
+		
 	if reac_input['RRM Analysis'].lower() == 'true':
 		path_2 = reac_input['Output Folder Name']+'_folder/RRM_analysis/'
 		generate_folder(path_2)
@@ -334,8 +339,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		rrmStringsThin = rrmEqs(rate_array,rev_irr,'dx(1)')	
 		rrmStringsPoint = rrmEqs(rate_array,rev_irr,'dT(1)')
 
-	#if reac_input['Fit Parameters'].lower() == 'true':
-	if 'true' == 'true':
+	if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Display Objective Points'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true':
 		for k_fitting in range(0,len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])])):
 			for timeStep in range(0,len(output_fitting[legend_label[0]]['times'])):
 				output_fitting[legend_label[k_fitting]]['times'][timeStep] = round(output_fitting[legend_label[k_fitting]]['times'][timeStep],6)
@@ -346,7 +350,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			for timeStep in range(0,len(output_fitting[legend_label[-1]]['times'])):
 				output_fitting[legend_label[k_fitting]]['times'][timeStep] = round(output_fitting[legend_label[k_fitting]]['times'][timeStep],6)
 
-	if reac_input['Sensitivity Analysis'].lower() == 'true' or reac_input['RRM Analysis'].lower() == 'true':
+	if reac_input['Sensitivity Analysis'].lower() == 'true' or reac_input['RRM Analysis'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true':
 
 		c = r_const[reac_input['Sensitivity Parameter']]
 		c.tlm_value = r_const[reac_input['Sensitivity Parameter']]
@@ -389,8 +393,6 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	for k_pulse in range(0,int(reac_input['Number of Pulses'])):
 
 		### Clear the tape for the adjoint (will lead to challenges with fitting parameters over multiple pulses) ###
-
-		#tape.clear_tape()
 		
 		print("")
 		print("Simulation Status: "+"Pulse #"+str(k_pulse+1))
@@ -447,7 +449,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			cat_data['conVtime_'+str(z_gasses)] = []
 
 		t = 0
-		if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Sensitivity Analysis'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true':
+		if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Sensitivity Analysis'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true':
 			osub = integration_section()
 			domains = MeshFunction("size_t", mesh,0)
 			domains.set_all(0)
@@ -455,7 +457,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			dP = Measure('vertex',domain = mesh, subdomain_data=domains)
 		
 		test_new = project(-u.dx(0),V)
-		test_new_split = test_new.split(deepcopy=True)
+		test_new_split = test_new.split(deepcopy=False)
 
 		### Used to define the function to be minimized between the experimental points and synthetic points ###
 		w_new = Expression("1", degree=0)
@@ -467,9 +469,8 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		x_dim = list(range(0, int(reac_input['Mesh Size'])+1))
 		
 		cum_sum = 0
-		
-		while t <= reac_input['Pulse Duration']:
 
+		while t <= reac_input['Pulse Duration']:
 			### Store the results of each iteration ###
 			graph_data['timing'].append(t)
 			for k in range(0,monitored_gas):
@@ -484,10 +485,12 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			mesh_size = reac_input['Mesh Size']
 
 			### If you are trying to fit parameters, then check if the point must be defined as a part of the objective function ###
-			if reac_input['Fit Parameters'].lower() == 'true':
+			if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true':
 
 				for k_fitting in range(0,len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])])):
+					
 					if round(t,6) in output_fitting[legend_label[k_fitting]]['times']:
+						
 						c_exp = output_fitting[legend_label[k_fitting]]['values'][output_fitting[legend_label[k_fitting]]['times'].index(round(t,6))]
 						slope = (-c_exp)/(1/mesh_size)
 						intercept = c_exp - ((1-(1/mesh_size))*slope)
@@ -499,7 +502,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 						try:
 							if legend_label[k_fitting] != 'Inert':
 								jfunc_2 += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
-								tot_objective += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
+								#tot_objective += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
 								#tot_objective += assemble(inner(u_n[k_fitting] - w3,u_n[k_fitting] - w3)*dP(1))
 								
 							else:
@@ -509,11 +512,11 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 							
 							if legend_label[k_fitting] != 'Inert':
 								jfunc_2 = assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
-								tot_objective += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
+								#tot_objective += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
 								#tot_objective += assemble(inner(u_n[k_fitting] - w3,u_n[k_fitting] - w3)*dP(1))
 							else:
 								pass
-						print(tot_objective)
+						#print(tot_objective)
 
 			### len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])]),len(legend_label[int(reac_input['Number of Inerts']):]
 
@@ -533,7 +536,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 						try:
 							if legend_label[k_fitting] != 'Inert':
 								jfunc_2 += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
-								tot_objective += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
+								#tot_objective += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
 								#tot_objective += assemble(inner(u_n[k_fitting] - w3,u_n[k_fitting] - w3)*dP(1))
 								
 							else:
@@ -543,7 +546,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 							
 							if legend_label[k_fitting] != 'Inert':
 								jfunc_2 = assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
-								tot_objective += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
+								#tot_objective += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
 								#tot_objective += assemble(inner(u_n[k_fitting] - w3,u_n[k_fitting] - w3)*dP(1))
 							else:
 								pass
@@ -568,14 +571,22 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 					cat_data['conVtime_'+str(jk)].append(cat_values)
 
 			if round(t,6) not in reactant_time:
+
 				dt = solver_iteration(dt,reac_input['Solver Method'],solver,dk,1.5,1.1)
 				
 			else:
 				if reac_input['Reactor Type'] == 'tap':
+					
+					if reac_input['Fit Parameters'].lower() == 'true':
+						if t == 0:
+							for k in range(0,int(reac_input['Number of Reactants'])):
+									u_n.vector()[int((all_molecules)*(reac_input['Mesh Size']+1))+k-(all_molecules)] = -1e-10#list_species_pulse[k]
+
 					if ',' in str(species_pulse_list):
 						for k in range(0,int(reac_input['Number of Reactants'])):
 							
 							if reactant_time[k] == round(t,6):
+
 								u_n.vector()[int((all_molecules)*(reac_input['Mesh Size']+1))+k-(all_molecules)] = float(species_pulse_list[k])*Inert_pulse_conc#list_species_pulse[k]
 
 					else:
@@ -796,6 +807,21 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			#	print('Will shortly begin generating the optimization gif.')
 			#	time.sleep(5)
 			#	optimization_success = False
+		if reac_input['Uncertainty Quantification'].lower() == 'true':
+			h = Constant(1)
+			print(type(jfunc_2))
+			#Jfunc_2.adj_value = 1.0
+			c.tlm_value = h
+			tape.evaluate_adj()
+			tape.evaluate_tlm()
+			Jfunc_2.block_variable.hessian_value = 0
+			tape.evaluate_hessian()
+			Hm = c.originial_block_variable.hessian_value
+			print(Hm)
+			np.savetxt(sensFolder+'/k1.csv',Hm,delimiter=",")#
+			sys.exit()
+
+
 
 	############# Store the output data #######################################################
 		if k_pulse == 0:
@@ -812,29 +838,39 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 
 	############# Visualize/graph the data #######################################################
 		if reac_input['Display Experimental Data'].lower() == 'true':
+
+
+			#if reac_input['Fit Parameters'].lower() == 'true':
+			if reac_input['Display Objective Points'].lower() == 'true' or reac_input['Fit Parameters'].lower() == 'true':
+				for k_fitting in range(0,len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])])):
+					ax2.scatter(output_fitting[legend_label[k_fitting]]['times'],output_fitting[legend_label[k_fitting]]['values'],marker='^',color=colors[k_fitting],label='Fitting'+legend_label[k_fitting])
+		
+			#if reac_input['Fit Parameters'].lower() == 'true':
+			if reac_input['Display Objective Points'].lower() == 'true' and reac_input['Fit Inert'].lower() == 'true':
+				for k_fitting in range( int(len(legend_label)-reac_input['Number of Inerts']) ,len(legend_label[int(len(legend_label)+reac_input['Number of Inerts'])])):
+					ax2.scatter(output_fitting[legend_label[monitored_gas+k_fitting]]['times'],output_fitting[legend_label[monitored_gas+k_fitting]]['values'],marker='^',color='r',label='Fitting'+legend_label[monitored_gas+k_fitting], alpha=0.3)
+
+
+
 			for k,j in enumerate(graph_data):
 				if j != 'timing': #and j != 'conVtime_1' and j != 'conVtime_2' and j != 'conVtime_3' and j != 'conVtime_0' 
-					print(j)
-					print(k)
+
 					if k_pulse > 0:
 						pass
 					else:
 						dfNew = pd.read_csv(reac_input['Experimental Data Folder']+'/flux_data/'+legend_label[k]+'.csv',header=None)
-						ax2.scatter(dfNew[0][:],dfNew[1][:],color=colors[k],label='exp '+legend_label[k], alpha=0.3) #, ls = '--'
+						ax2.scatter(dfNew[0][:],dfNew[1][:],color=colors[k],label='exp '+legend_label[k], alpha=0.2) #, ls = '--'
 				else:
 					pass
 
 
 
 
-
-
-
-
 		
 		if reac_input['Infinite Inert'].lower() == 'true':
-		
+			
 			for kjc in range(0,monitored_gas):
+
 				outlet = []
 				outlet.append(0)
 				
@@ -860,9 +896,9 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 				#print(outlet)
 				#sys.exit()
 				ax2.plot(graph_data['timing'],outlet,color=colors[kjc],label='Analytical'+legend_label[kjc], alpha=0.7)
+
 			#for kjc in range(all_molecules-int(reac_input['Number of Inerts']),all_molecules):
 			for kjc in range(0,int(reac_input['Number of Inerts'])):
-			
 				outlet = []
 				outlet.append(0)
 				
@@ -891,7 +927,6 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 				#print(outlet)
 				#sys.exit()
 				ax2.plot(graph_data['timing'],outlet,color=colors[monitored_gas+kjc],label='Analytical'+legend_label[monitored_gas+kjc], alpha=0.7)
-				
 
 			###outlet = []
 			###outlet.append(0)
@@ -930,26 +965,6 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			####print(outlet)
 			####sys.exit()
 			###ax2.plot(graph_data['timing'],outlet,color='k',label='Analytical Inert-1', alpha=0.7)
-
-
-
-
-
-
-
-		#if reac_input['Fit Parameters'].lower() == 'true':
-		if reac_input['Display Objective Points'].lower() == 'true' and reac_input['Fit Parameters'].lower() == 'true':
-			for k_fitting in range(0,len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])])):
-				ax2.scatter(output_fitting[legend_label[k_fitting]]['times'],output_fitting[legend_label[k_fitting]]['values'],marker='^',color='r',label='Fitting'+legend_label[k_fitting], alpha=0.3)
-		
-		#if reac_input['Fit Parameters'].lower() == 'true':
-		if reac_input['Display Objective Points'].lower() == 'true' and reac_input['Fit Inert'].lower() == 'true':
-			for k_fitting in range( int(len(legend_label)-reac_input['Number of Inerts']) ,len(legend_label[int(len(legend_label)+reac_input['Number of Inerts'])])):
-				ax2.scatter(output_fitting[legend_label[monitored_gas+k_fitting]]['times'],output_fitting[legend_label[monitored_gas+k_fitting]]['values'],marker='^',color='r',label='Fitting'+legend_label[monitored_gas+k_fitting], alpha=0.3)
-
-
-
-
 
 		sig = 0.05
 		beta_2 = 0.00270
@@ -1025,10 +1040,10 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			times = lines[0]
 			times = times.replace('Contents: ','')
 			times = eval(times)
-
 			constants = lines[2]
 			constants = constants.replace('Constants: ','')
 			constants = eval(constants)
+
 			things = len(times)
 			#if optimization_success == False:
 			#things -= 1
@@ -1066,12 +1081,14 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 
 						else:
 							alter.iloc[k,1] = 'FALSE'
-
+						alter.iloc[51,1] = 'FALSE'
+				#print(alter)
+				#sys.exit()
 				alter.to_csv('./input_file.csv',header=None,index=False)	
 			
 				try:
 					call_sim()
-
+					sys.exit()
 				except:
 					k_num = things
 		
@@ -1089,7 +1106,7 @@ def call_sim():
 	
 	reactor_kinetics_input,kinetic_parameters,kin_in = read_input()
 
-	if reactor_kinetics_input['Sensitivity Analysis'].lower() == 'true' or reactor_kinetics_input['RRM Analysis'].lower() == 'true':
+	if reactor_kinetics_input['Sensitivity Analysis'].lower() == 'true' or reactor_kinetics_input['RRM Analysis'].lower() == 'true' or reactor_kinetics_input['Uncertainty Quantification'].lower() == 'true':
 		for parameters in kinetic_parameters:
 			reactor_kinetics_input,kinetic_parameters,kin_in = read_input()
 			reactor_kinetics_input['Sensitivity Parameter'] = parameters
