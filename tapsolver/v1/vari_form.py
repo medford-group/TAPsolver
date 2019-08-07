@@ -60,13 +60,10 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,active_sites,numbe
 	#rate_array, reactions, reactants, rev_irr
 
 	#print("")
-	print('')
-	print('######################################################################################')
-	print('working with altered pdes. Swap all lines with "#!#!#!#!#!#!#!#" to go back to normal')
-	print('######################################################################################')
+
 	#time.sleep(4)
 	
-
+	
 	if reactor_type == 'tap':
 		for k in range(0,molecules_in_gas_phase):
 			if k < (molecules_in_gas_phase-1):
@@ -80,7 +77,7 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,active_sites,numbe
 				#print("")
 			else:
 				#!#!#!#!#!#!#!#F = F+"((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']))*v_d['v_"+str(k+1)+"']*dx(0)      + Constant(2*eb[0])*dk*Constant(theta)*(Dout["+str(k)+"]/(np.sum(r_param)**2) )*dot(grad(u_d['u_"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(0)         + Constant(2*eb[0])*dk*Constant(1-theta)*(Dout["+str(k)+"]/(np.sum(r_param)**2) )*dot(grad(u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(0)     + ((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']) )*v_d['v_"+str(k+1)+"']*dx(1)      + Constant(2*eb[1])*dk*Constant(theta)*(Din["+str(k)+"]/(np.sum(r_param)**2) )*dot(grad(u_d['u_"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(1)      + Constant(2*eb[1])*dk*Constant(1-theta)*(Din["+str(k)+"]/(np.sum(r_param)**2) )*dot(grad(u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(1)" 
-				F = F+"((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']))*v_d['v_"+str(k+1)+"']*dx(0)      + Constant(2)*dk*Constant(theta)*(Dout["+str(k)+"]/(np.sum(r_param)**2) )*dot(grad(u_d['u_"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(0)         + Constant(2)*dk*Constant(1-theta)*(Dout["+str(k)+"]/(np.sum(r_param)**2) )*dot(grad(u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(0)     + ((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']) )*v_d['v_"+str(k+1)+"']*dx(1)      + Constant(2)*dk*Constant(theta)*(Din["+str(k)+"]/(np.sum(r_param)**2) )*dot(grad(u_d['u_"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(1)      + Constant(2)*dk*Constant(1-theta)*(Din["+str(k)+"]/(np.sum(r_param)**2) )*dot(grad(u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(1)" 
+				F = F+"((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']))*v_d['v_"+str(k+1)+"']*dx(0)      + dk*Constant(theta)*(Dout["+str(k)+"]/(eb[0]*np.sum(r_param)**2) )*dot(grad(u_d['u_"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(0)         + dk*Constant(1-theta)*(Dout["+str(k)+"]/(eb[0]*np.sum(r_param)**2) )*dot(grad(u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(0)     + ((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']) )*v_d['v_"+str(k+1)+"']*dx(1)      + dk*Constant(theta)*(Din["+str(k)+"]/(eb[0]*np.sum(r_param)**2) )*dot(grad(u_d['u_"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(1)      + dk*Constant(1-theta)*(Din["+str(k)+"]/(eb[0]*np.sum(r_param)**2) )*dot(grad(u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(1)" 
 				
 				if advection.lower() == 'true':
 					F = F+ " + dk*Constant(theta)*Constant((np.sum(r_param)))*dot(advTerm, grad(u_d['u_"+str(k+1)+"']))*v_d['v_"+str(k+1)+"']*dx(0)         + dk*Constant(1-theta)*Constant((np.sum(r_param)))*dot(advTerm, grad(u_nd['u_n"+str(k+1)+"']))*v_d['v_"+str(k+1)+"']*dx(0) + dk*Constant(theta)*Constant((np.sum(r_param)))*dot(advTerm, grad(u_d['u_"+str(k+1)+"']))*v_d['v_"+str(k+1)+"']*dx(1)                  + dk*Constant(1-theta)*Constant((np.sum(r_param)))*dot(advTerm, grad(u_nd['u_n"+str(k+1)+"']))*v_d['v_"+str(k+1)+"']*dx(1) "
