@@ -235,7 +235,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	except NameError:
 		error_output(reac_input['reactions_test'])
 	
-	if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or reac_input['Display Objective Points'].lower() == 'true':
+	if reac_input['Experimental Data Folder'].lower() != 'none' and (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or reac_input['Display Objective Points'].lower() == 'true'):
 		try:
 			if type(reac_input['Objective Points']) == float:
 				output_fitting = exp_data_fitting(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'])
@@ -339,7 +339,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		rrmStringsThin = rrmEqs(rate_array,rev_irr,'dx(1)')	
 		rrmStringsPoint = rrmEqs(rate_array,rev_irr,'dT(1)')
 
-	if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Display Objective Points'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true':
+	if reac_input['Experimental Data Folder'].lower() != 'none' and (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Display Objective Points'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true'):
 		for k_fitting in range(0,len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])])):
 			for timeStep in range(0,len(output_fitting[legend_label[0]]['times'])):
 				output_fitting[legend_label[k_fitting]]['times'][timeStep] = round(output_fitting[legend_label[k_fitting]]['times'][timeStep],6)
@@ -789,7 +789,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			elif reac_input['Optimization Method'] == 'Newton-CG':
 				u_opt_2 = minimize(rf_2, method = 'Newton-CG',tol=1e-9, options={"ftol":1e-9,"gtol":1e-9})
 			elif reac_input['Optimization Method'] == 'BFGS':
-				u_opt_2 = minimize(rf_2, method = 'BFGS',tol=1e-9, options={"gtol":1e-9})
+				u_opt_2 = minimize(rf_2, method = 'BFGS',tol=1e-13, options={"gtol":1e-13})
 			elif reac_input['Optimization Method'] == 'SLSQP':
 				u_opt_2 = minimize(rf_2, method = 'SLSQP', bounds = (low_bounds,up_bounds),tol=1e-9, options={"ftol":1e-9})
 			elif reac_input['Optimization Method'] == 'CG':
@@ -837,7 +837,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 				dictionary_of_numpy_data[necessary_values['reactants'][k_species-1]] = np.vstack((dictionary_of_numpy_data[necessary_values['reactants'][k_species-1]],new_data))
 
 	############# Visualize/graph the data #######################################################
-		if reac_input['Display Experimental Data'].lower() == 'true':
+		if reac_input['Experimental Data Folder'].lower() != 'none' and reac_input['Display Experimental Data'].lower() == 'true':
 
 
 			#if reac_input['Fit Parameters'].lower() == 'true':
@@ -895,7 +895,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 				#print(dfNew[0][:].tolist())
 				#print(outlet)
 				#sys.exit()
-				ax2.plot(graph_data['timing'],outlet,color=colors[kjc],label='Analytical'+legend_label[kjc], alpha=0.7)
+				ax2.plot(graph_data['timing'],outlet,color=colors[kjc],label='Analytical '+legend_label[kjc], alpha=0.7)
 
 			#for kjc in range(all_molecules-int(reac_input['Number of Inerts']),all_molecules):
 			for kjc in range(0,int(reac_input['Number of Inerts'])):
