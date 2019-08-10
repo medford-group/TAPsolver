@@ -120,9 +120,9 @@ def solver_iteration(time_step,method,solver,dk,dec_tim,inc_tim):
 			return time_step
 	except RuntimeError:
 		print('Time Step Failure')
-		fenics_version = dolfin.__version__
-		if fenics_version != '2017.2.0':
-			print('Since the version of fenics >2017, the choice of time steps might be limited. Try running with a smaller number of time steps.')
+		#fenics_version = dolfin.__version__
+		#if fenics_version != '2017.2.0':
+		#	print('Since the version of fenics >2017, the choice of time steps might be limited. Try running with a smaller number of time steps.')
 		sys.exit()
 
 	#except RuntimeError:
@@ -341,7 +341,7 @@ def knudsenTest(species_list,sim_steps,folder,time,points,intensity,fraction):
 		print()
 
 ####Fit every point
-def every_point_fitting(species_list,sim_steps,folder,timeTot,points):
+def every_point_fitting(species_list,sim_steps,folder,timeTot,points,objSpecies):
 	frequency = 3
 	"""Define the objective function for optimizing kinetic parameters"""
 
@@ -355,55 +355,56 @@ def every_point_fitting(species_list,sim_steps,folder,timeTot,points):
 	species_list = species_list[:len(species_list)]#'./experimental_data/'
 
 	for k in range(0,len(species_list)):
-		user_data[species_list[k]] = pd.read_csv(folder+'/flux_data/'+species_list[k]+'.csv',header=None)
+		if objSpecies[k] == '1':
+			user_data[species_list[k]] = pd.read_csv(folder+'/flux_data/'+species_list[k]+'.csv',header=None)
 	
 	curve_fitting = {}
 	exp_data = user_data
-
-	for k_new in species_list:
-
-		def find_experimental_point(n,exp_step):
-			""" Find an appropriate intensity point for the fitting process """
-			approx_exp_n = n*(syn_time_step)/exp_step
+	
+	for k_newNum, k_new in enumerate(species_list):
+		if objSpecies[k_newNum] == '1':
+			def find_experimental_point(n,exp_step):
+				""" Find an appropriate intensity point for the fitting process """
+				approx_exp_n = n*(syn_time_step)/exp_step
 			
-			if approx_exp_n != n:
-				high = math.ceil(approx_exp_n)
-				low = int(approx_exp_n)
-				#print(interp(user_data[k_new][1][high],user_data[k_new][1][low],user_data[k_new][0][high],user_data[k_new][0][low],n*(syn_time_step)))
-				return interp(user_data[k_new][1][high-1],user_data[k_new][1][low-1],user_data[k_new][0][high-1],user_data[k_new][0][low-1],n*(syn_time_step))
+				if approx_exp_n != n:
+					high = math.ceil(approx_exp_n)
+					low = int(approx_exp_n)
+					#print(interp(user_data[k_new][1][high],user_data[k_new][1][low],user_data[k_new][0][high],user_data[k_new][0][low],n*(syn_time_step)))
+					return interp(user_data[k_new][1][high-1],user_data[k_new][1][low-1],user_data[k_new][0][high-1],user_data[k_new][0][low-1],n*(syn_time_step))
 
-			else:
-				return user_data[k_new][1][n]
+				else:
+					return user_data[k_new][1][n]
 
-		def exp_point_to_syn_point(n_exp,exp_step):
-			"""Align an experimental data point with the associated (or nearest synthetic point)"""
-			approx_syn_n = n_exp*exp_step/(syn_time_step)
-			
-			if int(approx_syn_n) > 0:
-				return find_experimental_point(int(approx_syn_n),exp_step)
-			else:
-				return find_experimental_point(math.ceil(approx_syn_n),exp_step) 
+			def exp_point_to_syn_point(n_exp,exp_step):
+				"""Align an experimental data point with the associated (or nearest synthetic point)"""
+				approx_syn_n = n_exp*exp_step/(syn_time_step)
+				
+				if int(approx_syn_n) > 0:
+					return find_experimental_point(int(approx_syn_n),exp_step)
+				else:
+					return find_experimental_point(math.ceil(approx_syn_n),exp_step) 
 
-		time_step = []
-		times = []
-		values = []
-		exp_time_step = user_data[k_new][0][1] - user_data[k_new][0][0]
-		near_start = round(user_data[k_new].iloc[30,0],6)/(timeTot/sim_steps)
+			time_step = []
+			times = []
+			values = []
+			exp_time_step = user_data[k_new][0][1] - user_data[k_new][0][0]
+			near_start = round(user_data[k_new].iloc[30,0],6)/(timeTot/sim_steps)
 		
-		for k in range(30,int(sim_steps),frequency):
-			time_step.append(k)
-			times.append(k*(syn_time_step))
-			
-			#print(exp_time_step)
-			values.append(find_experimental_point(k,exp_time_step))#k*(syn_time_step)
-			#print(find_experimental_point(k*(syn_time_step),exp_time_step))
+			for k in range(40,int(sim_steps),frequency):
+				time_step.append(k)
+				times.append(k*(syn_time_step))
+				
+				#print(exp_time_step)
+				values.append(find_experimental_point(k,exp_time_step))#k*(syn_time_step)
+				#print(find_experimental_point(k*(syn_time_step),exp_time_step))
 
-		data = {}
-		data['time_step'] = time_step
-		data['times'] = times
-		data['values'] = values
+			data = {}
+			data['time_step'] = time_step
+			data['times'] = times
+			data['values'] = values
 
-		curve_fitting[k_new] = data
+			curve_fitting[k_new] = data
 
 	return curve_fitting
 

@@ -229,6 +229,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			controls.append(Control(Dout[j]))
 			legend_2.append(j)
 
+	objSpecies = list(reac_input['Objective Species'].split(','))
 
 	try:
 		F = eval(necessary_values['F'])
@@ -238,9 +239,9 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	if reac_input['Experimental Data Folder'].lower() != 'none' and (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or reac_input['Display Objective Points'].lower() == 'true'):
 		try:
 			if type(reac_input['Objective Points']) == float:
-				output_fitting = exp_data_fitting(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'])
+				output_fitting = exp_data_fitting(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],objSpecies)
 			elif reac_input['Objective Points'] == 'all':
-				output_fitting = every_point_fitting(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'])
+				output_fitting = every_point_fitting(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],objSpecies)
 
 			else:
 				print('Objective Points defined incorrectly')
@@ -292,19 +293,79 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	to_flux = flux_generation(reac_input['Reactor Type'],len(legend_label),reac_input['Number of Reactants'],reac_input['Reference Pulse Size'],D,eb,dx_r,reac_input['Reactor Radius'],dx2_r,reac_input['Scale Output'])
 	store_data_func(reac_input['Store Outlet Flux'],reac_input['Output Folder Name'])
 	store_sens_analysis(reac_input['Sensitivity Analysis'],reac_input['Output Folder Name'],monitored_gas,legend_label)
-	
-	### Declare the solver to be used ###
-	
+
 	#class Plane(SubDomain):
 	#	def inside(self, x, on_boundary):
 	#		return x[0] > 1.0 - DOLFIN_EPS
-
+	#solver = PETScTAOSolver()
 	J = derivative(F,u)
-	problem = NonlinearVariationalProblem(F,u,bcs,J)
-	solver = NonlinearVariationalSolver(problem)
+
+	#### Might want to consider adding this later (the hessian, that is!)
+	###H = derivative(J,u)
+
+	if reac_input['Variational Solver'].lower() == 'constrained':
+		snes_solver_parameters = {"nonlinear_solver": "snes","snes_solver": {"linear_solver": "lu","maximum_iterations": 40,"report": False,"error_on_nonconvergence": False}}
+		W = FunctionSpace(mesh, "P", 1)
+		#solver.parameters.update(snes_solver_parameters)
+		testV_du = FunctionSpace(mesh,P1)
+		testw_new = Expression('A',A=Constant(1),degree=0)#Expression("1", degree=0)
+		#testw_new2 = 
+		a_min = interpolate(testw_new,testV_du)
+		
+		lower = Function(V)
+		upper = Function(V) 
+		
+		ninfty = Function(V); ninfty.vector()[:] = 0
+		pinfty = Function(V); pinfty.vector()[:] =  np.infty
+
+		
+		problem = NonlinearVariationalProblem(F,u,bcs,J)
+		
+		problem.set_bounds(ninfty,pinfty)
+
+		solver = NonlinearVariationalSolver(problem)
+		solver.parameters.update(snes_solver_parameters)
+	elif reac_input['Variational Solver'].lower() == 'newton':
+		problem = NonlinearVariationalProblem(F,u,bcs,J)
+		solver = NonlinearVariationalSolver(problem)
+
+		#solver.parameters["newton_solver"]["relative_tolerance"] = 1.0e-8
+		#solver.parameters["newton_solver"]["absolute_tolerance"] = 1e-10
+
+
+
+	####solver.parameters["nonlinear_solver"] = 'snes'
+	####solver.parameters["snes_solver"]["maximum_iterations"] = 100
+	####solver.parameters["snes_solver"]["report"] = False
+	#constraint_l = Expression('A',A=Constant(1),degree=0) 
+	#umin = interpolate(constraint_l, FunctionSpace(mesh,P1))
+	#sys.exit()
+	# Create the PETScTAOSolver
+	####solver = PETScTAOSolver(problem)
+
+	# Set some parameters
+	####solver.parameters["method"] = "tron"
+	####solver.parameters["monitor_convergence"] = True
+	####solver.parameters["report"] = True
 	
-	solver.parameters["newton_solver"]["relative_tolerance"] = 1.0e-8
-	solver.parameters["newton_solver"]["absolute_tolerance"] = 1e-10
+	
+	# Uncomment this line to see the available parameters
+	####info(parameters, True)
+	
+	# Parse (PETSc) parameters
+	####parameters.parse()
+	####sys.exit()
+
+	#dolfin.parameters["nonlinear_solver"]["test_gradient"] = True
+	#dolfin.parameters["nonlinear_solver"] = 'snes'
+	#solver.parameters["snes_solver"]["maximum_iterations"] = 50
+	#solver.parameters["snes_solver"]["report"] = False
+
+	#solver  = NonlinearVariationalSolver(problem)
+	#solver.parameters["nonlinear_solver"] = 'snes'
+
+	#a_max = Function(interpolate(Constant(1.0), V))
+
 
 	### Handle a pulse intensity that changes with each pulse ###
 	if '/' in str(reac_input['Pulse Ratio']):
@@ -341,8 +402,9 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 
 	if reac_input['Experimental Data Folder'].lower() != 'none' and (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Display Objective Points'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true'):
 		for k_fitting in range(0,len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])])):
-			for timeStep in range(0,len(output_fitting[legend_label[0]]['times'])):
-				output_fitting[legend_label[k_fitting]]['times'][timeStep] = round(output_fitting[legend_label[k_fitting]]['times'][timeStep],6)
+			if objSpecies[k_fitting] == '1':
+				for timeStep in range(0,len(output_fitting[legend_label[k_fitting]]['times'])):
+					output_fitting[legend_label[k_fitting]]['times'][timeStep] = round(output_fitting[legend_label[k_fitting]]['times'][timeStep],6)
 
 	### legend_label[int(reac_input['Number of Inerts']):]
 	if reac_input['Fit Inert'].lower() == 'true':
@@ -488,35 +550,35 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true':
 
 				for k_fitting in range(0,len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])])):
-					
-					if round(t,6) in output_fitting[legend_label[k_fitting]]['times']:
+					if objSpecies[k_fitting] == '1':
+						if round(t,6) in output_fitting[legend_label[k_fitting]]['times']:
 						
-						c_exp = output_fitting[legend_label[k_fitting]]['values'][output_fitting[legend_label[k_fitting]]['times'].index(round(t,6))]
-						slope = (-c_exp)/(1/mesh_size)
-						intercept = c_exp - ((1-(1/mesh_size))*slope)
-						w_new = Expression('A*x[0]+B',A=Constant(slope),B=Constant(intercept),degree=0)#Expression("1", degree=0)
-						w_new2 = interpolate(w_new,V_du)
-						w3 = project(w_new2,V_du)#output_fitting[legend_label[k_fitting]]['values'][output_fitting[legend_label[k_fitting]]['times'].index(round(t,6))]*
-						#test_meaning = assemble(inner(u_n[k_fitting] + output_fitting[legend_label[k_fitting]]['values'][output_fitting[legend_label[k_fitting]]['times'].index(round(t,6))] ,u_n[k_fitting] + output_fitting[legend_label[k_fitting]]['values'][output_fitting[legend_label[k_fitting]]['times'].index(round(t,6))])*ds(1))
+							c_exp = output_fitting[legend_label[k_fitting]]['values'][output_fitting[legend_label[k_fitting]]['times'].index(round(t,6))]
+							slope = (-c_exp)/(1/mesh_size)
+							intercept = c_exp - ((1-(1/mesh_size))*slope)
+							w_new = Expression('A*x[0]+B',A=Constant(slope),B=Constant(intercept),degree=0)#Expression("1", degree=0)
+							w_new2 = interpolate(w_new,V_du)
+							w3 = project(w_new2,V_du)#output_fitting[legend_label[k_fitting]]['values'][output_fitting[legend_label[k_fitting]]['times'].index(round(t,6))]*
+							#test_meaning = assemble(inner(u_n[k_fitting] + output_fitting[legend_label[k_fitting]]['values'][output_fitting[legend_label[k_fitting]]['times'].index(round(t,6))] ,u_n[k_fitting] + output_fitting[legend_label[k_fitting]]['values'][output_fitting[legend_label[k_fitting]]['times'].index(round(t,6))])*ds(1))
 
-						try:
-							if legend_label[k_fitting] != 'Inert':
-								jfunc_2 += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
-								#tot_objective += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
-								#tot_objective += assemble(inner(u_n[k_fitting] - w3,u_n[k_fitting] - w3)*dP(1))
+							try:
+								if legend_label[k_fitting] != 'Inert':
+									jfunc_2 += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
+									#tot_objective += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
+									#tot_objective += assemble(inner(u_n[k_fitting] - w3,u_n[k_fitting] - w3)*dP(1))
 								
-							else:
-								pass
+								else:
+									pass
 
-						except UnboundLocalError:
-							
-							if legend_label[k_fitting] != 'Inert':
-								jfunc_2 = assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
-								#tot_objective += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
-								#tot_objective += assemble(inner(u_n[k_fitting] - w3,u_n[k_fitting] - w3)*dP(1))
-							else:
-								pass
-						#print(tot_objective)
+							except UnboundLocalError:
+								
+								if legend_label[k_fitting] != 'Inert':
+									jfunc_2 = assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
+									#tot_objective += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
+									#tot_objective += assemble(inner(u_n[k_fitting] - w3,u_n[k_fitting] - w3)*dP(1))
+								else:
+									pass
+							#print(tot_objective)
 
 			### len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])]),len(legend_label[int(reac_input['Number of Inerts']):]
 
@@ -783,7 +845,6 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			for gt in range(0,len(controls)):
 				low_bounds.append(0)
 				up_bounds.append(np.inf)
-			
 			if reac_input['Optimization Method'] == 'L-BFGS-B' or reac_input['Optimization Method'] == '':
 				u_opt_2 = minimize(rf_2, bounds = (low_bounds,up_bounds),tol=1e-9, options={"ftol":1e-9,"gtol":1e-9})
 			elif reac_input['Optimization Method'] == 'Newton-CG':
@@ -839,11 +900,11 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	############# Visualize/graph the data #######################################################
 		if reac_input['Experimental Data Folder'].lower() != 'none' and reac_input['Display Experimental Data'].lower() == 'true':
 
-
 			#if reac_input['Fit Parameters'].lower() == 'true':
 			if reac_input['Display Objective Points'].lower() == 'true' or reac_input['Fit Parameters'].lower() == 'true':
 				for k_fitting in range(0,len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])])):
-					ax2.scatter(output_fitting[legend_label[k_fitting]]['times'],output_fitting[legend_label[k_fitting]]['values'],marker='^',color=colors[k_fitting],label='Fitting'+legend_label[k_fitting])
+					if objSpecies[k_fitting] == '1':
+						ax2.scatter(output_fitting[legend_label[k_fitting]]['times'],output_fitting[legend_label[k_fitting]]['values'],marker='^',color=colors[k_fitting],label='Fitting'+legend_label[k_fitting])
 		
 			#if reac_input['Fit Parameters'].lower() == 'true':
 			if reac_input['Display Objective Points'].lower() == 'true' and reac_input['Fit Inert'].lower() == 'true':
@@ -895,7 +956,12 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 				#print(dfNew[0][:].tolist())
 				#print(outlet)
 				#sys.exit()
-				ax2.plot(graph_data['timing'],outlet,color=colors[kjc],label='Analytical '+legend_label[kjc], alpha=0.7)
+				try:
+					ax2.plot(graph_data['timing'],outlet,color=colors[kjc],label='Analytical '+legend_label[kjc], alpha=0.7)
+				except ValueError:
+					outlet = outlet[:-1]
+					ax2.plot(graph_data['timing'],outlet,color=colors[kjc],label='Analytical '+legend_label[kjc], alpha=0.7)
+
 
 			#for kjc in range(all_molecules-int(reac_input['Number of Inerts']),all_molecules):
 			for kjc in range(0,int(reac_input['Number of Inerts'])):
@@ -926,7 +992,11 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 				#print(dfNew[0][:].tolist())
 				#print(outlet)
 				#sys.exit()
-				ax2.plot(graph_data['timing'],outlet,color=colors[monitored_gas+kjc],label='Analytical'+legend_label[monitored_gas+kjc], alpha=0.7)
+				try:
+					ax2.plot(graph_data['timing'],outlet,color=colors[monitored_gas+kjc],label='Analytical'+legend_label[monitored_gas+kjc], alpha=0.7)
+				except ValueError:
+					outlet = outlet[:-1]
+					ax2.plot(graph_data['timing'],outlet,color=colors[monitored_gas+kjc],label='Analytical'+legend_label[monitored_gas+kjc], alpha=0.7)
 
 			###outlet = []
 			###outlet.append(0)
