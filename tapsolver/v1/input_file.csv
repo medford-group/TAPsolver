@@ -1,8 +1,8 @@
 Reactor_Information,,,,,,,,,,,,,,,,,,,,,,,Feed_&_Surface_Composition,
 Pulse Duration,0.5,,,,,,,,,,,,,,,,,,,,,,Number of Reactants,1
-Time Steps,400,,,,,6,,,,,,,,,,,,,,,,,Number of Pulses,1
+Time Steps,1000,,,,,6,,,,,,,,,,,,,,,,,Number of Pulses,1
 Reactor Length,5.788,,5,5.788,,500,,,,,,,,,,,,,,,,,Reference Pulse Size,5
-Mesh Size,1000,,5.788,,,5.788,,,,,,,,,,,,,,,,,Pulse Ratio,"0.03,0,0.175,0.0125"
+Mesh Size,500,,5.788,,,5.788,,,,,,,,,,,,,,,,,Pulse Ratio,"0.03,0,0.175,0.0125"
 Catalyst Fraction,0.029025570145128,,,,,500,,,,,,,,,,,,,,,,,Pulse Time,"0.01,0,0.01,0.0"
 Reactor Radius,1,,,0.5,,0.029025570145128,,First Inert Length,0.0281,m,,,,,,,,,,,,,Mass List,"28,44,40,4"
 Catalyst Location,0.5,,,0.5788,,0.2,,Cross Section Area,1.256E-05,m^2,,0.05788,,,,,,,,,,,Advection,FALSE
@@ -20,7 +20,7 @@ Reactor Type,tap,,,,,,,,,,,,,,,,,,,,,,Scale Output,FALSE
 Knudsen Test,FALSE,,,,,,,,,,,,,,,,,,,,,,Display Graph,TRUE
 Theta,1,,,,,,,,,,,,,,,,,,,,,,Sensitivity Analysis,FALSE
 Solver Method,None,,,,,,,,,,,,,,,,,,,,,,RRM Analysis,FALSE
-Variational Solver,constrained,,,,,"2,6,0,1.6,0.4",,,,,,,,,,,,,,,,,Thin-Zone Analysis,FALSE
+Variational Solver,newton,,,,,"2,6,0,1.6,0.4",,,,,,,,,,,,,,,,,Thin-Zone Analysis,FALSE
 ,,,,,,,,,,,,,,,,,8.70535192579134,3899.74202678706,8.70535192579134,3899.74202678706,8.70535192579134,,Fit Parameters,FALSE
 Feed_&_Surface_Composition,,,,,,,,,,,,,,,,,5.59E-09,0.1,5.59E-09,,5.59E-09,,Fit Inert,FALSE
 Number of Reactants,2,,,2.5,,"28,32,44,40,4",,,,,,,,,,,224.021656661843,,224.021656661843,,224.021656661843,,Optimization Method,BFGS
@@ -44,9 +44,9 @@ Scale Output,FALSE,,,0,0,,,,,,,,,,,,,,,,,,,
 Display Graph,TRUE,,,0,,,,,,,,,,,,,,,,,,,,
 Sensitivity Analysis,FALSE,,,0,,,,,,,,,,,,,,,,,,,,
 RRM Analysis,FALSE,,,,,,,,,,,,,,,,,,,,,,,
-Thin-Zone Analysis,FALSE,,,,,,,,,,,,,,,,,,,,,,,
-Fit Parameters,FALSE,,,,,,,0.000670095085301,23.20995906496,,,,,,,,,,,,,,,
-Fit Inert,FALSE,,,,,0.000670095085301,23.20995906496,1.11E-05,0.310457684429562,,,,,,,,,,,,,,,
+Thin-Zone Analysis,FALSE,,0.000670095085301,23.20995906496,,,,,,,,,,,,,,,,,,,,
+Fit Parameters,FALSE,,1.11E-05,0.310457684429562,,,,0.000670095085301,23.20995906496,,,,,,,,,,,,,,,
+Fit Inert,FALSE,,2,1.63E-12,,0.000670095085301,23.20995906496,1.11E-05,0.310457684429562,,,,,,,,,,,,,,,
 Optimization Method,BFGS,,,,,2.00E-09,0.310457684429562,2,1.63E-12,,,,,,,,,,,,,,,
 Objective Points,all,,,,,2,1.63E-12,,,,,,,,,,,,,,,,,
 Objective Species,"0,0,1",,,0.000670095085301,23.20995906496,,,,3899.74202678706,,,,,,,,,,,,,,,
@@ -55,6 +55,6 @@ Fitting Gif,FALSE,,,2,1.63E-12,,,,0,,,,,,,,,,,,,,,
 Uncertainty Quantification,FALSE,,,,,,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,,,,
 Reaction_Information,,,,,,,,,,,,,,,,,,,,,,,,
-CO + * <-> CO*,0.000670095085301,23.20995906496,,,,,,,,,,,,,,,,,,,,,,
-O2 + 2* <-> 2O*,1.11E-05,0.310457684429562,,,,,,,,,,,,,,,,,,,,,,
-O* + CO* <-> CO2 + 2*,2,1.63E-12,,,,,,,,,,,,,,,,,,,,,,
+CO + * <-> CO*,0,0,,,,,,,,,,,,,,,,,,,,,,
+O2 + 2* <-> 2O*,0,0,,,,,,,,,,,,,,,,,,,,,,
+O* + CO* <-> CO2 + 2*,0,0,,,,,,,,,,,,,,,,,,,,,,

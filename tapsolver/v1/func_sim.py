@@ -116,7 +116,7 @@ def solver_iteration(time_step,method,solver,dk,dec_tim,inc_tim):
 			return time_step
 		
 		elif method == 'None':
-			solver.solve()
+			solver.solve(annotate = False) # ### can pass annotate = False if I don't want it to record the solution
 			return time_step
 	except RuntimeError:
 		print('Time Step Failure')

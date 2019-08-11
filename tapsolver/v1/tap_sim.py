@@ -509,7 +509,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		
 		for z_gasses in range(0,all_molecules):
 			cat_data['conVtime_'+str(z_gasses)] = []
-
+		start_time = time.time()
 		t = 0
 		if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Sensitivity Analysis'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true':
 			osub = integration_section()
@@ -634,7 +634,14 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 
 			if round(t,6) not in reactant_time:
 
-				dt = solver_iteration(dt,reac_input['Solver Method'],solver,dk,1.5,1.1)
+				#dt = solver_iteration(dt,reac_input['Solver Method'],solver,dk,1.5,1.1)
+				try:
+					if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true' or reac_input['RRM Analysis'].lower() == 'true' or reac_input['Sensitivity Analysis'].lower() == 'true':
+						solver.solve()
+					else:
+						solver.solve(annotate = False)
+				except RuntimeError:
+					print('Time Step Failure')
 				
 			else:
 				if reac_input['Reactor Type'] == 'tap':
@@ -674,7 +681,14 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 								u_n.vector()[z*(all_molecules)-(2)] = float(species_pulse_list)
 
 				
-				dt = solver_iteration(dt,reac_input['Solver Method'],solver,dk,1.5,1.1)
+								#dt = solver_iteration(dt,reac_input['Solver Method'],solver,dk,1.5,1.1)
+				try:
+					if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true' or reac_input['RRM Analysis'].lower() == 'true' or reac_input['Sensitivity Analysis'].lower() == 'true':
+						solver.solve()
+					else:
+						solver.solve(annotate = False)
+				except RuntimeError:
+					print('Time Step Failure')
 				
 			if reac_input['Sensitivity Analysis'].lower() == 'true':
 				time_size = time.time()
@@ -779,7 +793,8 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 				np.savetxt(rrmFolder+'/pointValue'+'/dr_'+necessary_values['reactants'][numEachSens]+'.csv',newList,delimiter=",")
 			
 			#sys.exit()
-		
+		print(time.time() - start_time)
+		sys.exit()
 		current_reac_set += 1
 		if current_reac_set >  pulse_variation:
 			current_reac_set = 1
@@ -841,8 +856,11 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			#	rf_2 = ReducedFunctional(jfunc_2, controls,derivative_cb_post=deriv_inert)
 			low_bounds = []
 			up_bounds = []
+			##### bounded = [0,np.inf]
+			##### bounds = []
 			#try:
 			for gt in range(0,len(controls)):
+				##### bounds.append(bounded)
 				low_bounds.append(0)
 				up_bounds.append(np.inf)
 			if reac_input['Optimization Method'] == 'L-BFGS-B' or reac_input['Optimization Method'] == '':
@@ -850,7 +868,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			elif reac_input['Optimization Method'] == 'Newton-CG':
 				u_opt_2 = minimize(rf_2, method = 'Newton-CG',tol=1e-9, options={"ftol":1e-9,"gtol":1e-9})
 			elif reac_input['Optimization Method'] == 'BFGS':
-				u_opt_2 = minimize(rf_2, method = 'BFGS',tol=1e-13, options={"gtol":1e-13})
+				u_opt_2 = minimize(rf_2, method = 'BFGS',tol=1e-13, options={"gtol":1e-13})# , "constraints":bounds
 			elif reac_input['Optimization Method'] == 'SLSQP':
 				u_opt_2 = minimize(rf_2, method = 'SLSQP', bounds = (low_bounds,up_bounds),tol=1e-9, options={"ftol":1e-9})
 			elif reac_input['Optimization Method'] == 'CG':
