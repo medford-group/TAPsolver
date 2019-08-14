@@ -21,6 +21,10 @@ import ufl
 import scipy
 import pip
 import pkg_resources
+#import optizelle
+#import moola
+#import ipopt
+#import pyipopt
 
 fenics_version = dolfin.__version__
 
@@ -925,6 +929,18 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 				##### bounds.append(bounded)
 				low_bounds.append(0)
 				up_bounds.append(np.inf)
+
+			#### TESTING NEW OPTIMIZATION METHOD THROUGH MOOLA ####
+			problem = MoolaOptimizationProblem(rf_2)
+			print(r_const)
+			k_moola = moola.DolfinPrimalVector(r_const["kf0"])
+
+			solver = moola.BFGS(problem, k_moola)
+
+			sys.exit()
+			#### TESTING NEW OPTIMIZATION METHOD THROUGH MOOLA ####
+
+
 			if reac_input['Optimization Method'] == 'L-BFGS-B' or reac_input['Optimization Method'] == '':
 				u_opt_2 = minimize(rf_2, bounds = (low_bounds,up_bounds),tol=1e-9, options={"ftol":1e-9,"gtol":1e-9})
 			elif reac_input['Optimization Method'] == 'Newton-CG':
