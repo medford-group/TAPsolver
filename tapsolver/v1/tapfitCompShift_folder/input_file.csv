@@ -1,6 +1,6 @@
 Reactor_Information,,,,,,,,,,,,,,,,,,,,,,,Feed_&_Surface_Composition,
 Pulse Duration,5,,,,,,,,,,,,,,,,,,,,,,Number of Reactants,1
-Time Steps,5000,,,,,6,,,,,,,,,,,,,,,,,Number of Pulses,1
+Time Steps,10000,,,,,6,,,,,,,,,,,,,,,,,Number of Pulses,1
 Reactor Length,4.75,,5,5.788,,500,,,,,,,,,,,,,,,,,Reference Pulse Size,5
 Mesh Size,4750,,5.788,,,5.788,,,,,,,,,,,,,,,,,Pulse Ratio,"0.03,0,0.175,0.0125"
 Catalyst Fraction,0.021052,,0.02902557,,,500,,,,,,,,,,,,,,,,,Pulse Time,"0.01,0,0.01,0.0"
@@ -56,4 +56,4 @@ Fitting Gif,FALSE,,,,,,,,,,,,,,,,,,,,,,,
 Uncertainty Quantification,FALSE,,,,,,,,,,,,,,,,,,,,,,,
 ,,,,3.57895E-10,,,,,,,,,,,,,,,,,,,,
 Reaction_Information,,,,,,,,,,,,,,,,,,,,,,,,
-CO + * <-> CO*,0.01449,1.40E+13,,,,,,,,,,,,,,,,,,,,,,
+CO + * <-> CO*,0,0.00E+00,,,,,,,,,,,,,,,,,,,,,,
