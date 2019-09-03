@@ -1,4 +1,9 @@
 
+<p align="center">
+  <a href="https://github.com/medford-group/TAPsolver/blob/master/docs/figures/tapAdjointLogo.PNG"><img alt="TAPAdjoint" src="https://github.com/medford-group/TAPsolver/blob/master/docs/figures/tapAdjointLogo.PNG" width="60%"></a>
+  <p align="center">Advanced TAP Processing</p>
+</p>
+
 # TAPsolver
 
 The primary features of TAPsolver are:
