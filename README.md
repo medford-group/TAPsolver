@@ -1,12 +1,10 @@
 
 <p align="center">
-  <a href="https://github.com/medford-group/TAPsolver/blob/master/docs/figures/tapAdjointLogo.PNG"><img alt="TAPAdjoint" src="https://github.com/medford-group/TAPsolver/blob/master/docs/figures/tapAdjointLogo.PNG" width="60%"></a>
+  <a href="https://github.com/medford-group/TAPsolver/blob/master/docs/figures/tapAdjointLogo.PNG"><img alt="TAPAdjoint" src="https://github.com/medford-group/TAPsolver/blob/master/docs/figures/tapAdjointLogo.PNG" width="40%"></a>
   <p align="center">Advanced TAP Processing</p>
 </p>
 
-# TAPsolver
-
-The primary features of TAPsolver are:
+The primary features of TAPAdjoint are:
  * Forward simulations of common TAP experiments, including:
    * State-defining
    * State-altering
@@ -23,7 +21,7 @@ The primary features of TAPsolver are:
   <img src="https://github.com/medford-group/TAPsolver/blob/master/docs/figures/CO.gif">
 </p>
 
-## Installation
+# Installation
 
 [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install) is the simplest way to install [FEniCS](https://fenicsproject.org/) (on [Ubuntu](https://tutorials.ubuntu.com/tutorial/tutorial-ubuntu-on-windows#0) systems, especially) and is highly recommended. It is possible to install FEniCS in other ways, but Conda was found to be the quickest.
 
@@ -47,7 +45,7 @@ To properly establish the environment for FEniCS through conda, run the followin
 
 If you are having trouble installing FEniCS, contact Adam Yonge (ayonge3@gatech.edu) or the [FEniCS developers](https://fenicsproject.org/community/).
 
-## Running TAPsolver
+# Running TAPAdjoint
 
 An explanation of the input file and how to properly manipulate it can be found [here](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/input_file) and a simple tutorial can be found [here](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/examples/coAdsorption).
 
