@@ -15,7 +15,7 @@ The primary features of TAPsolver are:
 </p>
 
 <p align="center">
-  <img width="800" height="600" src="https://github.com/medford-group/TAPsolver/blob/master/docs/figures/CO.gif">
+  <img src="https://github.com/medford-group/TAPsolver/blob/master/docs/figures/CO.gif">
 </p>
 
 <p align="center">
