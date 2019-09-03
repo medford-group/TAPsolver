@@ -11,7 +11,11 @@ The primary features of TAPsolver are:
  * Kinetic parameter fitting for reaction mechanisms
 
 <p align="center">
-  <img width="600" height="200" src="https://github.com/medford-group/TAPsolver/blob/master/docs/figures/expSimExample.png">
+  <img width="800" height="600" src="https://github.com/medford-group/TAPsolver/blob/master/docs/figures/expSimExample.png">
+</p>
+
+<p align="center">
+  <img width="800" height="600" src="https://github.com/medford-group/TAPsolver/blob/master/docs/figures/CO.gif">
 </p>
 
 <p align="center">
