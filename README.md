@@ -1,10 +1,7 @@
 
-<p align="center">
-  <a href="https://github.com/medford-group/TAPsolver/blob/master/docs/figures/tapAdjointLogo.PNG"><img alt="TAPAdjoint" src="https://github.com/medford-group/TAPsolver/blob/master/docs/figures/tapAdjointLogo.PNG" width="40%"></a>
-  <p align="center">Advanced TAP Processing</p>
-</p>
+# TAPsolver
 
-The primary features of TAPAdjoint are:
+The primary features of TAPsolver are:
  * Forward simulations of common TAP experiments, including:
    * State-defining
    * State-altering
@@ -45,7 +42,7 @@ To properly establish the environment for FEniCS through conda, run the followin
 
 If you are having trouble installing FEniCS, contact Adam Yonge (ayonge3@gatech.edu) or the [FEniCS developers](https://fenicsproject.org/community/).
 
-# Running TAPAdjoint
+# Running TAPsolver
 
 An explanation of the input file and how to properly manipulate it can be found [here](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/input_file) and a simple tutorial can be found [here](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/examples/coAdsorption).
 
