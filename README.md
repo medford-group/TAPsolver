@@ -1,4 +1,11 @@
+
 # TAPsolver
+
+The key features of TAPsolver are:
+ * Forward simulation of common TAP experiments, including: 
+ * 
+ * 
+ *
 
 ## Installation
 
@@ -10,11 +17,17 @@ To install FEniCS through conda, run the following the terminal:
 
 	source activate fenicsproject
 
+	pip install dolfin-adjoint==2019.1.0
+
+	conda install -c imperial-college-research-computing pyipopt
+
 	pip install matplotlib
 
 	conda install imageio
 
 	conda install pandas
+
+	conda install xlrd
 
 If you are having trouble installing FEniCS, contact Adam Yonge (ayonge3@gatech.edu) or the [FEniCS developers](https://fenicsproject.org/community/).
 
