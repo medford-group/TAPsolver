@@ -1,4 +1,10 @@
 
+import pandas as pd
+import numpy as np
+
+pd.read_excel('tmp.xlsx', index_col=0)
+
+
 # for each different gas
 class gasOptions():
     def __init__(self, *args, **kwargs):
@@ -11,35 +17,31 @@ class gasOptions():
         self.calibrationCoef = 1
         self.pumpProbeSpacing = 0
         self.massCorrection = 0
-        self.savGolSmoothing = 0
+        self.fluxSmoothing = 0
         self.smoothingType = "None"
         self.outliers = "None"
         self.__dict__.update(kwargs)
-        availableProperties = ["name", "amu", "gain", "baselineStart", "baselineEnd", "baselineType", "calibrationCoef", "pumpProbeSpacing", "massCorrection", "savGolSmoothing", "smoothingType", "outliers"]
+        availableProperties = ["name", "amu", "gain", "baselineStart", "baselineEnd", "baselineType", "calibrationCoef", "pumpProbeSpacing", "massCorrection", "fluxSmoothing", "smoothingType", "outliers"]
         for i in range(len(args)):
             setattr(self, availableProperties[i], args[i])
     def return_dict(self):
         return(self.__dict__)
-
 
 class reactorOptions():
     def __init__(self, *args, **kwargs):
         self.inertZone1Length = 0.02
         self.inertZone2Length = 0.02
         self.catalystBedLength = 0.00075
-        self.reactorLength = .04075
         self.crossSectionalArea = 1.14009E-05
         self.catalystWeight = 1
         self.bedPorosity = 0.4
         self.molPerM0Inert = 1.63E-09
         self.__dict__.update(kwargs)
-        availableProperties = ["inertZone1Length", "inertZone2Length", "catalystBedLength", "reactorLength", "crossSectionalArea", "catalystWeight", "bedPorosity", "molPerM0Inert"]
+        availableProperties = ["inertZone1Length", "inertZone2Length", "catalystBedLength", "crossSectionalArea", "catalystWeight", "bedPorosity", "molPerM0Inert"]
         for i in range(len(args)):
             setattr(self, availableProperties[i], args[i])
     def return_dict(self):
         return(self.__dict__)
-
-
 
 class experimentOptions():
     def __init__(self, *args, **kwargs):
@@ -52,20 +54,56 @@ class experimentOptions():
         self.rateProcedure = "y"
         self.yProcSmoothing = 0
         self.pulseRemoved = 0
-        self.appliedFunctions = "None"
+        self.numTime = 100
+        self.numCores = 4
+        self.numPulses = 5
         self.__dict__.update(kwargs)
-        availableProperties = ["timeStart", "timeEnd", "diffusionCoef", "inert", "reactant", "products", "rateProcedure", "yProcSmoothing", "pulseRemoved", "appliedFunctions"]
+        availableProperties = ["timeStart", "timeEnd", "diffusionCoef", "inert", "reactant", "products", "rateProcedure", "yProcSmoothing", "pulseRemoved", "numTime", "numCores", "numPulses"]
         for i in range(len(args)):
             setattr(self, availableProperties[i], args[i])
     def return_dict(self):
         return(self.__dict__)
 
+class simulationOptions():
+    def __init__(self, *args, **kwargs):
+        self.meshSize = 360
+        self.outputFolderName = "results"
+        self.experimentalFolderName = "none"
+        self.noise = False
+        self.theta = 1
+        self.solverMethod = "None"
+        self.storeOutletFlux = True
+        self.storeGraph = False
+        self.displayExperimentalData = False
+        self.displayGraph = False
+        self.sensitivityAnalysis = False
+        self.fitParameters = False
+        self.optimizationMethod = "CG"
+        self.objectivePoints = 1
+        self.rrmAnalysis = False
+        self.mkmAnalysis = True
+        self.petalPlots = False
+        self.reactionsTest = ["A + * -> A*"]
+        self.massList = [40,40]
+        self.pulseTime = [0,0]
+        self.pulseRatio = [1,1]
+        self.initialSurfaceComposition = [0,1000]
+        self.kForward = [200]
+        self.kBackward = [0]
+        self.__dict__.update(kwargs)
+        availableProperties = ["meshSize", "outputFolderName", "experimentalFolderName", "noise", "theta", "solverMethod", "storeOutletFlux", "storeGraph", "displayExperimentalData", "displayGraph", "sensitivityAnalysis", "fitParameters", "optimizationMethod", "objectivePoints", "rrmAnalysis", "mkmAnalysis","petalPlots","reactionsTest", "massList", "pulseTime", "pulseRatio","initialSurfaceComposition","kForward", "kBackward"]
+        for i in range(len(args)):
+            setattr(self, availableProperties[i], args[i])
+    def return_dict(self):
+        return(self.__dict__)
+
+
 class tapParameters():
     def __init__(self, *args, **kwargs):
         self.reactor = reactorOptions()
         self.experiment = experimentOptions()
-        self.simulation = {} # a set of simulation parameters
-        self.analysis = {} # this a list of string to keep track of what analysis the user performed
+        self.simulation = simulationOptions()
+        self.analysis = ["Start"] # this a list of string to keep track of what analysis the user performed
         self.__dict__.update(kwargs)
         availableProperties = ["reactor", "experiment", "simulation","analysis"]
         for i in range(len(args)):
@@ -73,35 +111,43 @@ class tapParameters():
     def return_dict(self):
         self.reactor = self.reactor.return_dict()
         self.experiment = self.experiment.return_dict()
+        self.simulation = self.simulation.return_dict()
         return(self.__dict__)
 
-# not complete
 class gasObj():
     def __init__(self, *args, **kwargs):
-        self.matrix = {}
-        self.moments = {}
-        self.options = gasOptions(**kwargs)
-        #availableProperties = ["matrix", "moments", "options"] #TODO: connect to args
-        #for i in range(len(args)): 
-        #    setattr(self, availableProperties[i], args[i])
+        self.name = ""
+        self.matrix = [] # List per pulse number: each item is a flux
+        self.moments = [] # List per pulse number: list within for each different moment type
+        self.temperature = [] # Array of temperatures per pulse number
+        self.originalBaseline = [] # Array of baseline values of original flux per pulse
+        self.timeIndexFlux = [] # timing associated with 
+        self.options = gasOptions(self.name)
+        self.__dict__.update(kwargs)
+        availableProperties = ["name", "matrix", "moments", "temperature", "originalBaseline", "timeIndexFlux"]
+        for i in range(len(args)): 
+            setattr(self, availableProperties[i], args[i])
     def return_dict(self):
         self.options = self.options.return_dict()
         return(self.__dict__)
 
-# not complete
 class tapObj():
-    def __init__(self, *args, **kwargs):
+    def __init__(self, gasName):
+        self.gasName = gasName
         self.parameters = tapParameters()
         # for each gas create a gasObj
-        tempOptions = gasObj()
-        self.options = gasObj()
-        #self.__dict__.update(kwargs)
+        for name in gasName:
+            setattr(self, name, gasObj(name))
+    def setSimulation(self):
+        self.parameters.simulation.pulseDuration = self.parameters.experiment.timeEnd
+        self.parameters.simulation.timeSteps = self.parameters.experiment.numTime
+        self.parameters.simulation.reactorLength = self.parameters.reactor.inertZone1Length + self.parameters.reactor.inertZone2Length + self.parameters.reactor.catalystBedLength
+        self.parameters.simulation.catalystFraction = self.parameters.reactor.catalystBedLength / self.parameters.simulation.reactorLength
+        self.parameters.simulation.reactorRadius = np.sqrt(self.parameters.reactor.crossSectionalArea / np.pi)
+        
     def return_dict(self):
-
+        self.parameters = self.parameters.return_dict()
         return(self.__dict__)
-
-
-
 
 
 
