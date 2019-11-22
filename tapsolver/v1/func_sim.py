@@ -12,10 +12,10 @@ import math
 import os
 import fenics_adjoint
 
-def read_input():
+def readInput():
 	
 	"""
-	Returns a dictionary of simulation parameters from 
+	Convert the input file into dictionaries for TAPsolver to use
 	"""
 
 	user_data = pd.read_csv('./input_file.csv',header=None)
@@ -79,31 +79,12 @@ def read_input():
 
 	return reactor_kinetics_input,kinetic_parameters,kin_in
 
-def call_sens_analysis(u_value,control_list,domain,direction):
-
-	""" Perform the sensitivty analysis"""
-
-	flux =  u_value*u_value*domain
-	sens_func = assemble(flux)
-	X = compute_gradient(sens_func,control_list)###################
-
-	#X = compute_hessian(sens_func,control_list,direction)
-	print('test')
-	#X = compute_tlm(control_list)###################
-	#X = hessian(sens_func,control_list)###################
-	m = Enlist(control_list)
-	grads = [i.get_derivative(options=None) for i in m]
-	value_list = []
-	Z = np.array(len(control_list))
-
-	for nu in grads:
-		value_list.append(nu.values().item(0))
+def solverIteration(time_step,method,solver,dk,dec_tim,inc_tim):
 	
-	temp = np.array((value_list))
-	
-	return temp
+	"""
+	Old time step iteration method. Could be useful in future implementations when runge-kutta stepping is optional.
+	"""
 
-def solver_iteration(time_step,method,solver,dk,dec_tim,inc_tim):
 	try:
 		if method == 'simple_adaptive':
 	
@@ -120,9 +101,6 @@ def solver_iteration(time_step,method,solver,dk,dec_tim,inc_tim):
 			return time_step
 	except RuntimeError:
 		print('Time Step Failure')
-		#fenics_version = dolfin.__version__
-		#if fenics_version != '2017.2.0':
-		#	print('Since the version of fenics >2017, the choice of time steps might be limited. Try running with a smaller number of time steps.')
 		sys.exit()
 
 	#except RuntimeError:
@@ -136,7 +114,7 @@ def solver_iteration(time_step,method,solver,dk,dec_tim,inc_tim):
 	#	time_step=solver_iteration(time_step,method,solver,dk,1.5,1.1)
 	#	return time_step
 
-def flux_generation(reactor,gasses,reactants,pulse_size,Diff,voidage,dx,radius,dx2_r,outScale):
+def fluxGeneration(reactor,gasses,reactants,pulse_size,Diff,voidage,dx,radius,dx2_r,outScale):
 	
 	"""Scale the output values of flux with the constant found here (messy now due to different trials)"""
 
@@ -167,10 +145,11 @@ def flux_generation(reactor,gasses,reactants,pulse_size,Diff,voidage,dx,radius,d
 	
 	return to_flux
 
-def define_boundary_conditions(reactor,elem_list,nec_values,V_sec,reacs_num,all_mol,reac_ratio,L_bound,R_bound,number_of_inerts):
+def defineBCs(reactor,elem_list,nec_values,V_sec,reacs_num,all_mol,reac_ratio,L_bound,R_bound,number_of_inerts):
 
 	"""Define the appropriate boundary conditions for all monitored species"""
 
+	# Zero Flux boundary condition at entrance of reactor (dcdx = 0 @ L = 0)
 	if reactor == 'tap':
 		bcs = []
 
@@ -185,6 +164,7 @@ def define_boundary_conditions(reactor,elem_list,nec_values,V_sec,reacs_num,all_
 		else:	
 			bcs.append(DirichletBC(V_sec,Constant(0),R_bound))
 	
+	# Vacuum BC at outlet of reactor (C = 0 @ L = L_reactor)
 	elif reactor == 't_pfr' or 't_pfr_diff':
 		bcs = []
 		
@@ -199,7 +179,7 @@ def define_boundary_conditions(reactor,elem_list,nec_values,V_sec,reacs_num,all_
 	return bcs
 
 
-def initialize_variable_dictionaries(nec,moles,V_nu,u_nu,un_nu):
+def initializeVariableDictionaries(nec,moles,V_nu,u_nu,un_nu):
 	
 	"""For all monitored parameters (gasses/surface species), establish necessary test and trial functions, as well as dictionaries for value storing"""
 
@@ -236,7 +216,7 @@ def initialize_variable_dictionaries(nec,moles,V_nu,u_nu,un_nu):
 	return graph_data,v_d,u_d,u_nd,sens_data,surf_data,cat_data
 
 
-def establish_grid_system(in_1,cat,in_2,mesh_size):
+def establishMesh(in_1,cat,in_2,mesh_size):
 
 	"""Generate the FEniCS Mesh"""
 
@@ -256,7 +236,7 @@ def establish_grid_system(in_1,cat,in_2,mesh_size):
 	return r_param,dx_r,dx2_r,frac_length,cat_location
 
 
-def establish_output_graph(reactor,gas_phase,reacs,inerts,scaleGraph):
+def establishOutletGraph(reactor,gas_phase,reacs,inerts,scaleGraph):
 
 	"""Generate the outlet flux graph (initialize, anyway)"""
 
@@ -282,45 +262,6 @@ def establish_output_graph(reactor,gas_phase,reacs,inerts,scaleGraph):
 
 	return fig2,ax2,legend_label,header,colors
 
-
-def exp_data_fitting_all(species_list,time,folder):
-
-	"""Define the objective function in terms of every simulated point"""
-
-	print("This method is not recommended and will lead to an endless calculation. Will continue after six seconds.")
-	time.sleep(6)
-
-	def interp(y2,y1,x2,x1,b,xn):
-		print('used')
-		return ((y2 - y1)/(x2 - x1))*xn + b
-
-	user_data = {}
-	species_list = species_list[:len(species_list)]
-	print(species_list)
-	time_steps = int(time)
-	for k in range(0,len(species_list)):
-		user_data[species_list[k]] = pd.read_csv(folder+species_list[k]+'.csv',header=None)
-	curve_fitting = {}
-	exp_data = user_data
-	
-	for k_new in species_list:
-		time_step = []
-		times = []
-		values = []
-		for j in range(0,time_steps):
-			time_step.append(j)
-			times.append(round(user_data[k_new].iloc[j,0],6))
-			values.append(user_data[k_new].iloc[j,1])
-
-		data = {}
-		data['time_step'] = time_step
-		data['times'] = times
-		data['values'] = values
-
-		curve_fitting[k_new] = data
-
-	return curve_fitting
-
 def knudsenTest(species_list,sim_steps,folder,time,points,intensity,fraction):
 
 	user_data = {}
@@ -341,7 +282,7 @@ def knudsenTest(species_list,sim_steps,folder,time,points,intensity,fraction):
 		print()
 
 ####Fit every point
-def every_point_fitting(species_list,sim_steps,folder,timeTot,points,objSpecies):
+def curveFitting(species_list,sim_steps,folder,timeTot,points,objSpecies):
 	frequency = 3
 	"""Define the objective function for optimizing kinetic parameters"""
 
@@ -350,6 +291,7 @@ def every_point_fitting(species_list,sim_steps,folder,timeTot,points,objSpecies)
 	def interp(y2,y1,x2,x1,xn):
 		"""Simple linear interpolation function"""
 		return ((y2 - y1)/(x2 - x1))*(xn - x1) + y1
+		
 
 	user_data = {}
 	species_list = species_list[:len(species_list)]#'./experimental_data/'
@@ -391,7 +333,7 @@ def every_point_fitting(species_list,sim_steps,folder,timeTot,points,objSpecies)
 			exp_time_step = user_data[k_new][0][1] - user_data[k_new][0][0]
 			near_start = round(user_data[k_new].iloc[30,0],6)/(timeTot/sim_steps)
 		
-			for k in range(40,int(sim_steps),frequency):
+			for k in range(50,int(sim_steps),frequency):
 				time_step.append(k)
 				times.append(k*(syn_time_step))
 				
@@ -409,7 +351,7 @@ def every_point_fitting(species_list,sim_steps,folder,timeTot,points,objSpecies)
 	return curve_fitting
 
 
-def exp_data_fitting(species_list,sim_steps,folder,time,points,objSpecies):
+def pointFitting(species_list,sim_steps,folder,time,points,objSpecies):
 
 	"""Define the objective function for optimizing kinetic parameters"""
 
@@ -524,7 +466,7 @@ def exp_data_fitting(species_list,sim_steps,folder,time,points,objSpecies):
 	return curve_fitting
 
 
-def generate_gif(molecules,exp_loc,fit_loc,all_steps,constants,reactions,time_data):
+def generateGif(molecules,exp_loc,fit_loc,all_steps,constants,reactions,time_data):
 	
 	"""
 	Return a gif showing changes made during the optimization process
@@ -603,21 +545,22 @@ def generate_gif(molecules,exp_loc,fit_loc,all_steps,constants,reactions,time_da
 		peak_peak = 0
 
 		#for k_names in molecules[:-1]:
-#		#	peak_loc = exp_data[k_names].iloc[exp_data[k_names][1].idxmax()]
-#		#	plt.plot(peak_loc[0], peak_loc[1], 'ro')
-#		#	if peak_loc[1] > peak_peak:
-#		#		peak_peak = peak_loc[1]
-#
-#		#	peak2 = exp_data[k_names].loc[exp_data[k_names][0] == exp_data[0]].index
-#		#	test3 = int(round((peak2[0]+1)/2,0))
-#		#	mid_loc = exp_data[k_names].iloc[test3,:]
-#		#	plt.plot(mid_loc[0], mid_loc[1], 'ro')
-#
+		#	peak_loc = exp_data[k_names].iloc[exp_data[k_names][1].idxmax()]
+		#	plt.plot(peak_loc[0], peak_loc[1], 'ro')
+		#	if peak_loc[1] > peak_peak:
+		#		peak_peak = peak_loc[1]
+
+		#	peak2 = exp_data[k_names].loc[exp_data[k_names][0] == exp_data[0]].index
+		#	test3 = int(round((peak2[0]+1)/2,0))
+		#	mid_loc = exp_data[k_names].iloc[test3,:]
+		#	plt.plot(mid_loc[0], mid_loc[1], 'ro')
+
 		#	#peak_loc = exp_data_2.iloc[exp_data_2[1].idxmax()]
 		#	#peak2 = exp_data_2.loc[exp_data_2[0] == peak_loc[0]].index
 		#	#plt.plot(peak_loc[0], peak_loc[1], 'ro')
 
-		#ax.set_ylim(0,peak_peak*1.1)
+		ax.set_xlim(0,0.5)
+		ax.set_ylim(0,5)
 		
 		#subpos = [0.4,0.13,0.5,0.4]
 		#subax1 = add_subplot_axes(ax,subpos)
@@ -635,12 +578,17 @@ def generate_gif(molecules,exp_loc,fit_loc,all_steps,constants,reactions,time_da
 		return image
 	
 	kwargs_write = {'fps':4.0, 'quantizer':'nq'}
-	imageio.mimsave(fit_loc+'/output.gif', [tap_plot(i) for i in range(all_steps)], fps=4)
+	components = list(range(0,all_steps))
+	for zoo in range(0,10):
+		components.append(all_steps-1) 
+
+	print(all_steps)
+	imageio.mimsave(fit_loc+'/output.gif', [tap_plot(i) for i in components], fps=4)
 
 
 """Functions used to keep output organized"""
 
-def generate_folder(path_name):
+def generateFolder(path_name):
 	try:  
 		os.mkdir(path_name)
 	except OSError:  
@@ -650,7 +598,7 @@ def generate_folder(path_name):
 		###print ("Successfully created the directory %s " % path_name)
 		pass
 	
-def store_sens_analysis(yes_no,output_file,gasses,legend_ref):	
+def storeSens(yes_no,output_file,gasses,legend_ref):	
 	if yes_no == True:
 		try:
 			os.makedirs('./'+output_file+'_folder/sensitivity_'+output_file)
@@ -662,7 +610,7 @@ def store_sens_analysis(yes_no,output_file,gasses,legend_ref):
 			except OSError:
 				pass
 
-def store_data_func(yes_no,output_file):
+def storeDataFunc(yes_no,output_file):
 	if yes_no == True:
 		try:
 			os.makedirs('./'+output_file+'_folder')
@@ -680,7 +628,7 @@ def progressBar(value, endvalue, bar_length=20):
 	sys.stdout.write("\rPercent: [{0}] {1}%".format(arrow + spaces, round(percent * 100,3)))
 	sys.stdout.flush()
 
-def call_solver(dk,u_temp,u,u_new,solver_def,keep_sol = True):
+def callSolver(dk,u_temp,u,u_new,solver_def,keep_sol = True):
 	u_temp.assign(u)
 	solver_def.solve()
 	u_new.assign(u)
@@ -688,7 +636,7 @@ def call_solver(dk,u_temp,u,u_new,solver_def,keep_sol = True):
 		u.assign(u_temp)
 	return u_new
 
-def norm_comp(u1,u2,u3,d_t,i_t):
+def normComp(u1,u2,u3,d_t,i_t):
 	ref_norm = u2.vector().norm("l2")
 	norm1 = u1.vector().norm('l2')/ref_norm
 	norm2 = u3.vector().norm('l2')/ref_norm
@@ -703,8 +651,21 @@ def norm_comp(u1,u2,u3,d_t,i_t):
 		u.assign(u3)
 	return time_step
 
+def processTime(start_time):
+	if (time.time() - start_time) < 120:
+		return 'Completed in: '+str(round((time.time() - start_time),3))+' seconds'
+	elif (time.time() - start_time)/60 < 120:
+		return 'Completed in: '+str(round((time.time() - start_time)/60,3))+' minutes'
+	else:
+		return 'Completed in: '+str(round((time.time() - start_time)/3600,3))+' hours'
 
-def error_output(elem_reacs):
+def evalCB(j, m):
+	print('eval')
+	print(j)
+	print(m)
+
+
+def errorOutput(elem_reacs):
 	
 	"""Return this error in the event that the user doesn't define rate constants correct"""
 
