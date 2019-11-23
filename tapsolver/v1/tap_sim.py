@@ -642,7 +642,21 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 
 				try:
 					if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true' or reac_input['RRM Analysis'].lower() == 'true' or reac_input['Sensitivity Analysis'].lower() == 'true':
-						solver.solve()
+						if t > 0.0011+timeDiff:
+						#if t > 0.0011:
+							#if t > 0 and k_pulse < 4:
+							solver.solve()
+							#else:
+							#	solver2.solve(annotate = False)
+						else:
+							solvertemp.solve()
+
+							if round(t,6) == 0.001+timeDiff:
+							#if round(t,6) == 0.001:
+								dt = reac_input['Pulse Duration']/reac_input['Time Steps']
+								dk.assign(dt)
+								u_n.assign(u)
+								solver.solve()
 					else:
 						
 						if t > 0.0011+timeDiff:
