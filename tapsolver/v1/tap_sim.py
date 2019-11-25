@@ -23,6 +23,12 @@ import pkg_resources
 #from hippylib import *
 import warnings
 
+from muq import pymuqModeling as mm # Needed for Gaussian distribution
+from muq import pymuqApproximation as ma # Needed for Gaussian processes
+from muq import pymuqSamplingAlgorithms as ms # Needed for MCMC
+from muq import pymuqUtilities as mu
+
+import faulthandler
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -244,7 +250,8 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	except NameError:
 		errorOutput(reac_input['reactions_test'])
 	
-	if reac_input['Experimental Data Folder'].lower() != 'none' and (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or reac_input['Display Objective Points'].lower() == 'true'):
+	if reac_input['Experimental Data Folder'].lower() != 'none' and (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or reac_input['Display Objective Points'].lower() == 'true') or sampling == True:
+		print("Uncertainty Quantification")
 		try:
 			if type(reac_input['Objective Points']) == float:
 				output_fitting = pointFitting(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],objSpecies)
@@ -391,7 +398,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		rrmStringsThin = rrmEqs(rate_array,rev_irr,'dx(1)')	
 		rrmStringsPoint = rrmEqs(rate_array,rev_irr,'dT(1)')
 
-	if reac_input['Experimental Data Folder'].lower() != 'none' and (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Display Objective Points'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true'):
+	if reac_input['Experimental Data Folder'].lower() != 'none' and (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Display Objective Points'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true') or sampling == True:
 		for k_fitting in range(0,len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])])):
 			if objSpecies[k_fitting] == '1':
 				for timeStep in range(0,len(output_fitting[legend_label[k_fitting]]['times'])):
@@ -406,7 +413,10 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 
 		c = r_const[reac_input['Sensitivity Parameter']]
 		c.tlm_value = r_const[reac_input['Sensitivity Parameter']]
-
+		#print(reac_input['Sensitivity Parameter'])
+		c2 = r_const['kf1']
+		#c2.tlm_value = r_const['kf1']
+		#sys.exit()
 		SV_du = FunctionSpace(mesh,P1)
 		Sw_new = Expression('A',A=Constant(1),degree=0)
 		Sw_new2 = interpolate(Sw_new,SV_du)
@@ -496,7 +506,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			cat_data['conVtime_'+str(z_gasses)] = []
 
 		t = 0
-		if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Sensitivity Analysis'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true':
+		if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Sensitivity Analysis'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or sampling == True:
 			osub = integration_section()
 			domains = MeshFunction("size_t", mesh,0)
 			domains.set_all(0)
@@ -586,7 +596,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			#				else:
 			#					pass
 
-			if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true':
+			if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or sampling == True:
 
 				for k_fitting in range(0,len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])])):
 					if objSpecies[k_fitting] == '1':
@@ -1065,9 +1075,19 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 			rf_2 = ReducedFunctional(jfunc_2, control)
 
 			dJdm = c._ad_dot(rf_2.derivative())
-			Hm = c._ad_dot(rf_2.hessian(c))
+
+			testHessian = rf_2.hessian(c2)
+			print(type(testHessian))
+
+			Hm = c._ad_dot(testHessian)
+			print(type(Hm))
+			
+			#Hm = c._ad_dot(rf_2.hessian(c))
+			#Hm = c._ad_dot(rf_2.hessian(c))
 			print(processTime(start_time))
+			np.savetxt(hessFolder+'/'+reactor_kinetics_input['Sensitivity Parameter']+'_sens.csv',[dJdm],delimiter=",")#
 			np.savetxt(hessFolder+'/'+reactor_kinetics_input['Sensitivity Parameter']+'.csv',[Hm],delimiter=",")#
+			sys.exit()
 
 		if k_pulse == 0:
 			dictionary_of_numpy_data = {}
@@ -1280,7 +1300,14 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		user_data = pd.read_csv('./'+reac_input['Output Folder Name']+'_folder/input_file.csv',header=None)
 		user_data.to_csv('./input_file.csv',header=None,index=False)
 
-	return graph_data, legend_label, necessary_values['reactants']
+
+	if sampling == True:
+		outValue = float(jfunc_2)
+		tape2.clear_tape()		
+		return outValue
+
+	else:
+		return graph_data, legend_label, necessary_values['reactants']
 
 def call_sim():
 	
@@ -1298,10 +1325,121 @@ def call_sim():
 				print('Running the Sensitivity/RRM Analysis and Parameter Fitting methods simultaniously is not possible due to conflicts between the tangent linear and adjoint methods.')
 				print('Please run again with one of these methods excluded.')
 				sys.exit()
-			print('')
-			print('Processing '+parameters)
+			if reactor_kinetics_input['Sensitivity Analysis'].lower() == 'true':
+				print('')
+				print('Processing '+parameters)
 			graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters)
 	else:
 		graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters)
 	
+sampling = False
+if sampling == True:
+	class fenicsModel(mm.PyModPiece):
+		def __init__(self):
+		#def __init__(self,a,b,c,d,e,f):
+			mm.PyModPiece.__init__(self, [6], [1]) # One input containing 2 components [2]) # One output containing 2 components
+			#self.a = a
+			#self.b = b
+			#self.c = c
+			#self.d = d
+			#self.e = e
+			#self.f = f
+
+		def EvaluateImpl(self, inputs):
+			reactor_kinetics_input,kinetic_parameters,kin_in = readInput()
+			inputs = inputs[0].tolist()
+			for j_num,j in enumerate(kinetic_parameters):
+				kinetic_parameters[j] = inputs[j_num]
+
+			print(kinetic_parameters)
+			outputValue = tap_simulation_function(reactor_kinetics_input,kinetic_parameters)
+			
+			#z = inputs[0]
+			#m = np.zeros((6))
+
+			print('done')
+			return outputValue
+
+		def JacobianImpl(self, outDimWrt, inDimWrt, inputs):
+			m = inputs[0]
+			self.jacobian = np.array([ [1.0/self.a, 0], [2.0*self.a*self.b*m[0], self.a] ])
+
+	reactor_kinetics_input,kinetic_parameters,kin_in = readInput()
+	
+	graph = mm.WorkGraph()
+
+	zDist = mm.Gaussian(np.zeros((1)))
+
+	#invf = fenicsModel(1,2,3,4,5,6)
+	invf = fenicsModel()
+
+	graph.AddNode(zDist.AsDensity(), "Gaussian Reference")
+	graph.AddNode(invf, "TAP Evaluation")
+
+	graph.AddEdge("TAP Evaluation", 0, "Gaussian Reference", 0)
+
+	tgtDens = graph.CreateModPiece("Gaussian Reference")
+
+	
+	numSamps = 12
+	paramDim = 6
+	
+	mSamps = np.zeros((paramDim, numSamps))
+
+	value = 1
+	propMu = np.array([value,value,value,value,value,value])
+	propCov = np.array([ [0.25, 0, 0, 0, 0, 0],[ 0,0.25, 0, 0, 0, 0],[ 0, 0,0.25, 0, 0, 0],[ 0, 0, 0,0.25, 0, 0],[ 0, 0, 0, 0,0.25, 0],[ 0, 0, 0, 0, 0,0.25]])
+
+	rejectSamps = np.zeros((paramDim, numSamps))
+	rejectDens = np.zeros((numSamps))
+	print('test')
+	propDist = mm.Gaussian(propMu, propCov)
+	
+	numAccepts = 0
+	numProposed = 0
+	M = np.exp(3)
+	
+	while(numAccepts < numSamps):
+	    numProposed += 1
+	    
+	    # Propose in the banana space
+	    mprop = propDist.Sample()
+	    
+	    # Evaluate the log target density
+	    faulthandler.enable()
+	    print(tgtDens)
+	    logTgt = tgtDens.Evaluate([ mprop ])
+	    print('test')
+	    
+	    # Evaluate the log proposal density
+	    logProp = propDist.LogDensity(mprop)
+	    
+	    # Compute the acceptance ratio
+	    alpha = np.exp(logTgt - np.log(M) - logProp)
+	    
+	    assert logTgt < np.log(M) + logProp
+	    
+	    # Accept with probability alpha
+	    if(rg.GetUniform() < alpha):
+	        rejectSamps[:,numAccepts] = mprop
+	        rejectDens[numAccepts] = logTgt
+	        numAccepts += 1
+
+
+
+	logDensVals2 = np.zeros(numSamps)
+	otherTest = []
+	for i in range(numSamps):
+		print(mSamps[:,i])
+		otherTest.append(tgtDens.Evaluate([ mSamps[:,i] ]))
+		logDensVals2[i] = tgtDens.Evaluate([ mSamps[:,i] ]) # NOTE: This only works because the jacobian is 1
+		print('done')
+	#graph.Visualize("EvaluationGraph.png")
+
+
+	
+	print('pass')
+	sys.exit()
+
 call_sim()
+

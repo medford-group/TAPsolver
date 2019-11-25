@@ -308,14 +308,13 @@ def curveFitting(species_list,sim_steps,folder,timeTot,points,objSpecies):
 			def find_experimental_point(n,exp_step):
 				""" Find an appropriate intensity point for the fitting process """
 				approx_exp_n = n*(syn_time_step)/exp_step
-			
 				if approx_exp_n != n:
 					high = math.ceil(approx_exp_n)
 					low = int(approx_exp_n)
-					#print(interp(user_data[k_new][1][high],user_data[k_new][1][low],user_data[k_new][0][high],user_data[k_new][0][low],n*(syn_time_step)))
 					return interp(user_data[k_new][1][high-1],user_data[k_new][1][low-1],user_data[k_new][0][high-1],user_data[k_new][0][low-1],n*(syn_time_step))
 
 				else:
+					user_data[k_new][1][n]
 					return user_data[k_new][1][n]
 
 			def exp_point_to_syn_point(n_exp,exp_step):
@@ -330,10 +329,10 @@ def curveFitting(species_list,sim_steps,folder,timeTot,points,objSpecies):
 			time_step = []
 			times = []
 			values = []
-			exp_time_step = user_data[k_new][0][1] - user_data[k_new][0][0]
+			exp_time_step = user_data[k_new][0][user_data[k_new].shape[0]-1] - user_data[k_new][0][user_data[k_new].shape[0]-2]
 			near_start = round(user_data[k_new].iloc[30,0],6)/(timeTot/sim_steps)
-		
-			for k in range(50,int(sim_steps),frequency):
+			
+			for k in range(60,int(sim_steps),frequency):
 				time_step.append(k)
 				times.append(k*(syn_time_step))
 				
