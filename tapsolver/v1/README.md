@@ -24,19 +24,22 @@ The primary features of TAPsolver are:
 
 To properly establish the environment for FEniCS through conda, run the following commands:
 
-	conda create -n fenicsproject -c conda-forge dolfin-adjoint
 
-	source activate fenicsproject
+	conda create -n fenics-2019.1 -c uvilla -c conda-forge fenics==2019.1.0 matplotlib scipy jupyter
 
-	pip install dolfin-adjoint==2019.1.0
+	pip install -e git+https://github.com/hippylib/hippylib@master#egg=hippylib
 
-	conda install -c imperial-college-research-computing pyipopt
+	conda install -c conda-forge dolfin-adjoint
 
-	pip install matplotlib
+	conda install -c conda-forge imageio
 
-	conda install imageio
+	conda install -c anaconda pandas
 
-	conda install pandas
+	(make sure conda-forge is in your list of channels by running the following commaned: "conda config --append channels conda-forge")
+
+	conda install -c rmg muq2 
+
+	pip install git+https://bitbucket.org/dolfin-adjoint/pyadjoint.git@master
 
 	conda install xlrd
 
