@@ -23,10 +23,12 @@ import pkg_resources
 #from hippylib import *
 import warnings
 
-from muq import pymuqModeling as mm # Needed for Gaussian distribution
-from muq import pymuqApproximation as ma # Needed for Gaussian processes
-from muq import pymuqSamplingAlgorithms as ms # Needed for MCMC
-from muq import pymuqUtilities as mu
+sampling = False
+if sampling == True:
+	from muq import pymuqModeling as mm # Needed for Gaussian distribution
+	from muq import pymuqApproximation as ma # Needed for Gaussian processes
+	from muq import pymuqSamplingAlgorithms as ms # Needed for MCMC
+	from muq import pymuqUtilities as mu
 
 import faulthandler
 
@@ -65,7 +67,6 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true':
 		path_6 = './'+reac_input['Output Folder Name']+'_folder/fitting/'
 		generateFolder(path_6)
-
 
 	# Declare and define the constants of interest
 	r_const = constants_input
@@ -251,7 +252,8 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		errorOutput(reac_input['reactions_test'])
 	
 	if reac_input['Experimental Data Folder'].lower() != 'none' and (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or reac_input['Display Objective Points'].lower() == 'true') or sampling == True:
-		print("Uncertainty Quantification")
+		if reac_input['Uncertainty Quantification'].lower() == 'true':
+			print("Uncertainty Quantification")
 		try:
 			if type(reac_input['Objective Points']) == float:
 				output_fitting = pointFitting(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],objSpecies)
@@ -454,8 +456,10 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	for k_pulse in range(0,int(reac_input['Number of Pulses'])):
 
 		start_time = time.time()
-		print("")
-		print("Simulation Status: "+"Pulse #"+str(k_pulse+1))
+		
+		if sampling == False:
+			print("")
+			print("Simulation Status: "+"Pulse #"+str(k_pulse+1))
 
 		species_pulse_list = reactant_feed[current_reac_set-1]
 		
@@ -1331,8 +1335,7 @@ def call_sim():
 			graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters)
 	else:
 		graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters)
-	
-sampling = False
+
 if sampling == True:
 	class fenicsModel(mm.PyModPiece):
 		def __init__(self):
@@ -1360,10 +1363,6 @@ if sampling == True:
 			print('done')
 			return outputValue
 
-		def JacobianImpl(self, outDimWrt, inDimWrt, inputs):
-			m = inputs[0]
-			self.jacobian = np.array([ [1.0/self.a, 0], [2.0*self.a*self.b*m[0], self.a] ])
-
 	reactor_kinetics_input,kinetic_parameters,kin_in = readInput()
 	
 	graph = mm.WorkGraph()
@@ -1381,60 +1380,225 @@ if sampling == True:
 	tgtDens = graph.CreateModPiece("Gaussian Reference")
 
 	
-	numSamps = 12
+	numSamps = 200
 	paramDim = 6
 	
 	mSamps = np.zeros((paramDim, numSamps))
 
-	value = 1
-	propMu = np.array([value,value,value,value,value,value])
-	propCov = np.array([ [0.25, 0, 0, 0, 0, 0],[ 0,0.25, 0, 0, 0, 0],[ 0, 0,0.25, 0, 0, 0],[ 0, 0, 0,0.25, 0, 0],[ 0, 0, 0, 0,0.25, 0],[ 0, 0, 0, 0, 0,0.25]])
+	samplingVersion = 'mcmc' # mcmc, importance
 
-	rejectSamps = np.zeros((paramDim, numSamps))
-	rejectDens = np.zeros((numSamps))
-	print('test')
-	propDist = mm.Gaussian(propMu, propCov)
+	####Rejection Sampling
+	if samplingVersion == 'rejection':
+		propMu = np.array([29,0,3.6,11,8,0])
+		propCov = np.array([ [2, 0, 0, 0, 0, 0],[ 0,0.25, 0, 0, 0, 0],[ 0, 0,1, 0, 0, 0],[ 0, 0, 0,2, 0, 0],[ 0, 0, 0, 0,3, 0],[ 0, 0, 0, 0, 0,0.25]])
+
+		rejectSamps = np.zeros((paramDim, numSamps))
+		rejectDens = np.zeros((numSamps))
+		propDist = mm.Gaussian(propMu, propCov)
 	
-	numAccepts = 0
-	numProposed = 0
-	M = np.exp(3)
+		numAccepts = 0
+		numProposed = 0
+		M = np.exp(3)
 	
-	while(numAccepts < numSamps):
-	    numProposed += 1
-	    
-	    # Propose in the banana space
-	    mprop = propDist.Sample()
-	    
-	    # Evaluate the log target density
-	    faulthandler.enable()
-	    print(tgtDens)
-	    logTgt = tgtDens.Evaluate([ mprop ])
-	    print('test')
-	    
-	    # Evaluate the log proposal density
-	    logProp = propDist.LogDensity(mprop)
-	    
-	    # Compute the acceptance ratio
-	    alpha = np.exp(logTgt - np.log(M) - logProp)
-	    
-	    assert logTgt < np.log(M) + logProp
-	    
-	    # Accept with probability alpha
-	    if(rg.GetUniform() < alpha):
-	        rejectSamps[:,numAccepts] = mprop
-	        rejectDens[numAccepts] = logTgt
-	        numAccepts += 1
+		while(numAccepts < numSamps):
+			numProposed += 1
+			#print(numAccepts)
+			#print(numSamps)
+			#print(numProposed)
+		
+			# Propose in the banana space
+			mprop = propDist.Sample()
+			
+			# Evaluate the log target density
+			#faulthandler.enable()
+	   
 
+			reactor_kinetics_input,kinetic_parameters,kin_in = readInput()
+			mprop = mprop.tolist()
+			
+			for j_num,j in enumerate(kinetic_parameters):
+				if mprop[j_num] < 0:
+					mprop[j_num] = 0
+					kinetic_parameters[j] = 0
+				else:
+					kinetic_parameters[j] = mprop[j_num]
+			print(mprop)
+			#print(kinetic_parameters)
+			logTgt = tap_simulation_function(reactor_kinetics_input,kinetic_parameters)
 
+			#logTgt = tgtDens.Evaluate([ mprop ])
+			
+			# Evaluate the log proposal density
+			logProp = propDist.LogDensity(mprop)
+			print(mprop)
+			print(logProp)
 
-	logDensVals2 = np.zeros(numSamps)
-	otherTest = []
-	for i in range(numSamps):
-		print(mSamps[:,i])
-		otherTest.append(tgtDens.Evaluate([ mSamps[:,i] ]))
-		logDensVals2[i] = tgtDens.Evaluate([ mSamps[:,i] ]) # NOTE: This only works because the jacobian is 1
-		print('done')
-	#graph.Visualize("EvaluationGraph.png")
+			# Compute the acceptance ratio
+			alpha = np.exp(logTgt - np.log(M) - logProp)
+			
+			print(logTgt)
+
+			#assert logTgt < np.log(M) + logProp
+		
+			# Accept with probability alpha
+
+			testRG = mu.RandomGenerator.GetUniform()
+			print(testRG)
+			print(alpha)
+			sys.exit()
+			if(testRG < alpha):
+				print(alpha)
+				rejectSamps[:,numAccepts] = mprop
+				rejectDens[numAccepts] = logTgt
+				numAccepts += 1
+
+	if samplingVersion == 'mcmc':
+		propMu = np.array([29,0,3.6,11,8,0])
+		#propMu = np.zeros((paramDim))
+		propCov = 4.0*np.eye(paramDim)
+		#propCov = np.array([ [2, 0, 0, 0, 0, 0],[ 0,0.25, 0, 0, 0, 0],[ 0, 0,1, 0, 0, 0],[ 0, 0, 0,2, 0, 0],[ 0, 0, 0, 0,3, 0],[ 0, 0, 0, 0, 0,0.25]])
+
+		mcmcProp = mm.Gaussian(propMu, propCov)
+
+		mcmcSamps = np.zeros((paramDim, numSamps))
+		mcmcDens = np.zeros((numSamps))
+
+		currPt = propMu#np.zeros((paramDim))
+
+		reactor_kinetics_input,kinetic_parameters,kin_in = readInput()
+		currPt = currPt.tolist()
+			
+		for j_num,j in enumerate(kinetic_parameters):
+			if currPt[j_num] < 0:
+				currPt[j_num] = 0
+				kinetic_parameters[j] = 0
+			else:
+				kinetic_parameters[j] = currPt[j_num]
+		#print(currPt)
+
+		currLogTgt = tap_simulation_function(reactor_kinetics_input,kinetic_parameters)
+
+		#currLogTgt = tgtDens.Evaluate([currPt])[0]
+
+		numAccepts = 0
+
+		for i in range(numSamps):
+
+			print()
+			print('Sample '+str(i+1)+' of '+str(numSamps))
+
+			propSamp = mcmcProp.Sample()
+
+			propSamp2 = propSamp
+			reactor_kinetics_input,kinetic_parameters,kin_in = readInput()
+			propSamp = propSamp.tolist()
+			
+			for j_num,j in enumerate(kinetic_parameters):
+				if propSamp[j_num] < 0:
+					propSamp[j_num] = 0
+					kinetic_parameters[j] = 0
+				else:
+					kinetic_parameters[j] = propSamp[j_num]
+			#print(propSamp)
+			#print(kinetic_parameters)
+			propLogTgt = tap_simulation_function(reactor_kinetics_input,kinetic_parameters)
+
+		
+			#propLogTgt = tgtDens.Evaluate([propSamp])[0]
+	
+			u = np.exp(propLogTgt - currLogTgt)
+			#print(mu.RandomGenerator.GetUniform())
+			#print(u)
+			if(mu.RandomGenerator.GetUniform() < u):
+				print('1')
+				numAccepts += 1
+		
+				mcmcSamps[:,i] = propSamp2
+		
+				currPt = propSamp
+				currLogTgt = propLogTgt
+			else:
+				print('2')
+				mcmcSamps[:,i] = currPt
+		
+		print('Acceptance Rate = %f'%(float(numAccepts)/numSamps))
+
+		plt.figure(figsize=(8,8))
+		print(mcmcSamps[0,:])
+		print(mcmcSamps[1,:])
+		plt.scatter(mcmcSamps[0,:], mcmcSamps[1,:], alpha=0.5)
+		plt.title('MCMC Samples1')
+		plt.savefig('MCMC_Samples1.png')
+		plt.show()
+
+		plt.figure(figsize=(8,8))
+		print(mcmcSamps[0,:])
+		print(mcmcSamps[2,:])
+		plt.scatter(mcmcSamps[0,:], mcmcSamps[2,:], alpha=0.5)
+		plt.title('MCMC Samples2')
+		plt.savefig('MCMC_Samples1.png')
+		plt.show()
+
+		plt.figure(figsize=(8,8))
+		print(mcmcSamps[0,:])
+		print(mcmcSamps[3,:])
+		plt.scatter(mcmcSamps[0,:], mcmcSamps[3,:], alpha=0.5)
+		plt.title('MCMC Samples3')
+		plt.savefig('MCMC_Samples3.png')
+		plt.show()
+
+		plt.figure(figsize=(8,8))
+		print(mcmcSamps[0,:])
+		print(mcmcSamps[4,:])
+		plt.scatter(mcmcSamps[0,:], mcmcSamps[4,:], alpha=0.5)
+		plt.title('MCMC Samples4')
+		plt.savefig('MCMC_Samples4.png')
+		plt.show()
+
+		plt.figure(figsize=(8,8))
+		print(mcmcSamps[0,:])
+		print(mcmcSamps[5,:])
+		plt.scatter(mcmcSamps[0,:], mcmcSamps[5,:], alpha=0.5)
+		plt.title('MCMC Samples5')
+		plt.savefig('MCMC_Samples5.png')
+		plt.show()
+
+		plt.figure(figsize=(16,8))
+
+		plt.plot(mcmcSamps[0,:],label='kf0')
+		plt.plot(mcmcSamps[1,:],label='kb0')
+		plt.plot(mcmcSamps[2,:],label='kf1')
+		plt.plot(mcmcSamps[3,:],label='kb1')
+		plt.plot(mcmcSamps[4,:],label='kf2')
+		plt.plot(mcmcSamps[5,:],label='kb2')
+
+		plt.legend()
+
+		plt.title('MCMC Chain')
+		plt.savefig('MCMC_Chain.png')
+		plt.show()
+
+	if samplingVersion == 'significance':
+		propMu = np.array([29,0,3.6,11,8,0])
+		propCov = np.array([ [2, 0, 0, 0, 0, 0],[ 0,0.25, 0, 0, 0, 0],[ 0, 0,1, 0, 0, 0],[ 0, 0, 0,2, 0, 0],[ 0, 0, 0, 0,3, 0],[ 0, 0, 0, 0, 0,0.25]])
+
+		isProp = mm.Gaussian(propMu, propCov)
+
+		isSamps   = np.zeros((paramDim, numSamps))
+		isWeights = np.zeros((numSamps))
+
+		for i in range(numSamps):
+			isSamps[:,i] = isProp.Sample()
+			isWeights[i] = np.exp( tgtDens.Evaluate([isSamps[:,i]])[0] - isProp.LogDensity(isSamps[:,i]) )
+
+	#	logDensVals2 = np.zeros(numSamps)
+	#	otherTest = []
+	#	for i in range(numSamps):
+	#		print(mSamps[:,i])
+	#		otherTest.append(tgtDens.Evaluate([ mSamps[:,i] ]))
+	#		logDensVals2[i] = tgtDens.Evaluate([ mSamps[:,i] ]) # NOTE: This only works because the jacobian is 1
+	#		print('done')
+	#	#graphsph.Visualize("EvaluationGraph.png")
 
 
 	
