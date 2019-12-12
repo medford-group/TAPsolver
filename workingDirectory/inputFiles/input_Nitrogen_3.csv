@@ -1,0 +1,61 @@
+Reactor_Information,X
+Pulse Duration,1
+Time Steps,4000
+Reactor Length,5
+Mesh Size,100
+Catalyst Fraction,0.025
+Catalyst Mesh Density,5
+Reactor Radius,1
+Catalyst Location,0.5
+Void Fraction Inert,0.4
+Void Fraction Catalyst,0.4
+Reactor Temperature,385.65
+Reference Diffusion Inert,13.5
+Reference Diffusion Catalyst,13.5
+Reference Temperature,385.5
+Reference Mass,40
+Output Folder Name,test
+Experimental Data Folder,None
+Noise,FALSE
+Reactor Type,tap
+Knudsen Test,FALSE
+Theta,1
+Solver Method,None
+Variational Solver,newton
+,
+Feed_&_Surface_Composition,
+Number of Reactants,1
+Number of Pulses,1
+Reference Pulse Size,5
+Pulse Ratio,"1,0,1"
+Pulse Time,"0.0,0.0,0.0"
+Mass List,"40,40,40"
+Advection,FALSE
+Advection Value,0.1
+Initial Surface Composition,"0.0, 100,100"
+Number of Active Sites,1
+Number of Inerts,1
+,
+Data_Storage_Options,
+Store Outlet Flux,TRUE
+Store Graph,FALSE
+Display Experimental Data,FALSE
+Infinite Inert,FALSE
+Scale Output,FALSE
+Display Graph,FALSE
+Sensitivity Analysis,FALSE
+RRM Analysis,FALSE
+Thin-Zone Analysis,FALSE
+Fit Parameters,FALSE
+Fit Inert,FALSE
+Optimization Method,BFGS
+Objective Points,all
+Objective Species,"1,1"
+Display Objective Points,TRUE
+Fitting Gif,FALSE
+Uncertainty Quantification,FALSE
+,
+Reaction_Information,
+AB + * <-> A + B*,0.001
+B* + B* -> BB* + *,0.01
+BB* -> B + *,0.01
