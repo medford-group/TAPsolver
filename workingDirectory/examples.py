@@ -24,29 +24,80 @@ timeVector = np.linspace(timeStep, timeStep * lenFlux, num = lenFlux)
 # the base function assumes diffusion coefficient of 0.4, reactor length of 1, timeStep of .001, lenFlux of 3000 (3 seconds), and a bed porosity of 0.4
 inertFlux = TAPas.standardDiffusionCurve(diffusion=diffusion, reactorLength = reactorLength, timeStep = timeStep, lenFlux = lenFlux, bedPorosity = bedPorosity)
 plt.plot(timeVector, inertFlux)
-plt.show()
+plt.show(block = False)
 
+plt.close()
 tapSolverInert = pd.read_csv("test_folder/flux_data/Inert-1.csv",header = None)
 tapSolverTime = tapSolverInert.iloc[:,0]
 tapSolverInertFlux = tapSolverInert.iloc[:,1]
 plt.plot(timeVector, inertFlux)
 plt.scatter(tapSolverTime, tapSolverInertFlux, color = "red")
-plt.show()
+plt.show(block = False)
 
 
 
 ### Irreversible Rate
-tempFlux = TAPas.genIrreversible(10, inertFlux)
+plt.close()
+tempFlux = TAPas.genIrreversible(30, inertFlux)
 plt.plot(timeVector, inertFlux)
 plt.plot(timeVector, tempFlux, color = 'red')
-plt.show()
+plt.show(block=False)
 
 plt.close()
 tapSolverReactant = pd.read_csv("test_folder/flux_data/CO.csv",header = None)
 tapSolverReactantFlux = tapSolverReactant.iloc[:,1]
 plt.plot(timeVector, tempFlux)
-plt.scatter(tapSolverTime, tapSolverReactantFlux * 200, color = "red")
+plt.scatter(tapSolverTime, tapSolverReactantFlux, color = "red")
 plt.show(block=False)
+
+plt.close()
+tapSolverReactant = pd.read_csv("test_folder/flux_data/CO.csv",header = None)
+tapSolverReactantFlux = tapSolverReactant.iloc[:,1]
+plt.plot(timeVector, inertFlux)
+plt.plot(timeVector, tempFlux, color = 'green')
+plt.scatter(tapSolverTime, tapSolverReactantFlux, color = "red")
+plt.show(block=False)
+
+
+
+
+### NO2
+
+
+plt.close()
+tapSolverInert = pd.read_csv("test_folder/flux_data/Inert-1.csv",header = None)
+tapSolverTime = tapSolverInert.iloc[:,0]
+tapSolverInertFlux = tapSolverInert.iloc[:,1]
+tapSolverReactant = pd.read_csv("test_folder/flux_data/AB.csv",header = None)
+tapSolverAB = tapSolverReactant.iloc[:,1]
+tapSolverReactant = pd.read_csv("test_folder/flux_data/A.csv",header = None)
+tapSolverA = tapSolverReactant.iloc[:,1]
+tapSolverReactant = pd.read_csv("test_folder/flux_data/B.csv",header = None)
+tapSolverB = tapSolverReactant.iloc[:,1]
+plt.scatter(tapSolverTime, tapSolverInertFlux - tapSolverAB, color = "red")
+plt.scatter(tapSolverTime, tapSolverA, color = "black")
+plt.scatter(tapSolverTime, tapSolverB, color = "green")
+plt.show(block=False)
+
+plt.close()
+tapSolverInert = pd.read_csv("test_folder/flux_data/Inert-1.csv",header = None)
+tapSolverTime = tapSolverInert.iloc[:,0]
+tapSolverInertFlux = tapSolverInert.iloc[:,1]
+tapSolverReactant = pd.read_csv("test_folder/flux_data/AB.csv",header = None)
+tapSolverAB = tapSolverReactant.iloc[:,1]
+tapSolverReactant = pd.read_csv("test_folder/flux_data/A.csv",header = None)
+tapSolverA = tapSolverReactant.iloc[:,1]
+tapSolverReactant = pd.read_csv("test_folder/flux_data/B.csv",header = None)
+tapSolverB = tapSolverReactant.iloc[:,1]
+plt.scatter(tapSolverTime, tapSolverInertFlux)
+plt.scatter(tapSolverTime, tapSolverAB, color = "red")
+plt.show(block=False)
+
+np.trapz(tapSolverInertFlux, tapSolverTime) - (np.trapz(tapSolverAB, tapSolverTime) + np.trapz(tapSolverA, tapSolverTime) + np.trapz(tapSolverB, tapSolverTime))
+np.trapz(tapSolverInertFlux, tapSolverTime) - np.trapz(tapSolverAB, tapSolverTime) - np.trapz(tapSolverA, tapSolverTime)
+
+np.trapz(tapSolverA, tapSolverTime) / np.trapz(tapSolverAB, tapSolverTime)
+
 
 plt.close()
 tapSolverReactant = pd.read_csv("test_folder/flux_data/CO.csv",header = None)

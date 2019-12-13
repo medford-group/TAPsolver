@@ -1,40 +1,40 @@
 Reactor_Information,X,
-Pulse Duration,3,good
-Time Steps,3000,good
-Reactor Length,1,good
-Mesh Size,400,good
-Catalyst Fraction,9.90E-01,maybe
-Catalyst Mesh Density,0,good
-Reactor Radius,1,good
-Catalyst Location,0.5,good
-Void Fraction Inert,0.5,good
-Void Fraction Catalyst,0.5,good
-Reactor Temperature,23,good
-Reference Diffusion Inert,0.5,good
-Reference Diffusion Catalyst,0.5,good
-Reference Temperature,23,good
-Reference Mass,40,good
-Output Folder Name,test,good
-Experimental Data Folder,None,good
-Noise,FALSE,good
-Reactor Type,tap,good
-Knudsen Test,FALSE,good
-Theta,1,good
-Solver Method,None,good
-Variational Solver,newton,good
+Pulse Duration,3,
+Time Steps,3000,
+Reactor Length,1,
+Mesh Size,400,
+Catalyst Fraction,0.99,
+Catalyst Mesh Density,0,
+Reactor Radius,1,
+Catalyst Location,0.5,
+Void Fraction Inert,0.5,
+Void Fraction Catalyst,0.5,
+Reactor Temperature,23,
+Reference Diffusion Inert,0.5,
+Reference Diffusion Catalyst,0.5,
+Reference Temperature,23,
+Reference Mass,40,
+Output Folder Name,test,
+Experimental Data Folder,None,
+Noise,FALSE,
+Reactor Type,tap,
+Knudsen Test,FALSE,
+Theta,1,
+Solver Method,None,
+Variational Solver,newton,
 ,,
 Feed_&_Surface_Composition,,
-Number of Reactants,1,good
-Number of Pulses,1,good
-Reference Pulse Size,1,maybe
-Pulse Ratio,"1,1",good
-Pulse Time,"0.0,0.0",good
-Mass List,"40,40",good
-Advection,FALSE,good
-Advection Value,0.1,good
-Initial Surface Composition,"0.0, 10",nope
-Number of Active Sites,1,good
-Number of Inerts,1,good
+Number of Reactants,1,
+Number of Pulses,1,
+Reference Pulse Size,1,
+Pulse Ratio,"1,0,0,1",
+Pulse Time,"0.0,0.0,0.0,0.0",
+Mass List,"40,40,40,40",
+Advection,FALSE,
+Advection Value,0.1,
+Initial Surface Composition,"0, 1000",
+Number of Active Sites,1,
+Number of Inerts,1,
 ,,
 Data_Storage_Options,,
 Store Outlet Flux,TRUE,
@@ -51,9 +51,10 @@ Fit Inert,FALSE,
 Optimization Method,BFGS,
 Objective Points,all,
 Objective Species,"1,1",
-Display Objective Points,FALSE,
+Display Objective Points,TRUE,
 Fitting Gif,FALSE,
 Uncertainty Quantification,FALSE,
 ,,
 Reaction_Information,,
-CO + * -> CO*,1,
+AB + * <-> A + B*,0.005,20.0
+B* + B* -> B + 2*,0,0.0
