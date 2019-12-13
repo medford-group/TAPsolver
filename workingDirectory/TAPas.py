@@ -1,6 +1,101 @@
 ## TAPas Python Functions
 import numpy as np
 
+def gProcedure(gasPulse, gasMass, isProduct, inertPulse, inertMass, timeStep, inertZone1, catalystZone, inertZone2=None, diffusion = None, bedPorosity=0.4):
+    #' G-Procedure
+    #'
+    #' Reconstruct concentrations and reaction rates for reactants and products using the G-procedure.
+    #' This function uses the Gamma Distribution to translate exit flow into rate and
+    #' concentration data from a catalytic process. 
+    #'
+    #' References: TBD
+    #'
+    #' Dependencies: Numpy
+    #'
+    #' Author: M. Ross Kunz
+    #'
+    ##################
+    ################## Definition of inputs
+    ##################
+    # 
+    # gasPulse(numpy array vector): the gas flux
+    # gasMass(float): The AMU mass of the gasPulse
+    # isProduct(bool): True if gasPulse is a product
+    # inertPulse(numpy array vector): the inert flux
+    # inertMass(float): The AMU mass of the inertPulse
+    # timeStep(float): Time between collection of flux information
+    # inertZone1(float): The length of the first inert zone
+    # catalystZone(float): The length of the catalyst zone
+    # inertZone2(float or None): The length of the second inert zone. If set to None, set to inertZone1
+    # diffusion(float or None): The diffusion coefficient of the inert gas. If set to None, will calculate it via moments
+    # bedPorosity(float): The bed porosity within the reactor (assuming the same particle size in the inert and catalyst zone)
+    # 
+    ##################
+    ################## Output as dictionary
+    ##################
+    #
+    # gasConcentration(numpy array vector): The calculated gas concentration
+    # reactionRate(numpy array vector): The calculated reaction rate
+    #
+    ##################
+    ##################
+    ##################
+    #
+    #
+    # set inertZone2 if symmetric reactor
+    if inertZone2 is None:
+        inertZone2 = inertZone1
+    lengthOfInertZone = inertZone1 + inertZone2
+    reactorLength = lengthOfInertZone + catalystZone
+    # Calculate diffusion if None
+    if diffusion is None:
+        diffusion = bedPorosity * (inertZone1 + catalystZone + inertZone2)**2 * np.trapz(inertPulse) / (2 * np.trapz(inertPulse * np.arange(0, (len(inertPulse) * timeStep), step=timeStep)))
+    lenFlux = len(inertPulse)
+    # Calculating Time
+    timeVector = np.reshape(np.linspace(timeStep, timeStep * lenFlux, num = lenFlux), (1, lenFlux))
+    # Mass time correction if there is a difference between the gas and inert flux mass
+    if inertMass != gasMass:
+        inertPulse = grahamScaling(inertPulse, inertMass, gasMass, timeStep)
+    # Required Moments
+    fluxArea = np.trapz(gasPulse, timeVector)
+    if isProduct:
+        tempReactant = gasPulse
+    else: 
+        tempReactant =  inertPulse - gasPulse
+    # Catalyst Ratio
+    catalystRatio = inertZone2 / reactorLength
+    ##
+    # Gas Concentration
+    ##
+    # altering the flux wrt the alpha parameter in the gamma distribution
+    timeScalar = (1 - catalystRatio**2) * (1/6)
+    concentration = gasPulse * timeVector**(-timeScalar) 
+    concentration[1] = 0
+    # Calculate areas
+    concentrationArea = np.trapz(concentration, timeVector) 
+    # Appropriately scale the M0
+    concentration = concentration / concentrationArea * fluxArea * inertZone2 / diffusion 
+    ##
+    # Reaction Rate
+    ##
+    # have to be aware of inert gas being less than reactant gas in initial timing
+    # Arbitrarily setting the first 10 values to be zero to account for noise while waiting for initial collection time
+    tempReactant[:10] = 0
+    # altering the flux wrt the alpha parameter in the gamma distribution
+    timeScalar = (1 - catalystRatio**2) * (3 / 2) 
+    rate = tempReactant * timeVector**(-timeScalar)
+    rate[:10] = 0
+    # Appropriately scale the M0
+    areaScalar = np.trapz(tempReactant, timeVector) / np.trapz(rate, timeVector)
+    rate = rate * areaScalar * timeScalar
+    # return result as a dictionary
+    result = {
+        "gasConcentration":concentration,
+        "reactionRate":rate
+    }
+    return(result)
+
+
 
 def genIrreversible(rate, inertPulse):
     #' Inert transformation to irreversible flux
@@ -336,14 +431,11 @@ def yProcedure(gasPulse, gasMass, isProduct, inertPulse, inertMass, timeStep, in
     gasArea = np.trapz(gasPulse)
     inertArea = np.trapz(inertPulse)
     # Calculate Gas Concentration
-    if isProduct:
-        gasConcentration = np.zeros(len(gasPulse))
-    else:
-        cFreqDomain = np.sinh(iwt1)/(gamma1 * iwt1)
-        cFreqDomain[0] = 1/gamma1
-        cFreqDomain = cFreqDomain * smoothScalar
-        gasConcentration = np.real(np.fft.ifft(cFreqDomain * np.fft.fft(gasPulse)))
-        gasConcentration = gasConcentration / np.trapz(gasConcentration) * gasArea * inertZone2 / diffusion * 2
+    cFreqDomain = np.sinh(iwt1)/(gamma1 * iwt1)
+    cFreqDomain[0] = 1/gamma1
+    cFreqDomain = cFreqDomain * smoothScalar
+    gasConcentration = np.real(np.fft.ifft(cFreqDomain * np.fft.fft(gasPulse)))
+    gasConcentration = gasConcentration / np.trapz(gasConcentration) * gasArea * inertZone2 / diffusion * 2
     # Calculate the Reaction Rate
     rFreqDomain = (np.cosh(iwt3) + np.sqrt((tau1 * gamma1**2) / (tau3 * gamma3**2)) * np.sinh(iwt1) * np.sinh(iwt3) / np.cosh(iwt1)) * smoothScalar
     if isProduct:

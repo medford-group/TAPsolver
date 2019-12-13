@@ -45,7 +45,7 @@ plt.close()
 tapSolverReactant = pd.read_csv("test_folder/flux_data/CO.csv",header = None)
 tapSolverReactantFlux = tapSolverReactant.iloc[:,1]
 plt.plot(timeVector, tempFlux)
-plt.scatter(tapSolverTime, tapSolverReactantFlux, color = "red")
+plt.scatter(tapSolverTime, tapSolverReactantFlux * 200, color = "red")
 plt.show(block=False)
 
 plt.close()
