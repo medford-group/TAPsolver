@@ -137,7 +137,8 @@ def fluxGeneration(reactor,gasses,reactants,pulse_size,Diff,voidage,dx,radius,dx
 		#to_flux.append( (Diff[gasses][0]*voidage[0] /(dx)) * (radius**2)*3.14159/(pulse_size) )
 		#to_flux.append((2*Diff[gasses][0] * (dx*(radius**2)*3.14159)/(dx*voidage[0])))#*(1/((1)*pulse_size)) *
 		#to_flux.append((2*(1/((1+reactants)*pulse_size)) *Diff[gasses][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r)))
-	elif reactor_type == 't_pfr' or 't_pfr_diff':
+	elif reactor == 't_pfr' or 't_pfr_diff':
+		print('to flux generation')
 		for k in range(0,gasses):
 			to_flux.append(1)
 		
@@ -167,14 +168,15 @@ def defineBCs(reactor,elem_list,nec_values,V_sec,reacs_num,all_mol,reac_ratio,L_
 	# Vacuum BC at outlet of reactor (C = 0 @ L = L_reactor)
 	elif reactor == 't_pfr' or 't_pfr_diff':
 		bcs = []
+		newValues = reac_ratio.split(',')
+		for k in range(0,len(newValues)):
+			bcs.append(DirichletBC(V_sec.sub(k),Constant(int(newValues[k])),L_bound))
 		
-		for k in range(0,int(reacs_num)):
-			bcs.append(DirichletBC(V_sec.sub(k),Constant(reac_ratio[k]),L_bound))
+		#for kin in range(int(reacs_num),len(newValues)-int(number_of_inerts)):
+		#	bcs.append(DirichletBC(V_sec.sub(kin),Constant(0),L_bound))
 		
-		for kin in range(reacs_num,all_mol):
-			bcs.append(DirichletBC(V_sec.sub(kin),Constant(0),L_bound))
-		
-		bcs.append(DirichletBC(V_sec.sub(all_mol),Constant(0),L_bound))
+		#for kfin in range(len(newValues),int(number_of_inerts)):
+		#	bcs.append(DirichletBC(V_sec.sub(all_mol),Constant(0),L_bound))
 	
 	return bcs
 
@@ -232,6 +234,7 @@ def establishMesh(in_1,cat,in_2,mesh_size):
 	dx2_r = dx_r*dx_r
 
 	frac_length = r_param[1]/(np.sum(r_param))
+
 	cat_location = (r_param[1]*0.5+r_param[0])/(np.sum(r_param))
 	return r_param,dx_r,dx2_r,frac_length,cat_location
 

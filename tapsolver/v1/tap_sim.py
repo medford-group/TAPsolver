@@ -129,7 +129,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 				Din.append(Constant(D[k,k_2]))
 
 	# Construct the rate expression based on the microkinetic model
-	necessary_values, rate_array, rev_irr = make_f_equation(reac_input['reactions_test'],reac_input['Number of Reactants'],reac_input['Reactor Type'],reac_input['Number of Active Sites'],reac_input['Number of Inerts'],reac_input['Advection'],False)
+	necessary_values, rate_array, rev_irr = make_f_equation(reac_input['reactions_test'],reac_input['Number of Reactants'],'tap',reac_input['Number of Active Sites'],reac_input['Number of Inerts'],reac_input['Advection'],False)
 
 	#############################################################
 	######## INITIALIZATION OF FINITE ELEMENTS AND MESH #########
@@ -142,11 +142,35 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	catalystRefinement = int(reac_input['Catalyst Mesh Density'])
 	cfDict = {}
 
+	roundedMesh2 = ((1-cat_location) + 0.5*frac_length)*reac_input['Mesh Size']	
+	Mesh2 = round(((1-cat_location) + 0.5*frac_length)*reac_input['Mesh Size'])
+
+	roundedMesh1 = ((1-cat_location) - 0.5*frac_length)*reac_input['Mesh Size']
+	Mesh1 = round(((1-cat_location) - 0.5*frac_length)*reac_input['Mesh Size'])
+
+	if Mesh2 != roundedMesh2 or Mesh1 != roundedMesh1:
+		print('Warning: Catalyst zone will be refined and rounded to the nearest whole mesh point!')
+		trueMesh = (roundedMesh2 - roundedMesh1)/reac_input['Mesh Size']
+		newMesh = (Mesh2 - Mesh1)/reac_input['Mesh Size']
+		print(Mesh2)
+		print(Mesh1)
+		print(trueMesh)
+		print(newMesh)
+		print('New Catalyst Fraction = '+str(newMesh))
+		print('Old Catalyst Fraction = '+str(trueMesh))
+		percentChange = abs(round(100*(trueMesh - newMesh)/trueMesh,2))
+		print('Change = '+str(percentChange)+'%')
+		print()
+		if percentChange > 4:
+			print('Consider refining the mesh to improve the accuracy of the simulation!')
+			sys.exit()
+		
+
 	for jayz in range(0,catalystRefinement+1):
 		class thin_zoneTest(SubDomain):
 			def inside(self, x, on_boundary):
 				return between(x[0], (((1-cat_location) - 0.5*frac_length), ((1-cat_location) + 0.5*frac_length)))
-
+		
 		thin_zoneTest = thin_zoneTest()
 		cfDict[jayz] = MeshFunction("bool",mesh,1)
 		
@@ -251,7 +275,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	#############################################################
 	######## EVALUATE AND INITIALIZE PDE FOR FEniCS #########
 	#############################################################
-		
+	
 	try:
 		theta = 1
 		Ftemp = eval(necessary_values['F'])
