@@ -32,6 +32,15 @@ if sampling == True:
 
 import faulthandler
 
+### How much concentration data do you want stored for 'thin-zone analysis'
+# 'point' = only center point in the catalyst zone
+# 'average' = average concentration values along the catalyst zone
+# 'cat' = all points in the catalyst zone
+# 'all' = all points in the reactor
+
+thinSize = 'point'
+
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 #############################################################
@@ -1011,6 +1020,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 
 		if reac_input['Thin-Zone Analysis'].lower() == 'true':
 			if int(reac_input['Number of Pulses']) == 1:
+				cat_dataRate = {}
 				for j_species in range(0,all_molecules-int(reac_input['Number of Inerts'])):
 					new_values = [] 
 					mol_values = []
@@ -1025,35 +1035,79 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 						else:					
 							new_values = cat_data['rawData'][:,z] 
 							mol_values = cat_data['rawData'][:,z]
+					
+					top = mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])+1
+					bottom = int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))-1
 
-					np.savetxt('./'+reac_input['Output Folder Name']+'_folder/thin_data/'+necessary_values['reactants'][j_species]+'.csv', mol_values, delimiter=",")
-					#rateTest = eval(rateStrings[j_species])
-					#np.savetxt('./'+reac_input['Output Folder Name']+'_folder/thin_data/r_'+necessary_values['reactants'][j_species]+'.csv', np.array(rateTest), delimiter=",")			
+					## Change so that only thin-zone data is being stored
+					if thinSize == 'cat':
+						cat_dataRate['convtime_'+str(j_species)] = np.flip(np.transpose(mol_values[top:bottom,:]),axis=1)
+						np.savetxt('./'+reac_input['Output Folder Name']+'_folder/thin_data/'+necessary_values['reactants'][j_species]+'.csv', np.flip(np.transpose(mol_values[top:bottom,:]),axis=1), delimiter=",")
+			
+					elif thinSize == 'point':
+						centerPoint = int((top + bottom)/2)
+						cat_dataRate['convtime_'+str(j_species)] = np.transpose(mol_values[centerPoint,:])
+						np.savetxt('./'+reac_input['Output Folder Name']+'_folder/thin_data/'+necessary_values['reactants'][j_species]+'.csv', np.transpose(mol_values[centerPoint,:]), delimiter=",")
+			
+					elif thinSize == 'average':
+						cat_dataRate['convtime_'+str(j_species)] = np.mean(np.transpose(mol_values[top:bottom,:]),axis=1)
+						np.savetxt('./'+reac_input['Output Folder Name']+'_folder/thin_data/'+necessary_values['reactants'][j_species]+'.csv', np.mean(np.transpose(mol_values[top:bottom,:]),axis=1), delimiter=",")
+
+					elif thinSize == 'all':
+						cat_dataRate['convtime_'+str(j_species)] = np.flip(np.transpose(mol_values),axis=1)
+						np.savetxt('./'+reac_input['Output Folder Name']+'_folder/thin_data/'+necessary_values['reactants'][j_species]+'.csv', np.flip(np.transpose(mol_values),axis=1), delimiter=",")
+
+
+				for j_species in range(0,all_molecules-int(reac_input['Number of Inerts'])):
+					rateTest = eval(rateStrings[j_species])
+					np.savetxt('./'+reac_input['Output Folder Name']+'_folder/thin_data/r_'+necessary_values['reactants'][j_species]+'.csv', np.array(rateTest), delimiter=",")			
 
 			else:
 				pulse_path = './'+reac_input['Output Folder Name']+'_folder/thin_data/pulse_'+str(k_pulse+1)+'/'
 				generateFolder(pulse_path)
-				for j_species in range(0,all_molecules-int(reac_input['Number of Inerts'])):
+				cat_dataRate = {}
 				
+				for j_species in range(0,all_molecules-int(reac_input['Number of Inerts'])):
 					new_values = [] 
 					mol_values = []
-
-			
+	
 					for z in range(0, int(reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))-meshCells):
 
 						if z != 0:
 							#value_cat = u_n.vector().get_local()[z*(all_molecules)+jk]
 							new_values = np.vstack((mol_values,cat_data['rawData'][:,z*(all_molecules)+j_species]))
 							mol_values = new_values
-					
+				
 						else:					
 							new_values = cat_data['rawData'][:,z] 
 							mol_values = cat_data['rawData'][:,z]
+					
+					top = mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])+1
+					bottom = int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))-1				
+
+					## Change so that only thin-zone data is being stored
+					if thinSize == 'cat':
+						cat_dataRate['convtime_'+str(j_species)] = np.flip(np.transpose(mol_values[top:bottom,:]),axis=1)
+						np.savetxt(pulse_path+necessary_values['reactants'][j_species]+'.csv', np.flip(np.transpose(mol_values[top:bottom,:]),axis=1), delimiter=",")
+			
+					elif thinSize == 'point':
+						centerPoint = int((top + bottom)/2)
+						cat_dataRate['convtime_'+str(j_species)] = np.transpose(mol_values[centerPoint,:])
+						np.savetxt(pulse_path+necessary_values['reactants'][j_species]+'.csv', np.transpose(mol_values[centerPoint,:]), delimiter=",")
+			
+					elif thinSize == 'average':
+						cat_dataRate['convtime_'+str(j_species)] = np.mean(np.transpose(mol_values[top:bottom,:]),axis=1)
+						np.savetxt(pulse_path+necessary_values['reactants'][j_species]+'.csv', np.mean(np.transpose(mol_values[top:bottom,:]),axis=1), delimiter=",")
+
+					elif thinSize == 'all':
+						cat_dataRate['convtime_'+str(j_species)] = np.flip(np.transpose(mol_values),axis=1)
+						np.savetxt(pulse_path+necessary_values['reactants'][j_species]+'.csv', np.flip(np.transpose(mol_values),axis=1), delimiter=",")
 
 
-					np.savetxt(pulse_path+necessary_values['reactants'][j_species]+'.csv', mol_values, delimiter=",")
-					#rateTest = eval(rateStrings[j_species])
-					#np.savetxt(pulse_path+'r_'+necessary_values['reactants'][j_species]+'.csv', np.array(rateTest), delimiter=",")
+				for j_species in range(0,all_molecules-int(reac_input['Number of Inerts'])):
+					rateTest = eval(rateStrings[j_species])
+					np.savetxt(pulse_path+'r_'+necessary_values['reactants'][j_species]+'.csv', np.array(rateTest), delimiter=",")		
+
 
 		#if reac_input['Thin-Zone Analysis'].lower() == 'true':
 		#	if int(reac_input['Number of Pulses']) == 1:

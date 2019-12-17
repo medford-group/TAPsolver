@@ -277,12 +277,12 @@ def rateEqs(rate_array,rev_irr):
 
 		new_neg = 'kVals["kf'+str(k)+'"]'
 		for j,v in enumerate(neg):
-			#new_neg = new_neg+"*(cat_data['conVtime_"+str(v)+"']**"+str(abs(val_neg[j]))+")"#
-			new_neg = new_neg+"*np.power(cat_data['conVtime_"+str(v)+"'],"+str(abs(val_neg[j]))+")"#
+			#new_neg = new_neg+"*(cat_dataRate['convtime_"+str(v)+"']**"+str(abs(val_neg[j]))+")"#
+			new_neg = new_neg+"*np.power(cat_dataRate['convtime_"+str(v)+"'],"+str(abs(val_neg[j]))+")"#
 		new_pos = 'kVals["kb'+str(k)+'"]'
 		for j,v in enumerate(pos):
-			#new_pos = new_pos+"*(cat_data['conVtime_"+str(v)+"']**"+str(abs(val_pos[j]))+")"#
-			new_pos = new_pos+"*np.power(cat_data['conVtime_"+str(v)+"'],"+str(abs(val_pos[j]))+")"#
+			#new_pos = new_pos+"*(cat_dataRate['convtime_"+str(v)+"']**"+str(abs(val_pos[j]))+")"#
+			new_pos = new_pos+"*np.power(cat_dataRate['convtime_"+str(v)+"'],"+str(abs(val_pos[j]))+")"#
 		for j,v in enumerate(together):
 			F = rateStrings[v]#''
 			if j < len(neg):
@@ -338,11 +338,11 @@ def rrmEqs(rate_array,rev_irr,domain):
 
 		new_neg = 'r_const["kf'+str(k)+'"]'
 		for j,v in enumerate(neg):
-			#new_neg = new_neg+"*(cat_data['conVtime_"+str(v)+"']**"+str(abs(val_neg[j]))+")"#
+			#new_neg = new_neg+"*(cat_dataRate['convtime_"+str(v)+"']**"+str(abs(val_neg[j]))+")"#
 			new_neg = new_neg+"*(u["+str(v)+"]**"+str(abs(val_neg[j]))+")"#
 		new_pos = 'r_const["kb'+str(k)+'"]'
 		for j,v in enumerate(pos):
-			#new_pos = new_pos+"*(cat_data['conVtime_"+str(v)+"']**"+str(abs(val_pos[j]))+")"#
+			#new_pos = new_pos+"*(cat_dataRate['convtime_"+str(v)+"']**"+str(abs(val_pos[j]))+")"#
 			new_pos = new_pos+"*(u["+str(v)+"]**"+str(abs(val_pos[j]))+")"#
 		
 		for j,v in enumerate(together):
