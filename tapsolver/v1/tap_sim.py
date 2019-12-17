@@ -40,7 +40,6 @@ import faulthandler
 
 thinSize = 'point'
 
-
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 #############################################################
@@ -60,6 +59,16 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	
 	kVals = constants_input.copy()
 	reac_input = reactor_kinetics_input
+
+	
+	reac_input['Optimization Method'] = 'BFGS'
+	reac_input['Objective Points'] = 'all'
+
+	if reac_input['Advection Value'] > 0.0:
+		reac_input['Advection'] = 'true'
+	else:
+		reac_input['Advection'] = 'false'
+
 
 	path = './'+reac_input['Output Folder Name']+'_folder/'
 	generateFolder(path)
@@ -161,10 +170,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 		print('Warning: Catalyst zone will be refined and rounded to the nearest whole mesh point!')
 		trueMesh = (roundedMesh2 - roundedMesh1)/reac_input['Mesh Size']
 		newMesh = (Mesh2 - Mesh1)/reac_input['Mesh Size']
-		print(Mesh2)
-		print(Mesh1)
-		print(trueMesh)
-		print(newMesh)
+		print()
 		print('New Catalyst Fraction = '+str(newMesh))
 		print('Old Catalyst Fraction = '+str(trueMesh))
 		percentChange = abs(round(100*(trueMesh - newMesh)/trueMesh,2))
@@ -368,6 +374,8 @@ def tap_simulation_function(reactor_kinetics_input,constants_input):
 	Jtemp = derivative(Ftemp,u)
 
 	# Define a constrained variational problem solver
+	reac_input['Variational Solver'] = 'newton'
+
 	if reac_input['Variational Solver'].lower() == 'constrained':
 		snes_solver_parameters = {"nonlinear_solver": "snes","snes_solver": {"linear_solver": "lu","line_search":'basic',"maximum_iterations": 10,"report": False,"error_on_nonconvergence": False}}
 		
