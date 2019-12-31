@@ -66,6 +66,10 @@ It should be noted that this structure must be maintained for every elementary r
 
 ### Gas and Surface Details
 
+<p align="center">
+  <img src="https://github.com/medford-group/TAPsolver/blob/master/docs/figures/CO.gif">
+</p>
+
 Defining the parameters for the gasses and initial surface composition depend on the order in which species appear in the elementary reactions (with the exception of active sites).
 
 It will be easier to see with the help of some examples:
@@ -120,4 +124,3 @@ Initial Surface Composition:    0 (A*), 0 (A^), 0 (B*), 10000 (*) and 5000 (^)
 ![Reactor Information](../../../figures/Feed_surf.png)
 
 *Section of the input_file.csv file that details the gas and surface components*
-
