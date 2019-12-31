@@ -1,3 +1,10 @@
+
+* [Overview](https://github.com/medford-group/TAPsolver/tree/master)
+* [Installation](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/installation)
+* [Interface options](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/ineterfaceOptions)
+* [Documentation](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/input_file)
+* [Questions & Development](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/questionsDiscussion)
+
 # Carbon Moxide Adsorption TAP Simulation
 
 How to generate synthetic data for CO adsorption on a catalyst surface is outlined below. Adjustments to multiple pulses and multiple active sites are also discussed. The first two sections should be straight forward, but the later two could be confusing.

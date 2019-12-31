@@ -1,3 +1,10 @@
+
+* [Overview](https://github.com/medford-group/TAPsolver/tree/master)
+* [Installation](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/installation)
+* [Interface options](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/ineterfaceOptions)
+* [Examples](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/examples/coAdsorption)
+* [Questions & Development](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/questionsDiscussion)
+
 ## File structure
 
 The current version of [TAPsolver](https://github.com/medford-group/TAPsolver/tree/master/tapsolver/v1) consists of five files, including tap_sim.py, func_sim.py, reac_odes.py, vari_form.py and input_file.csv. 
