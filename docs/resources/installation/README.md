@@ -1,9 +1,9 @@
 
 * [Overview](https://github.com/medford-group/TAPsolver/tree/master)
-* [Interface options](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/ineterfaceOptions)
+* [Interface options](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/interfaceOptions)
 * [Examples](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/examples/coAdsorption)
 * [Questions & Development](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/questionsDiscussion)
-* [Documentation](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/input_file))
+* [Documentation](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/input_file)
 
 # Installation
 
