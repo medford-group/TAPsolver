@@ -1,11 +1,11 @@
 
 # TAPsolver
 
-* Installation
-* Interface options
-* Examples
-* Documentation
-* Questions and Development
+* [Installation](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/installation)
+* [Interface options](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/ineterfaceOptions)
+* [Examples](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/examples/coAdsorption)
+* [Documentation](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/input_file)
+* [Questions & Development]((https://github.com/medford-group/TAPsolver/tree/master/docs/resources/questionsDiscussion)) 
 
 ## Overview
 TAPsolver is an open-source, python based Temporal Analysis of Products (TAP) simulation and analysis tool. The python packages [FEniCS](https://fenicsproject.org/)  (Finite Element Computational Software) and [Dolfin-Adjoint](http://www.dolfin-adjoint.org/en/latest/) act as the foundation of TAPsolver and allow for the flexible and efficient application of [automatic differentiation](https://towardsdatascience.com/automatic-differentiation-explained-b4ba8e60c2ad). 
