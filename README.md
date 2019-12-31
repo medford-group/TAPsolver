@@ -3,7 +3,7 @@
 
 The primary features of TAPsolver are:
  * Forward simulations of common TAP experiments, including:
-   * State-defining
+   * State-defining (test)
    * State-altering
    * Multi-site 
    * Pump-probe 
