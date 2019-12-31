@@ -24,3 +24,7 @@ TAPsolver is an open-source, python based Temporal Analysis of Products (TAP) si
 
 By generalizing TAP simulation and analysis options and providing roboust documentation, TAPsolver should offer the TAP community a centralized location for method development and application, as well as a consistent tool for processing experimental data. 
 
+<p align="center">
+  <img src="https://github.com/medford-group/TAPsolver/blob/master/docs/figures/cleanOptimizationExample.gif">
+</p>
+
