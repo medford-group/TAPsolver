@@ -5,6 +5,18 @@
 * [Documentation](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/input_file)
 * [Questions & Development](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/questionsDiscussion)
 
+# Running TAPsolver
+
+An explanation of the input file and how to properly manipulate it can be found [here](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/input_file) and a simple tutorial can be found [here](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/examples/coAdsorption).
+
+Currently, TAPsolver consists of five files, including the input file. With the five core files downloaded in the working directory and with the fenicsproject environment activated, run the following command:
+
+	python tap_sim.py
+
+This will call the simulation process and store all desired information in the appropriate folders.  
+
+This is the current format of TAPsolver and is subject to change. Steps will be taken to merge this process with other methods of TAP analysis developed by collaborators in the R programming language. 
+
 # Carbon Moxide Adsorption TAP Simulation
 
 How to generate synthetic data for CO adsorption on a catalyst surface is outlined below. Adjustments to multiple pulses and multiple active sites are also discussed. The first two sections should be straight forward, but the later two could be confusing.
