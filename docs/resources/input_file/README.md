@@ -138,23 +138,11 @@ Options: 'tap' or 'tap-diffusion'
 
 Description: Specify what type of reactor is being considered (including the transport). Currently need further development before 'tap-diffusion' can be properly applied.
 
-### Theta
-
-Options: '0', '0.5' or '1'
-
-Description: Specify the step type fenics uses to solve 
-
 ### Knudsen Test
 
 Options: 'TRUE' or 'FALSE'
 
 Description: Used to test if the inert data is within the knudsen regime. Should return approximately 0.31 for all of the inerts.
-
-### Solver Method
-
-Options: - - - -
-
-Description: Will include options for implicit and explicit time stepping in future implementations.
 
 ## Feed and Surface Composition
 
@@ -200,12 +188,6 @@ Description: Mass of each monitored gas species (in amu).
 
 Example: 28,16,44,40
 
-#### Advection 
-
-Options: 'TRUE' or 'FALSE'
-
-Description: Include or exclude an advection term in the simulation. Still requires further validation.
-
 #### Advection Value
 
 Options: 0 to inf (float)
@@ -250,8 +232,6 @@ Options: 'TRUE' or 'FALSE'
 
 Desciption: Tells the script whether or not to show the experimental data on the same graph as the outlet flux.
 
-####
-
 #### Display Graph
 
 Options: 'TRUE' or 'FALSE'
@@ -270,37 +250,38 @@ Options: 'TRUE' or 'FALSE'
 
 Desciption: Tells the script whether or not parameter fitting should be performed on the provided experimental data.
 
-#### Optimization Method
-
-Options: 'Newton-CG', 'BFGS', 'SLSQP', 'CG', 'basinhopping', 'COBYLA', 'TNC'
-
-Desciption: See the [scipy documentation](https://docs.scipy.org/doc/scipy/reference/optimize.html) for more details on each of these methods. Recommendations will be included in future versions of the documentation.
-
-#### Objective Points
-
-Options: - - - - (subject to change)
-
-Desciption: The number and distribution of the points that will be used to fit the curves in the 'optimization method'. 
-
 #### RRM Analysis 
 
 Options: 'TRUE' or 'FALSE'
 
 Desciption: (Subject to change)
 
-#### MKM Analysis 
+#### Thin-Zone Analysis 
 
 Options: 'TRUE' or 'FALSE'
 
-Desciption: (Subject to change) Primarily used to store thin zone concentrations and rates.
+Desciption: Store thin zone concentrations and rates.
 
-#### Petal Plots
+#### Display Objective Points
 
 Options: 'TRUE' or 'FALSE'
 
-Desciption: (Subject to change) Generate simple petal plots showing the rates relative to different concentrations.
+Description: Display the points used for optimization on the output graph.
+
+#### Fitting Gif
+
+Options: 'TRUE' or 'FALSE'
+
+Description: Generate a gif showing the outlet curves for each step in the optimization routine.
+
+#### Uncertainty Quantification
+
+Options: 'TRUE' or 'FALSE'
+
+Description: Used to calculate the uncertainty in parameters found during optimization.
 
 ### Reaction Information
 
 Description: Used to specify the elementary reactions involved in the microkinetic model. 
+
 
