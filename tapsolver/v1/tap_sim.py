@@ -32,6 +32,14 @@ if sampling == True:
 
 import faulthandler
 
+
+# New values for the objective function
+
+objectiveAnalysis = False
+selectivity = False
+conversion = False
+yieldValue = True
+
 ### How much concentration data do you want stored for 'thin-zone analysis'
 # 'point' = only center point in the catalyst zone
 # 'average' = average concentration values along the catalyst zone
@@ -44,7 +52,7 @@ thinSize = 'point'
 # 'trans' = transient sensitivity analysis
 # 'total' = sensitivity of summed objective function
 
-sens_type = 'trans'
+sens_type = 'total'
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -101,7 +109,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input,fitting_input
 	for j in r_const:
 		r_const[j] = Constant(r_const[j])
 
-	if reac_input['Fit Parameters'].lower() == 'true':
+	if reac_input['Fit Parameters'].lower() == 'true' or (sens_type == 'total' and reac_input['Sensitivity Analysis'].lower() == 'true'):
 		
 		controls = []
 		legend_2 = []
@@ -292,7 +300,10 @@ def tap_simulation_function(reactor_kinetics_input,constants_input,fitting_input
 			controls.append(Control(Dout[j]))
 			legend_2.append(j)
 
-	objSpecies = list(reac_input['Objective Species'].split(','))
+	if str(reac_input['Objective Species']).find(',') != -1:
+		objSpecies = list(reac_input['Objective Species'].split(','))
+	else:
+		objSpecies = [str(int(reac_input['Objective Species']))]
 
 	t = Constant(0)
 	uv = Expression('(1/sqrt(3.14159))*exp(-x[0]*100*t)',t=0,degree=1)
@@ -314,7 +325,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input,fitting_input
 	##### DEFINE METHOD OF OPTIMIZATION (OBJECTIVE FUNC.) #######
 	#############################################################
 	
-	if reac_input['Experimental Data Folder'].lower() != 'none' and (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or reac_input['Display Objective Points'].lower() == 'true') or sampling == True:
+	if reac_input['Experimental Data Folder'].lower() != 'none' and (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or reac_input['Display Objective Points'].lower() == 'true') or sampling == True or (sens_type == 'total' and reac_input['Sensitivity Analysis'].lower() == 'true'):
 		if reac_input['Uncertainty Quantification'].lower() == 'true':
 			print("Uncertainty Quantification")
 		try:
@@ -471,9 +482,10 @@ def tap_simulation_function(reactor_kinetics_input,constants_input,fitting_input
 		rrmStringsThin = rrmEqs(rate_array,rev_irr,'dx(1)')	
 		rrmStringsPoint = rrmEqs(rate_array,rev_irr,'dT(1)')
 
-	if reac_input['Experimental Data Folder'].lower() != 'none' and (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Display Objective Points'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true') or sampling == True:
+	if reac_input['Experimental Data Folder'].lower() != 'none' and (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Display Objective Points'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true') or sampling == True or (sens_type == 'total' and reac_input['Sensitivity Analysis'].lower() == 'true'):
 		for k_fitting in range(0,len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])])):
 			if objSpecies[k_fitting] == '1':
+
 				for timeStep in range(0,len(output_fitting[legend_label[k_fitting]]['times'])):
 					output_fitting[legend_label[k_fitting]]['times'][timeStep] = round(output_fitting[legend_label[k_fitting]]['times'][timeStep],6)
 
@@ -484,7 +496,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input,fitting_input
 
 	if reac_input['Sensitivity Analysis'].lower() == 'true' or reac_input['RRM Analysis'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true':
 
-		if sens_type == 'trans':
+		if sens_type == 'trans' or :
 			c = r_const[reac_input['Sensitivity Parameter']]
 			c.tlm_value = r_const[reac_input['Sensitivity Parameter']]
 			#c2 = r_const['kf1']
@@ -662,29 +674,100 @@ def tap_simulation_function(reactor_kinetics_input,constants_input,fitting_input
 			######## STEP FOR CONSTRUCTING OBJECTIVE FUNCTION ###########
 			#############################################################
 
-			if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or sampling == True:
+			if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or sampling == True or (sens_type == 'total' and reac_input['Sensitivity Analysis'].lower() == 'true'):
 
-				for k_fitting in range(0,len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])])):
-					if objSpecies[k_fitting] == '1':
-						if round(t,6) in output_fitting[legend_label[k_fitting]]['times']:
-							c_exp = output_fitting[legend_label[k_fitting]]['values'][output_fitting[legend_label[k_fitting]]['times'].index(round(t,6))]
-							slope = (-c_exp)/(1/mesh_size)
-							intercept = c_exp - ((1-(1/mesh_size))*slope)
-							w_new = Expression('A*x[0]+B',A=Constant(slope),B=Constant(intercept),degree=0)
-							w_new2 = interpolate(w_new,V_du)
-							w3 = project(w_new2,V_du)
+				#print(legend_label)
+				#sys.exit()
 
-							try:
-								if legend_label[k_fitting] != 'Inert':
-									jfunc_2 += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))							
-								else:
-									pass
+				if objectiveAnalysis == True:
+					for k_fitting in range(0,len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])])):
+					
+						if objSpecies[k_fitting] == '1':
+						
+							if round(t,6) in output_fitting[legend_label[k_fitting]]['times']:
+								c_exp = output_fitting[legend_label[k_fitting]]['values'][output_fitting[legend_label[k_fitting]]['times'].index(round(t,6))]
+								slope = (-c_exp)/(1/mesh_size)
+								intercept = c_exp - ((1-(1/mesh_size))*slope)
+								w_new = Expression('A*x[0]+B',A=Constant(slope),B=Constant(intercept),degree=0)
+								w_new2 = interpolate(w_new,V_du)
+								w3 = project(w_new2,V_du)
 
-							except UnboundLocalError:
-								if legend_label[k_fitting] != 'Inert':
-									jfunc_2 = assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
-								else:
-									pass
+								try:
+									if legend_label[k_fitting].find('Inert') == -1:
+									#if legend_label[k_fitting] != 'Inert':
+										jfunc_2 += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))							
+									else:
+										pass
+
+								except UnboundLocalError:
+									if legend_label[k_fitting].find('Inert') == -1:
+									#if legend_label[k_fitting] != 'Inert':
+										jfunc_2 = assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
+									else:
+										pass
+
+				if selectivity == True:
+					
+					
+					w_new = Expression('1',degree=0)
+					w_new2 = interpolate(w_new,V_du)
+					w3 = project(w_new2,V_du)
+
+					try:
+						if legend_label[2] != 'Inert':
+							selectDenom = 0
+							for zap in range(0,len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])])):
+								selectDenom += u_n[zap]*to_flux[zap]
+							jfunc_2 += assemble(inner(u_n[2]*to_flux[2]/selectDenom,w3)*dP(1))							
+						else:
+							pass
+
+					except UnboundLocalError:
+						if legend_label[2] != 'Inert':
+							selectDenom = 0
+							for zap in range(0,len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])])):
+								selectDenom += u_n[zap]*to_flux[zap]
+							jfunc_2 = assemble(inner(u_n[2]*to_flux[2]/selectDenom,w3)*dP(1))
+						else:
+							pass
+					
+
+				if conversion == True:
+										
+					w_new = Expression('1',degree=0)
+					w_new2 = interpolate(w_new,V_du)
+					w3 = project(w_new2,V_du)
+
+					try:
+						if legend_label[2] != 'Inert':
+							jfunc_2 += assemble(inner(dt*u_n[2]*to_flux[2],w3)*dP(1))							
+						else:
+							pass
+
+					except UnboundLocalError:
+						if legend_label[2] != 'Inert':
+							jfunc_2 = assemble(inner(dt*u_n[2]*to_flux[2],w3)*dP(1))
+						else:
+							pass
+
+				if yieldValue == True:
+										
+					w_new = Expression('1',degree=0)
+					w_new2 = interpolate(w_new,V_du)
+					w3 = project(w_new2,V_du)
+
+					try:
+						if legend_label[2] != 'Inert':
+							jfunc_2 += assemble(inner( (1/(dt*u_n[2]*to_flux[2])) -  (u_n[0]*to_flux[0]/(u_n[2]*to_flux[2]))  ,w3)*dP(1))							
+						else:
+							pass
+
+					except UnboundLocalError:
+						if legend_label[2] != 'Inert':
+							jfunc_2 = assemble(inner( (1/(dt*u_n[2]*to_flux[2])) -  (u_n[0]*to_flux[0]/(u_n[2]*to_flux[2]))  ,w3)*dP(1))
+						else:
+							pass
+
 
 			if reac_input['Fit Inert'].lower() == 'true':
 
@@ -985,7 +1068,12 @@ def tap_simulation_function(reactor_kinetics_input,constants_input,fitting_input
 				print('Evaluating Tape with Tangent Linear Method. Could take some time.')
 				tape2.evaluate_tlm()
 			elif sens_type == 'total':
-				pass
+				dJdm = compute_gradient(jfunc_2, controls)
+				djv = [v.values()[0] for v in dJdm]
+				print(djv)
+				with open('./'+reac_input['Output Folder Name']+'_folder/sensitivity/objSens.txt', 'w') as f:
+					f.write("Change: "+str(djv))
+					f.close
 
 			else:
 				print('Sensitivity analysis is not properly defined.')
