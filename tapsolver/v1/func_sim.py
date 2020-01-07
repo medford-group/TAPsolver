@@ -68,16 +68,35 @@ def readInput():
 	reactor_kinetics_input['reactions_test'] = reaction_info.iloc[:,0].tolist()
 
 	kinetic_parameters = {}
+	fittingParameters = {} 
 	
 	for j in range(0,len(reaction_info.index)):
-		kinetic_parameters['kf'+str(j)] = float(reaction_info.iloc[j,1])
+
+		if reaction_info.iloc[j,1].find("'") < 0:
+			kinetic_parameters['kf'+str(j)] = float(reaction_info.iloc[j,1])
+			fittingParameters['kf'+str(j)] = float(reaction_info.iloc[j,1])
+
+		else:
+			new_value = float(reaction_info.iloc[j,1][:-1])
+			kinetic_parameters['kf'+str(j)] = new_value#float(reaction_info.iloc[j,1])
+
 		if str(reaction_info.iloc[j,2]) != 'nan':
-			kinetic_parameters['kb'+str(j)] = float(reaction_info.iloc[j,2])
+			
+			if reaction_info.iloc[j,2].find("'") < 0:
+				kinetic_parameters['kb'+str(j)] = float(reaction_info.iloc[j,2])
+				fittingParameters['kb'+str(j)] = float(reaction_info.iloc[j,2])
+			
+			else:
+				new_value = float(reaction_info.iloc[j,2][:-1])
+				kinetic_parameters['kb'+str(j)] = new_value
 		else:
 			pass
-	kin_in = kinetic_parameters.copy()
 
-	return reactor_kinetics_input,kinetic_parameters,kin_in
+	kin_in = kinetic_parameters.copy()
+	
+	kin_fit = fittingParameters.copy()
+
+	return reactor_kinetics_input,kinetic_parameters,kin_in,kin_fit
 
 def solverIteration(time_step,method,solver,dk,dec_tim,inc_tim):
 	
