@@ -496,7 +496,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input,fitting_input
 
 	if reac_input['Sensitivity Analysis'].lower() == 'true' or reac_input['RRM Analysis'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true':
 
-		if sens_type == 'trans' or :
+		if sens_type == 'trans' or reac_input['Uncertainty Quantification'].lower() == 'true':
 			c = r_const[reac_input['Sensitivity Parameter']]
 			c.tlm_value = r_const[reac_input['Sensitivity Parameter']]
 			#c2 = r_const['kf1']
