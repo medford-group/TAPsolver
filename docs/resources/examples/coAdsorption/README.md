@@ -1,3 +1,22 @@
+
+* [Overview](https://github.com/medford-group/TAPsolver/tree/master)
+* [Installation](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/installation)
+* [Interface options](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/interfaceOptions)
+* [Documentation](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/input_file)
+* [Questions & Development](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/questionsDiscussion)
+
+# Running TAPsolver
+
+An explanation of the input file and how to properly manipulate it can be found [here](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/input_file) and a simple tutorial can be found [here](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/examples/coAdsorption).
+
+Currently, TAPsolver consists of five files, including the input file. With the five core files downloaded in the working directory and with the fenicsproject environment activated, run the following command:
+
+	python tap_sim.py
+
+This will call the simulation process and store all desired information in the appropriate folders.  
+
+This is the current format of TAPsolver and is subject to change. Steps will be taken to merge this process with other methods of TAP analysis developed by collaborators in the R programming language. 
+
 # Carbon Moxide Adsorption TAP Simulation
 
 How to generate synthetic data for CO adsorption on a catalyst surface is outlined below. Adjustments to multiple pulses and multiple active sites are also discussed. The first two sections should be straight forward, but the later two could be confusing.
@@ -66,6 +85,10 @@ It should be noted that this structure must be maintained for every elementary r
 
 ### Gas and Surface Details
 
+<p align="center">
+  <img src="https://github.com/medford-group/TAPsolver/blob/master/docs/figures/CO.gif">
+</p>
+
 Defining the parameters for the gasses and initial surface composition depend on the order in which species appear in the elementary reactions (with the exception of active sites).
 
 It will be easier to see with the help of some examples:
@@ -120,4 +143,3 @@ Initial Surface Composition:    0 (A*), 0 (A^), 0 (B*), 10000 (*) and 5000 (^)
 ![Reactor Information](../../../figures/Feed_surf.png)
 
 *Section of the input_file.csv file that details the gas and surface components*
-
