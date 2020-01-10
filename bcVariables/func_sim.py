@@ -25,10 +25,6 @@ def readInput():
 	rows_3, cols_3 = np.where(user_data == 'Data_Storage_Options')
 	rows_4, cols_4 = np.where(user_data == 'Reaction_Information')
 
-	#print(rows_4)
-	#print(cols_4)
-	#sys.exit()
-
 	reactor_info = user_data.iloc[(1+rows_1[0]):(rows_2[0]-1),:] 
 	feed_surf_info = user_data.iloc[1+rows_2[0]:rows_3[0]-1,:]
 	data_storage = user_data.iloc[1+rows_3[0]:rows_4[0]-1,:]
@@ -68,35 +64,80 @@ def readInput():
 	reactor_kinetics_input['reactions_test'] = reaction_info.iloc[:,0].tolist()
 
 	kinetic_parameters = {}
-	fittingParameters = {} 
+	Ao = {}
+	Ea = {}
+
+	fittingParametersList = []
+
+	arrForward = []
+	arrBackward = []
 	
 	for j in range(0,len(reaction_info.index)):
 
-		if reaction_info.iloc[j,1].find("'") < 0:
-			kinetic_parameters['kf'+str(j)] = float(reaction_info.iloc[j,1])
-			fittingParameters['kf'+str(j)] = float(reaction_info.iloc[j,1])
+		if reaction_info.iloc[j,1].find("$") > 0:
+			Anew, Eanew = reaction_info.iloc[j,1].split("$")
+			if Anew.find("'") < 0:
+				Ao['Aof'+str(j)] = float(Anew)
+				fittingParametersList.append('Aof'+str(j))
+			
+			else:
+				Ao['Aof'+str(j)] = float(Anew[:-1])
+
+			if Eanew.find("'") < 0:
+				Ea['Eaf'+str(j)] = float(Eanew)
+				fittingParametersList.append('Eaf'+str(j))
+			
+			else:
+				Ea['Eaf'+str(j)] = float(Eanew[:-1])
+
+			arrForward.append(j)
 
 		else:
-			new_value = float(reaction_info.iloc[j,1][:-1])
-			kinetic_parameters['kf'+str(j)] = new_value#float(reaction_info.iloc[j,1])
+			if reaction_info.iloc[j,1].find("'") < 0:
+				kinetic_parameters['kf'+str(j)] = float(reaction_info.iloc[j,1])
+				fittingParametersList.append('kf'+str(j))
+			
+			else:
+				new_value = float(reaction_info.iloc[j,1][:-1])
+				kinetic_parameters['kf'+str(j)] = new_value#float(reaction_info.iloc[j,1])
 
 		if str(reaction_info.iloc[j,2]) != 'nan':
 			
-			if reaction_info.iloc[j,2].find("'") < 0:
-				kinetic_parameters['kb'+str(j)] = float(reaction_info.iloc[j,2])
-				fittingParameters['kb'+str(j)] = float(reaction_info.iloc[j,2])
-			
+			if reaction_info.iloc[j,2].find("$") > 0:
+				Anew, Eanew = reaction_info.iloc[j,2].split("$")
+				if Anew.find("'") < 0:
+					Ao['Aob'+str(j)] = float(Anew)
+					fittingParametersList.append('Aob'+str(j))
+					
+				else:
+					Ao['Aob'+str(j)] = float(Anew[:-1])						
+
+				if Eanew.find("'") < 0:
+					Ea['Eab'+str(j)] = float(Eanew)
+					fittingParametersList.append('Eab'+str(j))
+					
+				else:
+					Ea['Eab'+str(j)] = float(Eanew[:-1])
+
+				arrBackward.append(j)
+
 			else:
-				new_value = float(reaction_info.iloc[j,2][:-1])
-				kinetic_parameters['kb'+str(j)] = new_value
+
+				if reaction_info.iloc[j,2].find("'") < 0:
+					kinetic_parameters['kb'+str(j)] = float(reaction_info.iloc[j,2])
+					fittingParametersList.append('kb'+str(j))
+
+				else:
+					new_value = float(reaction_info.iloc[j,2][:-1])
+					kinetic_parameters['kb'+str(j)] = new_value
 		else:
 			pass
 
 	kin_in = kinetic_parameters.copy()
-	
-	kin_fit = fittingParameters.copy()
+	Ao_in = Ao.copy()
+	Ea_in = Ea.copy()
 
-	return reactor_kinetics_input,kinetic_parameters,kin_in,kin_fit
+	return reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,fittingParametersList,arrForward,arrBackward
 
 def solverIteration(time_step,method,solver,dk,dec_tim,inc_tim):
 	

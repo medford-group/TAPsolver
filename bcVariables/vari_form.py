@@ -6,22 +6,22 @@ import sys
 import time
 from reac_odes import deriv_and_const,variational_list_parsing
 
-def make_f_equation(reactions_n,reactants_number,reactor_type,active_sites,number_of_inerts,advection,Inert_only=False):
+def make_f_equation(reactions_n,reactants_number,reactor_type,active_sites,number_of_inerts,advection,arrForward,arrBackward,temp_change=False):
+
+	tempVariation = temp_change
+
+	# Ao_in,Ea_in
 
 	active_site_names = ['*','^','@','#']
 
-	if Inert_only == True:
-		F = "Constant(eb[0]) * ((u - u_n))*v*dx(0) + dk * ( Dout[0]/Constant(np.sum(r_param)**2) ) * dot(grad(u), grad(v))*dx(0) + Constant(eb[1]) * ((u - u_n) )*v*dx(1) + dk * ( Din[0]/Constant(np.sum(r_param)**2) ) * dot(grad(u), grad(v))*dx(1)"
-		necessary_dictionary = {'F': F,'gas_num': 1, 'surf_num': 0}
-		return necessary_dictionary
+	#if Inert_only == True:
+	#	F = "Constant(eb[0]) * ((u - u_n))*v*dx(0) + dk * ( Dout[0]/Constant(np.sum(r_param)**2) ) * dot(grad(u), grad(v))*dx(0) + Constant(eb[1]) * ((u - u_n) )*v*dx(1) + dk * ( Din[0]/Constant(np.sum(r_param)**2) ) * dot(grad(u), grad(v))*dx(1)"
+	#	necessary_dictionary = {'F': F,'gas_num': 1, 'surf_num': 0}
+	#	return necessary_dictionary
 
 	F = ''
 	rate_array, reactions, reactants, rev_irr = variational_list_parsing(reactions_n,active_sites)
-	
-	#sys.exit()
-	#print(rate_array)
-	#sys.exit()
-	#print(reactants)
+
 	#Removed the removal of the *
 		
 	#####If I need to include the number of active sites or not, alter the following code####
@@ -52,9 +52,6 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,active_sites,numbe
 	
 	gas_num = len(reactants)+int(number_of_inerts)
 
-	#print(reactants_number)
-	#print(gas_num)
-	#sys.exit()
 	tail = len(reactants)
 
 	#rate_array, reactions, reactants, rev_irr
@@ -67,7 +64,26 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,active_sites,numbe
 	if reactor_type == 'tap':
 		for k in range(0,molecules_in_gas_phase):
 			if k < (molecules_in_gas_phase-1):
-				F = F+"((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']))*v_d['v_"+str(k+1)+"']*dx(0)      + dk*(Dout["+str(k)+"]/(eb[0]*np.sum(r_param)**2) ) *dot(grad(theta*u_d['u_"+str(k+1)+"']+(1-theta)*u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(0)     + ((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']) )*v_d['v_"+str(k+1)+"']*dx(1)       + dk*(Din["+str(k)+"]/(eb[1]*np.sum(r_param)**2) )*dot(grad(theta*u_d['u_"+str(k+1)+"'] + (1-theta)*u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(1) + " 
+
+				# def diff_func(ref_mass,ref_T,mol_mass,ref_r):
+				# ref_r*(mp.sqrt(ref_mass*reac_input['Reactor Temperature'])/mp.sqrt(ref_T*mol_mass))
+				# diff_func(reac_input['Reference Mass'],reac_input['Reference Temperature'],float(j),j_2)
+
+				# reac_input['Mass List'] compMass_list
+
+				# ref_rate[k]*(mp.sqrt(reac_input['Reference Mass']*constantTemp)/mp.sqrt(reac_input['Reference Temperature']*compMass_list[k]))
+
+				if tempVariation == False:
+					F = F+"((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']))*v_d['v_"+str(k+1)+"']*dx(0)      + dk*(Dout["+str(k)+"]/(eb[0]*np.sum(r_param)**2) ) *dot(grad(theta*u_d['u_"+str(k+1)+"']+(1-theta)*u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(0)     + ((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']) )*v_d['v_"+str(k+1)+"']*dx(1)       + dk*(Din["+str(k)+"]/(eb[1]*np.sum(r_param)**2) )*dot(grad(theta*u_d['u_"+str(k+1)+"'] + (1-theta)*u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(1) + " 
+				
+				else:
+					F = F+"((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']))*v_d['v_"+str(k+1)+"']*dx(0)      + dk*((ref_rate["+str(0)+"]*(sqrt(reac_input['Reference Mass']*constantTemp)/sqrt(reac_input['Reference Temperature']*float(compMass_list["+str(k)+"]))))/(eb[0]*np.sum(r_param)**2) ) *dot(grad(theta*u_d['u_"+str(k+1)+"']+(1-theta)*u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(0)     + ((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']) )*v_d['v_"+str(k+1)+"']*dx(1)       + dk*((ref_rate["+str(1)+"]*(mp.sqrt(reac_input['Reference Mass']*constantTemp)/sqrt(reac_input['Reference Temperature']*float(compMass_list["+str(k)+"]))))/(eb[1]*np.sum(r_param)**2) )*dot(grad(theta*u_d['u_"+str(k+1)+"'] + (1-theta)*u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(1) + " 
+				
+					#F = F+"((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']))*v_d['v_"+str(k+1)+"']*dx(0)      + dk*((ref_rate["+str(k)+"]*(sqrt(reac_input['Reference Mass']*constantTemp)/sqrt(reac_input['Reference Temperature']*float(compMass_list["+str(k)+"]))))/(eb[0]*np.sum(r_param)**2) ) *dot(grad(theta*u_d['u_"+str(k+1)+"']+(1-theta)*u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(0)     + ((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']) )*v_d['v_"+str(k+1)+"']*dx(1)       + dk*(((ref_rate["+str(k)+"]*(mp.sqrt(reac_input['Reference Mass']*constantTemp)/sqrt(reac_input['Reference Temperature']*float(compMass_list["+str(k)+"]))))/(eb[1]*np.sum(r_param)**2) )*dot(grad(theta*u_d['u_"+str(k+1)+"'] + (1-theta)*u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(1) + " 
+				
+
+
+
 				#F = F+"((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']))*v_d['v_"+str(k+1)+"']*dx(0)      + dk*Constant(theta)*(Dout["+str(k)+"]/(eb[0]*np.sum(r_param)**2) ) *dot(grad(u_d['u_"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(0)       + dk*Constant(1-theta)*(Dout["+str(k)+"]/(eb[0]*np.sum(r_param)**2) )*dot(grad(u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(0)      + ((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']) )*v_d['v_"+str(k+1)+"']*dx(1)       + dk*Constant(theta)*(Din["+str(k)+"]/(eb[1]*np.sum(r_param)**2) )*dot(grad(u_d['u_"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(1)      + dk*Constant(1-theta)*(Din["+str(k)+"]/(eb[1]*np.sum(r_param)**2) )*dot(grad(u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(1) + " 
 				# current # F = F+"((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']))*v_d['v_"+str(k+1)+"']*dx(0)      + dk*Constant(theta)*(Dout["+str(k)+"]/(eb[0]*np.sum(r_param)**2) ) *dot(grad(u_d['u_"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(0)       + ((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']) )*v_d['v_"+str(k+1)+"']*dx(1)       + dk*Constant(theta)*(Din["+str(k)+"]/(eb[0]*np.sum(r_param)**2) )*dot(grad(u_d['u_"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(1)     + " 
 				
@@ -77,7 +93,13 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,active_sites,numbe
 				#print("Constant(eb[0])*((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']))*v_d['v_"+str(k+1)+"']*dx(0)  + dk*Constant(D["+str(k)+"][0]/(np.sum(r_param)**2))*dot(grad(u_d['u_"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(0) + Constant(eb[1])*((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']) )*v_d['v_"+str(k+1)+"']*dx(1)  + dk*Constant(D["+str(k)+"][1]/(np.sum(r_param)**2))*dot(grad(u_d['u_"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(1) + " )
 				#print("")
 			else:
-				F = F+"((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']))*v_d['v_"+str(k+1)+"']*dx(0)      + dk*Constant(theta)*(Dout["+str(k)+"]/(eb[0]*np.sum(r_param)**2) )*dot(grad(u_d['u_"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(0)         + dk*Constant(1-theta)*(Dout["+str(k)+"]/(eb[0]*np.sum(r_param)**2) )*dot(grad(u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(0)     + ((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']) )*v_d['v_"+str(k+1)+"']*dx(1)      + dk*Constant(theta)*(Din["+str(k)+"]/(eb[1]*np.sum(r_param)**2) )*dot(grad(u_d['u_"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(1)      + dk*Constant(1-theta)*(Din["+str(k)+"]/(eb[1]*np.sum(r_param)**2) )*dot(grad(u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(1)" 
+				
+				if tempVariation == False:
+					F = F+"((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']))*v_d['v_"+str(k+1)+"']*dx(0)      + dk*Constant(theta)*(Dout["+str(k)+"]/(eb[0]*np.sum(r_param)**2) )*dot(grad(u_d['u_"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(0)         + dk*Constant(1-theta)*(Dout["+str(k)+"]/(eb[0]*np.sum(r_param)**2) )*dot(grad(u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(0)     + ((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']) )*v_d['v_"+str(k+1)+"']*dx(1)      + dk*Constant(theta)*(Din["+str(k)+"]/(eb[1]*np.sum(r_param)**2) )*dot(grad(u_d['u_"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(1)      + dk*Constant(1-theta)*(Din["+str(k)+"]/(eb[1]*np.sum(r_param)**2) )*dot(grad(u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(1)" 
+				
+				else:
+					F = F+"((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']))*v_d['v_"+str(k+1)+"']*dx(0)      + dk*((ref_rate["+str(0)+"]*(sqrt(reac_input['Reference Mass']*constantTemp)/sqrt(reac_input['Reference Temperature']*float(compMass_list["+str(k)+"]))))/(eb[0]*np.sum(r_param)**2) ) *dot(grad(theta*u_d['u_"+str(k+1)+"']+(1-theta)*u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(0)     + ((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']) )*v_d['v_"+str(k+1)+"']*dx(1)       + dk*((ref_rate["+str(1)+"]*(mp.sqrt(reac_input['Reference Mass']*constantTemp)/sqrt(reac_input['Reference Temperature']*float(compMass_list["+str(k)+"]))))/(eb[1]*np.sum(r_param)**2) )*dot(grad(theta*u_d['u_"+str(k+1)+"'] + (1-theta)*u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(1) " 
+				
 				# current # F = F+"((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']))*v_d['v_"+str(k+1)+"']*dx(0)      + dk*Constant(theta)*(Dout["+str(k)+"]/(eb[0]*np.sum(r_param)**2) )*dot(grad(u_d['u_"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(0)         + ((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']) )*v_d['v_"+str(k+1)+"']*dx(1)      + dk*Constant(theta)*(Din["+str(k)+"]/(eb[0]*np.sum(r_param)**2) )*dot(grad(u_d['u_"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(1)  " 
 				
 				if advection.lower() == 'true':
@@ -130,10 +152,21 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,active_sites,numbe
 			
 			together = neg+pos
 	
-			new_neg = 'r_const["kf'+str(k)+'"]'
+			if k in arrForward:
+				new_neg = 'r_Ao["Aof'+str(k)+'"]*exp(-r_Ea["Eaf'+str(k)+'"]/(8.314*constantTemp))'
+				
+			else:
+				new_neg = 'r_const["kf'+str(k)+'"]'
+				
 			for j,v in enumerate(neg):
 				new_neg = new_neg+"*(u_d['u_"+str(v+1)+"']**"+str(abs(val_neg[j]))+")"#
-			new_pos = 'r_const["kb'+str(k)+'"]'
+				
+			if k in arrBackward:
+				new_pos = 'r_Ao["Aob'+str(k)+'"]*exp(-r_Ea["Eab'+str(k)+'"]/(8.314*constantTemp))'
+				
+			else:
+				new_pos = 'r_const["kb'+str(k)+'"]'
+				
 			for j,v in enumerate(pos):
 				new_pos = new_pos+"*(u_d['u_"+str(v+1)+"']**"+str(abs(val_pos[j]))+")"#
 
@@ -176,13 +209,24 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,active_sites,numbe
 					val_pos.append(v)
 			
 			together = neg+pos
-	
-			new_neg = 'r_const["kf'+str(k)+'"]'
+
+			if k in arrForward:
+				new_neg = 'r_Ao["Aof'+str(k)+'"]*exp(-r_Ea["Eaf'+str(k)+'"]/(8.314*constantTemp))'
+				
+			else:
+				new_neg = 'r_const["kf'+str(k)+'"]'
+				
 			for j,v in enumerate(neg):
-				new_neg = new_neg+"*(u_nd['u_n"+str(v+1)+"']**"+str(abs(val_neg[j]))+")"#
-			new_pos = 'r_const["kb'+str(k)+'"]'
+				new_neg = new_neg+"*(u_nd['u_n"+str(v+1)+"']**"+str(abs(val_neg[j]))+")"
+			
+			if k in arrBackward:
+				new_pos = 'r_Ao["Aob'+str(k)+'"]*exp(-r_Ea["Eab'+str(k)+'"]/(8.314*constantTemp))'
+				
+			else:
+				new_pos = 'r_const["kb'+str(k)+'"]'
+				
 			for j,v in enumerate(pos):
-				new_pos = new_pos+"*(u_nd['u_n"+str(v+1)+"']**"+str(abs(val_pos[j]))+")"#
+				new_pos = new_pos+"*(u_nd['u_n"+str(v+1)+"']**"+str(abs(val_pos[j]))+")"
 
 			for j,v in enumerate(together):
 				if j < len(neg):
@@ -211,8 +255,13 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,active_sites,numbe
 
 		if reactor_type == 'tap':
 			for k in range(0,int(number_of_inerts)):
-				F = F + "+  ((u_d['u_"+str(len(reactants)+1+k)+"'] - u_nd['u_n"+str(len(reactants)+1+k)+"']))*v_d['v_"+str(len(reactants)+1+k)+"']*dx(0)        + dk *( Dout["+str(molecules_in_gas_phase+k)+"]/Constant(eb[0]*np.sum(r_param)**2) ) * dot(grad( theta*u_d['u_"+str(len(reactants)+1+k)+"'] + (1-theta)*u_nd['u_n"+str(len(reactants)+1+k)+"']), grad(v_d['v_"+str(len(reactants)+1+k)+"']))*dx(0)     +  ((u_d['u_"+str(len(reactants)+1+k)+"'] - u_nd['u_n"+str(len(reactants)+1+k)+"']) )*v_d['v_"+str(len(reactants)+1+k)+"']*dx(1)             + dk * (Din["+str(molecules_in_gas_phase+k)+"]  /Constant(eb[1]*np.sum(r_param)**2) ) * dot(grad( theta*u_d['u_"+str(len(reactants)+1+k)+"'] + (1-theta)*u_nd['u_n"+str(len(reactants)+1+k)+"']), grad(v_d['v_"+str(len(reactants)+1+k)+"']))*dx(1)"
 				
+				if tempVariation == False:
+					F = F + "+  ((u_d['u_"+str(len(reactants)+1+k)+"'] - u_nd['u_n"+str(len(reactants)+1+k)+"']))*v_d['v_"+str(len(reactants)+1+k)+"']*dx(0)        + dk *( Dout["+str(molecules_in_gas_phase+k)+"]/Constant(eb[0]*np.sum(r_param)**2) ) * dot(grad( theta*u_d['u_"+str(len(reactants)+1+k)+"'] + (1-theta)*u_nd['u_n"+str(len(reactants)+1+k)+"']), grad(v_d['v_"+str(len(reactants)+1+k)+"']))*dx(0)     +  ((u_d['u_"+str(len(reactants)+1+k)+"'] - u_nd['u_n"+str(len(reactants)+1+k)+"']) )*v_d['v_"+str(len(reactants)+1+k)+"']*dx(1)             + dk * (Din["+str(molecules_in_gas_phase+k)+"]  /Constant(eb[1]*np.sum(r_param)**2) ) * dot(grad( theta*u_d['u_"+str(len(reactants)+1+k)+"'] + (1-theta)*u_nd['u_n"+str(len(reactants)+1+k)+"']), grad(v_d['v_"+str(len(reactants)+1+k)+"']))*dx(1)"
+				else:
+					F = F+"+ ((u_d['u_"+str(len(reactants)+1+k)+"'] - u_nd['u_n"+str(len(reactants)+1+k)+"']))*v_d['v_"+str(len(reactants)+1+k)+"']*dx(0)      + dk*((ref_rate["+str(0)+"]*(sqrt(reac_input['Reference Mass']*constantTemp)/sqrt(reac_input['Reference Temperature']*float(compMass_list["+str(molecules_in_gas_phase+k)+"]))))/(eb[0]*np.sum(r_param)**2) ) *dot(grad(theta*u_d['u_"+str(len(reactants)+1+k)+"']+(1-theta)*u_nd['u_n"+str(len(reactants)+1+k)+"']), grad(v_d['v_"+str(len(reactants)+1+k)+"']))*dx(0)     + ((u_d['u_"+str(len(reactants)+1+k)+"'] - u_nd['u_n"+str(len(reactants)+1+k)+"']) )*v_d['v_"+str(len(reactants)+1+k)+"']*dx(1)       + dk*((ref_rate["+str(1)+"]*(mp.sqrt(reac_input['Reference Mass']*constantTemp)/sqrt(reac_input['Reference Temperature']*float(compMass_list["+str(molecules_in_gas_phase+k)+"]))))/(eb[1]*np.sum(r_param)**2) )*dot(grad(theta*u_d['u_"+str(len(reactants)+1+k)+"'] + (1-theta)*u_nd['u_n"+str(len(reactants)+1+k)+"']), grad(v_d['v_"+str(len(reactants)+1+k)+"']))*dx(1)" 
+				
+
 				#F = F + "+  ((u_d['u_"+str(len(reactants)+1+k)+"'] - u_nd['u_n"+str(len(reactants)+1+k)+"']))*v_d['v_"+str(len(reactants)+1+k)+"']*dx(0)        + dk *Constant(theta)*( Dout["+str(molecules_in_gas_phase+k)+"]/Constant(eb[0]*np.sum(r_param)**2) ) * dot(grad(u_d['u_"+str(len(reactants)+1+k)+"']), grad(v_d['v_"+str(len(reactants)+1+k)+"']))*dx(0)          + dk *Constant(1-theta)*(Dout["+str(molecules_in_gas_phase+k)+"] /Constant(eb[0]*np.sum(r_param)**2) )  * dot(grad(u_nd['u_n"+str(len(reactants)+1+k)+"']), grad(v_d['v_"+str(len(reactants)+1+k)+"']))*dx(0)          +  ((u_d['u_"+str(len(reactants)+1+k)+"'] - u_nd['u_n"+str(len(reactants)+1+k)+"']) )*v_d['v_"+str(len(reactants)+1+k)+"']*dx(1)             + dk *Constant(theta)* (Din["+str(molecules_in_gas_phase+k)+"]  /Constant(eb[1]*np.sum(r_param)**2) ) * dot(grad(u_d['u_"+str(len(reactants)+1+k)+"']), grad(v_d['v_"+str(len(reactants)+1+k)+"']))*dx(1)          + dk *Constant(1-theta)*(Din["+str(molecules_in_gas_phase+k)+"]  /Constant(eb[1]*np.sum(r_param)**2) ) * dot(grad(u_nd['u_n"+str(len(reactants)+1+k)+"']), grad(v_d['v_"+str(len(reactants)+1+k)+"']))*dx(1)"
 				# current # F = F + "+  ((u_d['u_"+str(len(reactants)+1+k)+"'] - u_nd['u_n"+str(len(reactants)+1+k)+"']))*v_d['v_"+str(len(reactants)+1+k)+"']*dx(0)        + Constant(1) *dk *Constant(theta)*( D["+str(molecules_in_gas_phase+k)+"][0] /Constant(eb[0]*np.sum(r_param)**2) ) * dot(grad(u_d['u_"+str(len(reactants)+1+k)+"']), grad(v_d['v_"+str(len(reactants)+1+k)+"']))*dx(0)       +  ((u_d['u_"+str(len(reactants)+1+k)+"'] - u_nd['u_n"+str(len(reactants)+1+k)+"']) )*v_d['v_"+str(len(reactants)+1+k)+"']*dx(1)             + Constant(1) *dk *Constant(theta)* (Din["+str(molecules_in_gas_phase+k)+"]  /Constant(eb[0]*np.sum(r_param)**2) ) * dot(grad(u_d['u_"+str(len(reactants)+1+k)+"']), grad(v_d['v_"+str(len(reactants)+1+k)+"']))*dx(1)      "
 				
@@ -229,7 +278,6 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,active_sites,numbe
 		#print("+ Constant(eb[0]) * ((u_d['u_"+str(len(reactants)+1)+"'] - u_nd['u_n"+str(len(reactants)+1)+"']))*v_d['v_"+str(len(reactants)+1)+"']*dx(0)+ dk * Constant(D["+str(molecules_in_gas_phase)+"][0]/(np.sum(r_param)**2)) * dot(grad(u_d['u_"+str(len(reactants)+1)+"']), grad(v_d['v_"+str(len(reactants)+1)+"']))*dx(0) + Constant(eb[1]) * ((u_d['u_"+str(len(reactants)+1)+"'] - u_nd['u_n"+str(len(reactants)+1)+"']) )*v_d['v_"+str(len(reactants)+1)+"']*dx(1) + dk * Constant(D["+str(molecules_in_gas_phase)+"][1]/(np.sum(r_param)**2)) * dot(grad(u_d['u_"+str(len(reactants)+1)+"']), grad(v_d['v_"+str(len(reactants)+1)+"']))*dx(1)")
 		#print("")
 		#F =  F+ "+ Constant(eb[0])*((u_d['u_"+str(len(reactants))+"'] - u_nd['u_n"+str(len(reactants))+"']) )*v_d['v_"+str(len(reactants))+"']*dx(0)  + dk * Constant(D["+str(molecules_in_gas_phase)+"][0]/(np.sum(r_param)**2))*dot(grad(u_d['u_"+str(len(reactants))+"']), grad(v_d['v_"+str(len(reactants))+"']))*dx(0) + Constant(eb[1])*((u_d['u_"+str(len(reactants))+"'] - u_nd['u_n"+str(len(reactants))+"']) )*v_d['v_"+str(len(reactants))+"']*dx(1)  + dk*Constant(D["+str(molecules_in_gas_phase)+"][1]/(np.sum(r_param)**2))*dot(grad(u_d['u_"+str(len(reactants))+"']), grad(v_d['v_"+str(len(reactants))+"']))*dx(1)" 
-		#sys.exit()
 	
 ###################
 	element = '['
@@ -240,8 +288,7 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,active_sites,numbe
 			element = element + 'P1]'
 
 	necessary_dictionary = {'F': F,'gas_num': gas_num, 'surf_num': (len(reactants)-gas_num-1),'element': element,'gas_molecules': gas_molecules,'reactants_number':reactants_number,'reactants':reactants,'molecules_in_gas_phase':molecules_in_gas_phase}
-	#print(F)
-	#sys.exit()
+	
 	return necessary_dictionary, rate_array, rev_irr
 
 #test_new_again = make_f_equation(reactions_test)
