@@ -6,7 +6,7 @@ import sys
 import time
 from reac_odes import deriv_and_const,variational_list_parsing
 
-def make_f_equation(reactions_n,reactants_number,reactor_type,active_sites,number_of_inerts,advection,arrForward,arrBackward,temp_change=False):
+def make_f_equation(reactions_n,reactants_number,reactor_type,active_sites,number_of_inerts,advection,arrForward,arrBackward,gForward,temp_change=False):
 
 	tempVariation = temp_change
 
@@ -77,7 +77,7 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,active_sites,numbe
 					F = F+"((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']))*v_d['v_"+str(k+1)+"']*dx(0)      + dk*(Dout["+str(k)+"]/(eb[0]*np.sum(r_param)**2) ) *dot(grad(theta*u_d['u_"+str(k+1)+"']+(1-theta)*u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(0)     + ((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']) )*v_d['v_"+str(k+1)+"']*dx(1)       + dk*(Din["+str(k)+"]/(eb[1]*np.sum(r_param)**2) )*dot(grad(theta*u_d['u_"+str(k+1)+"'] + (1-theta)*u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(1) + " 
 				
 				else:
-					F = F+"((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']))*v_d['v_"+str(k+1)+"']*dx(0)      + dk*((ref_rate["+str(0)+"]*(sqrt(reac_input['Reference Mass']*constantTemp)/sqrt(reac_input['Reference Temperature']*float(compMass_list["+str(k)+"]))))/(eb[0]*np.sum(r_param)**2) ) *dot(grad(theta*u_d['u_"+str(k+1)+"']+(1-theta)*u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(0)     + ((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']) )*v_d['v_"+str(k+1)+"']*dx(1)       + dk*((ref_rate["+str(1)+"]*(mp.sqrt(reac_input['Reference Mass']*constantTemp)/sqrt(reac_input['Reference Temperature']*float(compMass_list["+str(k)+"]))))/(eb[1]*np.sum(r_param)**2) )*dot(grad(theta*u_d['u_"+str(k+1)+"'] + (1-theta)*u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(1) + " 
+					F = F+"((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']))*v_d['v_"+str(k+1)+"']*dx(0)      + dk*((ref_rate["+str(0)+"]*(sqrt(reac_input['Reference Mass']*constantTemp)/sqrt(reac_input['Reference Temperature']*float(compMass_list["+str(k)+"]))))/(eb[0]*np.sum(r_param)**2) ) *dot(grad(theta*u_d['u_"+str(k+1)+"']+(1-theta)*u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(0)     + ((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']) )*v_d['v_"+str(k+1)+"']*dx(1)       + dk*((ref_rate["+str(1)+"]*(sqrt(reac_input['Reference Mass']*constantTemp)/sqrt(reac_input['Reference Temperature']*float(compMass_list["+str(k)+"]))))/(eb[1]*np.sum(r_param)**2) )*dot(grad(theta*u_d['u_"+str(k+1)+"'] + (1-theta)*u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(1) + " 
 				
 					#F = F+"((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']))*v_d['v_"+str(k+1)+"']*dx(0)      + dk*((ref_rate["+str(k)+"]*(sqrt(reac_input['Reference Mass']*constantTemp)/sqrt(reac_input['Reference Temperature']*float(compMass_list["+str(k)+"]))))/(eb[0]*np.sum(r_param)**2) ) *dot(grad(theta*u_d['u_"+str(k+1)+"']+(1-theta)*u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(0)     + ((u_d['u_"+str(k+1)+"'] - u_nd['u_n"+str(k+1)+"']) )*v_d['v_"+str(k+1)+"']*dx(1)       + dk*(((ref_rate["+str(k)+"]*(mp.sqrt(reac_input['Reference Mass']*constantTemp)/sqrt(reac_input['Reference Temperature']*float(compMass_list["+str(k)+"]))))/(eb[1]*np.sum(r_param)**2) )*dot(grad(theta*u_d['u_"+str(k+1)+"'] + (1-theta)*u_nd['u_n"+str(k+1)+"']), grad(v_d['v_"+str(k+1)+"']))*dx(1) + " 
 				
@@ -152,18 +152,23 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,active_sites,numbe
 			
 			together = neg+pos
 	
-			if k in arrForward:
-				new_neg = 'r_Ao["Aof'+str(k)+'"]*exp(-r_Ea["Eaf'+str(k)+'"]/(8.314*constantTemp))'
+			if k in gForward:#,Ga_in,dG_in
+				new_neg = '(kbt*constantTemp/hb)*exp(-Ga_in["Ga'+str(k)+'"]/(Rgas*constantTemp))'
+
+			elif k in arrForward:
+				new_neg = 'r_Ao["Aof'+str(k)+'"]*exp(-r_Ea["Eaf'+str(k)+'"]/(Rgas*constantTemp))'
 				
 			else:
 				new_neg = 'r_const["kf'+str(k)+'"]'
 				
 			for j,v in enumerate(neg):
 				new_neg = new_neg+"*(u_d['u_"+str(v+1)+"']**"+str(abs(val_neg[j]))+")"#
-				
-			if k in arrBackward:
-				new_pos = 'r_Ao["Aob'+str(k)+'"]*exp(-r_Ea["Eab'+str(k)+'"]/(8.314*constantTemp))'
-				
+			
+			if k in gForward:
+				new_pos = '(kbt*constantTemp/hb)*exp(-(Ga_in["Ga'+str(k)+'"]+dG_in["dG'+str(k)+'"])/(Rgas*constantTemp))'
+			
+			elif k in arrBackward:
+				new_pos = 'r_Ao["Aob'+str(k)+'"]*exp(-r_Ea["Eab'+str(k)+'"]/(Rgas*constantTemp))'	
 			else:
 				new_pos = 'r_const["kb'+str(k)+'"]'
 				
@@ -210,8 +215,11 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,active_sites,numbe
 			
 			together = neg+pos
 
-			if k in arrForward:
-				new_neg = 'r_Ao["Aof'+str(k)+'"]*exp(-r_Ea["Eaf'+str(k)+'"]/(8.314*constantTemp))'
+			if k in gForward:#,Ga_in,dG_in
+				new_neg = '(kbt*constantTemp/hb)*exp(-Ga_in["Ga'+str(k)+'"]/(Rgas*constantTemp))'
+
+			elif k in arrForward:
+				new_neg = 'r_Ao["Aof'+str(k)+'"]*exp(-r_Ea["Eaf'+str(k)+'"]/(Rgas*constantTemp))'
 				
 			else:
 				new_neg = 'r_const["kf'+str(k)+'"]'
@@ -219,8 +227,11 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,active_sites,numbe
 			for j,v in enumerate(neg):
 				new_neg = new_neg+"*(u_nd['u_n"+str(v+1)+"']**"+str(abs(val_neg[j]))+")"
 			
-			if k in arrBackward:
-				new_pos = 'r_Ao["Aob'+str(k)+'"]*exp(-r_Ea["Eab'+str(k)+'"]/(8.314*constantTemp))'
+			if k in gForward:
+				new_pos = '(kbt*constantTemp/hb)*exp(-(Ga_in["Ga'+str(k)+'"]+dG_in["dG'+str(k)+'"])/(Rgas*constantTemp))'
+
+			elif k in arrBackward:
+				new_pos = 'r_Ao["Aob'+str(k)+'"]*exp(-r_Ea["Eab'+str(k)+'"]/(Rgas*constantTemp))'
 				
 			else:
 				new_pos = 'r_const["kb'+str(k)+'"]'

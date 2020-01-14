@@ -66,15 +66,36 @@ def readInput():
 	kinetic_parameters = {}
 	Ao = {}
 	Ea = {}
+	Ga = {}
+	dG = {}
 
 	fittingParametersList = []
 
+	gForward = []
 	arrForward = []
 	arrBackward = []
 	
 	for j in range(0,len(reaction_info.index)):
 
-		if reaction_info.iloc[j,1].find("$") > 0:
+		if reaction_info.iloc[j,1].find("#") > 0:
+			Anew, Eanew = reaction_info.iloc[j,1].split("#")
+			if Anew.find("'") < 0:
+				Ga['Ga'+str(j)] = float(Anew)
+				fittingParametersList.append('Ga'+str(j))
+			
+			else:
+				Ga['Ga'+str(j)] = float(Anew[:-1])
+
+			if Eanew.find("'") < 0:
+				dG['dG'+str(j)] = float(Eanew)
+				fittingParametersList.append('dG'+str(j))
+			
+			else:
+				dG['dG'+str(j)] = float(Eanew[:-1])
+
+			gForward.append(j)
+
+		elif reaction_info.iloc[j,1].find("$") > 0:
 			Anew, Eanew = reaction_info.iloc[j,1].split("$")
 			if Anew.find("'") < 0:
 				Ao['Aof'+str(j)] = float(Anew)
@@ -90,7 +111,7 @@ def readInput():
 			else:
 				Ea['Eaf'+str(j)] = float(Eanew[:-1])
 
-			arrForward.append(j)
+			arrForward.append(-j)
 
 		else:
 			if reaction_info.iloc[j,1].find("'") < 0:
@@ -136,8 +157,11 @@ def readInput():
 	kin_in = kinetic_parameters.copy()
 	Ao_in = Ao.copy()
 	Ea_in = Ea.copy()
+	Ga_in = Ga.copy()
+	dG_in = dG.copy()
 
-	return reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,fittingParametersList,arrForward,arrBackward
+
+	return reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,fittingParametersList,arrForward,arrBackward
 
 def solverIteration(time_step,method,solver,dk,dec_tim,inc_tim):
 	

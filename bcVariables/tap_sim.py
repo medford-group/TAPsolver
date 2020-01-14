@@ -16,10 +16,11 @@ import ast
 import shutil
 import sys
 import os
-import ufl
 import scipy
 import pip
 import pkg_resources
+import ufl
+from ufl import sqrt,exp
 #from hippylib import *
 import warnings
 
@@ -67,7 +68,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 ################ TAPsolver FEniCS Function ##################
 #############################################################
 
-def tap_simulation_function(reactor_kinetics_input,constants_input,Ao_in,Ea_in,fitting_input,arrForward,arrBackward):
+def tap_simulation_function(reactor_kinetics_input,constants_input,Ao_in,Ea_in,Ga_in,dG_in,fitting_input,arrForward,arrBackward,gForward):
 
 	# Define or clear working Tape of FEniCS / Dolfin-Adjoint
 	tape2 = Tape()
@@ -102,7 +103,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input,Ao_in,Ea_in,f
 	path_5 = './'+reac_input['Output Folder Name']+'_folder/graphs/'
 	generateFolder(path_5)
 
-	if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true':
+	if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true' or fit_temperature == True:
 		path_6 = './'+reac_input['Output Folder Name']+'_folder/fitting/'
 		generateFolder(path_6)
 
@@ -114,6 +115,12 @@ def tap_simulation_function(reactor_kinetics_input,constants_input,Ao_in,Ea_in,f
 
 	print('Fitting the following parameters:')
 	print(r_fit)
+
+	for j in Ga_in:
+		Ga_in[j] = Constant(Ga_in[j])
+
+	for j in dG_in:
+		dG_in[j] = Constant(dG_in[j])
 
 	for j in r_const:
 		r_const[j] = Constant(r_const[j])
@@ -130,14 +137,20 @@ def tap_simulation_function(reactor_kinetics_input,constants_input,Ao_in,Ea_in,f
 		controls = []
 		legend_2 = []
 		for j in r_fit:
-			if j.find('Ao') > -1:
+			if j.find('Ga') > -1: # 'Ga' and 'dG'
+				controls.append(Control(Ga_in[j]))
+
+			elif j.find('dG') > -1: # 'Ga' and 'dG'			
+				controls.append(Control(dG_in[j]))
+			
+			elif j.find('Ao') > -1:
 				controls.append(Control(r_Ao[j]))
 
 			elif j.find('Ea') > -1:
-				controls.append(Constant(r_Ea[j]))
+				controls.append(Control(r_Ea[j]))
 
 			else:
-				controls.append(Constant(r_const[j]))
+				controls.append(Control(r_const[j]))
 			legend_2.append(j)
 
 	# Store input file in output folder	
@@ -151,6 +164,10 @@ def tap_simulation_function(reactor_kinetics_input,constants_input,Ao_in,Ea_in,f
 
 	set_log_level(30)
 	tol = 1E-14
+
+	kbt = 1.38064852e-23
+	hb = 6.62607004e-34
+	Rgas = 8.314
 
 	# Read the initial composition of the catalyst
 	if ',' in str(reac_input['Initial Surface Composition']):
@@ -185,7 +202,8 @@ def tap_simulation_function(reactor_kinetics_input,constants_input,Ao_in,Ea_in,f
 
 	if fit_temperature == True:
 		controls = []
-		controls.append(Control(constantTemp))
+		new = Control(constantTemp)
+		controls.append(new)
 
 	compMass_list = reac_input['Mass List'].split(',')
 
@@ -199,7 +217,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input,Ao_in,Ea_in,f
 				Din.append(Constant(D[k,k_2]))
 
 	# Construct the rate expression based on the microkinetic model
-	necessary_values, rate_array, rev_irr = make_f_equation(reac_input['reactions_test'],reac_input['Number of Reactants'],'tap',reac_input['Number of Active Sites'],reac_input['Number of Inerts'],reac_input['Advection'],arrForward,arrBackward,fit_temperature)
+	necessary_values, rate_array, rev_irr = make_f_equation(reac_input['reactions_test'],reac_input['Number of Reactants'],'tap',reac_input['Number of Active Sites'],reac_input['Number of Inerts'],reac_input['Advection'],arrForward,arrBackward,gForward,fit_temperature)
 
 	#############################################################
 	######## INITIALIZATION OF FINITE ELEMENTS AND MESH #########
@@ -345,12 +363,13 @@ def tap_simulation_function(reactor_kinetics_input,constants_input,Ao_in,Ea_in,f
 	#############################################################
 	######## EVALUATE AND INITIALIZE PDE FOR FEniCS #############
 	#############################################################
-	
+
 	try:
 		theta = 1
 		Ftemp = eval(necessary_values['F'])
+		#Ftemp = eval(necessary_values['F'])
 		theta = 0.5
-		F = eval(necessary_values['F'])#-eval(uv)
+		F = eval(necessary_values['F'])
 	except NameError:
 		errorOutput(reac_input['reactions_test'])
 
@@ -1354,7 +1373,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input,Ao_in,Ea_in,f
 				low_bounds.append(0)
 				up_bounds.append(np.inf)
 
-			compute_gradient(jfunc_2, controls)
+			#dj = compute_gradient(jfunc_2, controls)
 
 			if reac_input['Optimization Method'] == 'L-BFGS-B' or reac_input['Optimization Method'] == '':
 				u_opt_2 = minimize(rf_2, bounds = (low_bounds,up_bounds),tol=1e-9, options={"ftol":1e-9,"gtol":1e-9})
@@ -1375,7 +1394,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input,Ao_in,Ea_in,f
 			else:
 				print('Requested Optimization Method Does Not Exist')
 				sys.exit()
-
+			sys.exit()
 			print(processTime(start_time))
 
 			optimization_success = True
@@ -1658,13 +1677,13 @@ def tap_simulation_function(reactor_kinetics_input,constants_input,Ao_in,Ea_in,f
 
 def call_sim():
 	
-	reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,kin_fit,arrForward,arrBackward = readInput()
+	reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput()
 	
 	if reactor_kinetics_input['Sensitivity Analysis'].lower() == 'true' or reactor_kinetics_input['RRM Analysis'].lower() == 'true' or reactor_kinetics_input['Uncertainty Quantification'].lower() == 'true':
 		
 		if sens_type == 'trans':
 			for parameters in kinetic_parameters:
-				reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,kin_fit,arrForward,arrBackward = readInput()
+				reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput()
 				reactor_kinetics_input['Sensitivity Parameter'] = parameters
 				reactor_kinetics_input['Display Graph'] = 'FALSE'
 				if reactor_kinetics_input['Fit Parameters'].lower() == 'true' or reactor_kinetics_input['Fit Inert'].lower() == 'true':
@@ -1677,12 +1696,12 @@ def call_sim():
 				if reactor_kinetics_input['Sensitivity Analysis'].lower() == 'true':
 					print('')
 					print('Processing '+parameters)
-				graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters,Ao_in,Ea_in,kin_fit,arrForward,arrBackward)
+				graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters,Ao_in,Ea_in,Ga_in,dG_in,kin_fit,arrForward,arrBackward,gForward)
 		
 		elif sens_type == 'total':
-			graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters,Ao_in,Ea_in,kin_fit,arrForward,arrBackward)
+			graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters,Ao_in,Ea_in,Ga_in,dG_in,kin_fit,arrForward,arrBackward,gForward)
 	else:
-		graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters,Ao_in,Ea_in,kin_fit,arrForward,arrBackward)
+		graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters,Ao_in,Ea_in,Ga_in,dG_in,kin_fit,arrForward,arrBackward,gForward)
 
 
 #############################################################
@@ -1702,7 +1721,7 @@ if sampling == True:
 			#self.f = f
 
 		def EvaluateImpl(self, inputs):
-			reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,kin_fit,arrForward,arrBackward = readInput()
+			reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput()
 			inputs = inputs[0].tolist()
 			for j_num,j in enumerate(kinetic_parameters):
 				kinetic_parameters[j] = inputs[j_num]
@@ -1716,7 +1735,7 @@ if sampling == True:
 			print('done')
 			return outputValue
 
-	reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,kin_fit,arrForward,arrBackward = readInput()
+	reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput()
 	
 	graph = mm.WorkGraph()
 
@@ -1769,7 +1788,7 @@ if sampling == True:
 			#faulthandler.enable()
 	   
 
-			reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,kin_fit,arrForward,arrBackward = readInput()
+			reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput()
 			mprop = mprop.tolist()
 			
 			for j_num,j in enumerate(kinetic_parameters):
@@ -1821,7 +1840,7 @@ if sampling == True:
 
 		currPt = propMu#np.zeros((paramDim))
 
-		reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,kin_fit,arrForward,arrBackward = readInput()
+		reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput()
 		currPt = currPt.tolist()
 			
 		for j_num,j in enumerate(kinetic_parameters):
@@ -1846,7 +1865,7 @@ if sampling == True:
 			propSamp = mcmcProp.Sample()
 
 			propSamp2 = propSamp
-			reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,kin_fit,arrForward,arrBackward = readInput()
+			reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput()
 			propSamp = propSamp.tolist()
 			
 			for j_num,j in enumerate(kinetic_parameters):
