@@ -53,7 +53,7 @@ thinSize = 'point'
 # 'trans' = transient sensitivity analysis
 # 'total' = sensitivity of summed objective function
 
-sens_type = 'total'
+sens_type = 'trans'
 
 ### Fitting the temperature?
 
@@ -531,8 +531,8 @@ def tap_simulation_function(reactor_kinetics_input,constants_input,Ao_in,Ea_in,G
 		rateStrings = rateEqs(rate_array,rev_irr)
 	
 	if reac_input['RRM Analysis'].lower() == 'true':
-		rrmStringsThin = rrmEqs(rate_array,rev_irr,'dx(1)')	
-		rrmStringsPoint = rrmEqs(rate_array,rev_irr,'dT(1)')
+		rrmStringsThin = rrmEqs(rate_array,rev_irr,'dx(1)',gForward,arrForward)	
+		rrmStringsPoint = rrmEqs(rate_array,rev_irr,'dT(1)',gForward,arrForward)
 
 	if reac_input['Experimental Data Folder'].lower() != 'none' and (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Display Objective Points'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true') or sampling == True or (sens_type == 'total' and reac_input['Sensitivity Analysis'].lower() == 'true') or fit_temperature == True:
 		for k_fitting in range(0,len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])])):
@@ -548,7 +548,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input,Ao_in,Ea_in,G
 
 	if reac_input['Sensitivity Analysis'].lower() == 'true' or reac_input['RRM Analysis'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true':
 
-		if sens_type == 'trans' or reac_input['Uncertainty Quantification'].lower() == 'true':
+		if sens_type == 'trans' or reac_input['Uncertainty Quantification'].lower() == 'true' or reac_input['RRM Analysis'].lower() == 'true':
 			c = r_const[reac_input['Sensitivity Parameter']]
 			c.tlm_value = r_const[reac_input['Sensitivity Parameter']]
 			#c2 = r_const['kf1']
@@ -1394,7 +1394,7 @@ def tap_simulation_function(reactor_kinetics_input,constants_input,Ao_in,Ea_in,G
 			else:
 				print('Requested Optimization Method Does Not Exist')
 				sys.exit()
-			sys.exit()
+			#sys.exit()
 			print(processTime(start_time))
 
 			optimization_success = True
@@ -1680,7 +1680,6 @@ def call_sim():
 	reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput()
 	
 	if reactor_kinetics_input['Sensitivity Analysis'].lower() == 'true' or reactor_kinetics_input['RRM Analysis'].lower() == 'true' or reactor_kinetics_input['Uncertainty Quantification'].lower() == 'true':
-		
 		if sens_type == 'trans':
 			for parameters in kinetic_parameters:
 				reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput()
@@ -1696,6 +1695,7 @@ def call_sim():
 				if reactor_kinetics_input['Sensitivity Analysis'].lower() == 'true':
 					print('')
 					print('Processing '+parameters)
+
 				graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters,Ao_in,Ea_in,Ga_in,dG_in,kin_fit,arrForward,arrBackward,gForward)
 		
 		elif sens_type == 'total':

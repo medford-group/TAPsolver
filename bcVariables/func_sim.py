@@ -81,6 +81,7 @@ def readInput():
 			Anew, Eanew = reaction_info.iloc[j,1].split("#")
 			if Anew.find("'") < 0:
 				Ga['Ga'+str(j)] = float(Anew)
+				kinetic_parameters['Ga'+str(j)] = float(Anew)
 				fittingParametersList.append('Ga'+str(j))
 			
 			else:

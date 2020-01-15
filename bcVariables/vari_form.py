@@ -306,7 +306,7 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,active_sites,numbe
 
 #print(test_new_again['reactants'])
 
-def rateEqs(rate_array,rev_irr):
+def rateEqs(rate_array,rev_irr,gForward,arrForward):
 
 ###########################################################################################################
 	# Calls the array and 
@@ -333,11 +333,34 @@ def rateEqs(rate_array,rev_irr):
 		
 		together = neg+pos
 
-		new_neg = 'kVals["kf'+str(k)+'"]'
+
+		if k in gForward:#,Ga_in,dG_in
+			new_neg = '(kbt*constantTemp/hb)*exp(-Ga_in["Ga'+str(k)+'"]/(Rgas*constantTemp))'
+
+		elif k in arrForward:
+			new_neg = 'r_Ao["Aof'+str(k)+'"]*exp(-r_Ea["Eaf'+str(k)+'"]/(Rgas*constantTemp))'
+				
+		else:
+			new_neg = 'r_const["kf'+str(k)+'"]'
+
+		#new_neg = 'kVals["kf'+str(k)+'"]'
+		
 		for j,v in enumerate(neg):
 			#new_neg = new_neg+"*(cat_dataRate['convtime_"+str(v)+"']**"+str(abs(val_neg[j]))+")"#
 			new_neg = new_neg+"*np.power(cat_dataRate['convtime_"+str(v)+"'],"+str(abs(val_neg[j]))+")"#
-		new_pos = 'kVals["kb'+str(k)+'"]'
+
+		if k in gForward:
+			new_pos = '(kbt*constantTemp/hb)*exp(-(Ga_in["Ga'+str(k)+'"]+dG_in["dG'+str(k)+'"])/(Rgas*constantTemp))'
+
+		elif k in arrBackward:
+			new_pos = 'r_Ao["Aob'+str(k)+'"]*exp(-r_Ea["Eab'+str(k)+'"]/(Rgas*constantTemp))'
+				
+		else:
+			new_pos = 'r_const["kb'+str(k)+'"]'
+
+		
+		#new_pos = 'kVals["kb'+str(k)+'"]'
+		
 		for j,v in enumerate(pos):
 			#new_pos = new_pos+"*(cat_dataRate['convtime_"+str(v)+"']**"+str(abs(val_pos[j]))+")"#
 			new_pos = new_pos+"*np.power(cat_dataRate['convtime_"+str(v)+"'],"+str(abs(val_pos[j]))+")"#
@@ -368,7 +391,7 @@ def rateEqs(rate_array,rev_irr):
 
 	return rateStrings
 
-def rrmEqs(rate_array,rev_irr,domain):
+def rrmEqs(rate_array,rev_irr,domain,gForward,arrForward):
 
 ###########################################################################################################
 	# Calls the array and 
@@ -394,11 +417,32 @@ def rrmEqs(rate_array,rev_irr,domain):
 		
 		together = neg+pos
 
-		new_neg = 'r_const["kf'+str(k)+'"]'
+		if k in gForward:#,Ga_in,dG_in
+			new_neg = '(kbt*constantTemp/hb)*exp(-Ga_in["Ga'+str(k)+'"]/(Rgas*constantTemp))'
+
+		elif k in arrForward:
+			new_neg = 'r_Ao["Aof'+str(k)+'"]*exp(-r_Ea["Eaf'+str(k)+'"]/(Rgas*constantTemp))'
+				
+		else:
+			new_neg = 'r_const["kf'+str(k)+'"]'
+
+		#new_neg = 'r_const["kf'+str(k)+'"]'
+
 		for j,v in enumerate(neg):
 			#new_neg = new_neg+"*(cat_dataRate['convtime_"+str(v)+"']**"+str(abs(val_neg[j]))+")"#
 			new_neg = new_neg+"*(u["+str(v)+"]**"+str(abs(val_neg[j]))+")"#
-		new_pos = 'r_const["kb'+str(k)+'"]'
+
+		if k in gForward:
+			new_pos = '(kbt*constantTemp/hb)*exp(-(Ga_in["Ga'+str(k)+'"]+dG_in["dG'+str(k)+'"])/(Rgas*constantTemp))'
+
+		elif k in arrBackward:
+			new_pos = 'r_Ao["Aob'+str(k)+'"]*exp(-r_Ea["Eab'+str(k)+'"]/(Rgas*constantTemp))'
+				
+		else:
+			new_pos = 'r_const["kb'+str(k)+'"]'
+
+		#new_pos = 'r_const["kb'+str(k)+'"]'
+		
 		for j,v in enumerate(pos):
 			#new_pos = new_pos+"*(cat_dataRate['convtime_"+str(v)+"']**"+str(abs(val_pos[j]))+")"#
 			new_pos = new_pos+"*(u["+str(v)+"]**"+str(abs(val_pos[j]))+")"#
