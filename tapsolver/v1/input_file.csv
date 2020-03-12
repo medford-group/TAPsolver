@@ -1,53 +1,60 @@
-Reactor_Information,X,
-Pulse Duration,3,good
-Time Steps,3000,good
-Reactor Length,1,good
-Mesh Size,400,good
-Catalyst Fraction,0.99,maybe
-Catalyst Mesh Density,0,good
-Reactor Radius,1,good
-Catalyst Location,0.5,good
-Void Fraction Inert,0.5,good
-Void Fraction Catalyst,0.5,good
-Reactor Temperature,23,good
-Reference Diffusion Inert,0.5,good
-Reference Diffusion Catalyst,0.5,good
-Reference Temperature,23,good
-Reference Mass,40,good
-Output Folder Name,test,good
-Experimental Data Folder,None,good
-Noise,FALSE,good
-Reactor Type,tap,good
-Knudsen Test,FALSE,good
-,,
-Feed_&_Surface_Composition,,
-Number of Reactants,1,good
-Number of Pulses,1,good
-Reference Pulse Size,1,maybe
-Pulse Ratio,"1,1",good
-Pulse Time,"0.0,0.0",good
-Mass List,"40,40",good
-Advection Value,0.1,good
-Initial Surface Composition,"0.0, 1000",nope
-Number of Active Sites,1,good
-Number of Inerts,1,good
-,,
-Data_Storage_Options,,
-Store Outlet Flux,TRUE,
-Store Graph,FALSE,
-Display Experimental Data,FALSE,
-Infinite Inert,FALSE,
-Scale Output,FALSE,
-Display Graph,FALSE,
-Sensitivity Analysis,FALSE,
-RRM Analysis,FALSE,
-Thin-Zone Analysis,FALSE,
-Fit Parameters,FALSE,
-Fit Inert,FALSE,
-Objective Species,"1,1",
-Display Objective Points,FALSE,
-Fitting Gif,FALSE,
-Uncertainty Quantification,FALSE,
-,,
-Reaction_Information,,
-CO + * -> CO*,0.03,
+Reactor_Information,,,,,,,,,,,,,,,,,,,,,,,Feed_&_Surface_Composition,
+Pulse Duration,0.4,,,,,,,,,,,,,,,,,,,,,,Number of Reactants,1
+Time Steps,400,,,,,6,,,,,,,,,,,,,,,,,Number of Pulses,1
+Reactor Length,5.788,,5,5.788,,500,,,,,,,,,,,,,,,,,Reference Pulse Size,5
+Mesh Size,200,,5.788,,,5.788,,,,,,,,,,,,,,,,,Pulse Ratio,"0.03,0,0.175,0.0125"
+Catalyst Fraction,0.029025570145128,,,,,500,,,,,,,,,,,,,,,,,Pulse Time,"0.01,0,0.01,0.0"
+Catalyst Mesh Density,5,,,0.5,,0.029025570145128,,First Inert Length,0.0281,m,,,,,,,,,,,,,Mass List,"28,44,40,4"
+Reactor Radius,1,,,0.5788,,0.2,,Cross Section Area,1.256E-05,m^2,,0.05788,,,,,,,,,,,Advection,FALSE
+Catalyst Location,0.5,,,,,0.4,,Catalyst Zone Length,0.00168,m,,,,,,,,,,,,,Advection Value,0.1
+Void Fraction Inert,0.4,,,,,0.4,,catalyst weight,0.0295,g,,,,,,,,,,,,,Initial Surface Composition,"0,0,500000"
+Void Fraction Catalyst,0.4,,,,,385,,porosity ,0.4,,,,,,,,,,,,,,Number of Active Sites,1
+Reactor Temperature,385.65,,,13.15,,43.5319,,Inert(Ar) Diffusion Constant,0.00135,mol.m^-2. s^-1,,,,,,,,,,,,,Number of Inerts,2
+Reference Diffusion Inert,13.5,,,33.75,,43.5319,,,,,,,,,,,,,,,,,,
+Reference Diffusion Catalyst,13.5,,,,,423.15,,Catalyst ,Pt 1%(wt) on SiO2 ox 50,,,,,,,,,,,,,,Data_Storage_Options,
+Reference Temperature,385.5,,,,,40,,Reaction Temp,112.5 ?,,,,,,,,,,,,,,Store Outlet Flux,TRUE
+Reference Mass,40,,,,,,,,,,,,,,,,,,,,,,Store Graph,TRUE
+Output Folder Name,testBulk_current,,,,,33.5,,Procedure,"Oxidize Pt with O2/He at 200 C until no conversion, then ramp down to 112.5 ?, co-pulse O2(He)/CO(Ar) with  CO delay of 0.01 s ",,,,,,,,,,,,,,Display Experimental Data,TRUE
+Experimental Data Folder,./rawData/pulse4,,,./exp_data_folder,,33.5,,,"Total 500 pulses with 100 pulses for each AMU recorded in the order of 44,28, 32, 40, 4. ",,,,,,,,,,,,,,Infinite Inert,TRUE
+Noise,FALSE,,,,,,,,,,,,,,,,,,,,,,Scale Output,FALSE
+Reactor Type,tap,,,,,,,,,,,,,,,,,,,,,,Display Graph,TRUE
+Knudsen Test,FALSE,,,,,,,,,,,,,,,,,,,,,,Sensitivity Analysis,FALSE
+Solver Method,None,,,,,,,,,,,,,,,,,,,,,,RRM Analysis,FALSE
+Variational Solver,newton,,,,,"2,6,0,1.6,0.4",,,,,,,,,,,,,,,,,Thin-Zone Analysis,FALSE
+,,,,,,,,,,,,,,,,,8.70535192579134,3899.74202678706,8.70535192579134,3899.74202678706,8.70535192579134,,Fit Parameters,FALSE
+Feed_&_Surface_Composition,,,,"0.14,0.7,0,0.175,0.0125",,,,,,,,,,,,,5.59E-09,0.1,5.59E-09,,5.59E-09,,Fit Inert,FALSE
+Number of Reactants,2,,,2.5,,"28,32,44,40,4",,,,,,,,,,,224.021656661843,,224.021656661843,,224.021656661843,,Optimization Method,BFGS
+Number of Pulses,1,,,"0.53,1.3,0,0.53,0.1",,,,,,,,,,,,,,"[0.0, 0.0, 1.5512996145088806e-08, 1.5368050909947002, 0.0, 0.0]]",,,,,Objective Points,all
+Reference Pulse Size,5,,,"0.25,0.45,0.0,0.13,0.03",,,,"0.5,0,0,0,0/0,0.5,0,0,0",8.70535192579134,3899.74202678706,,,,,,,,,,,,,Display Objective Points,TRUE
+Pulse Ratio,"0.2,0.4,0.0",,,"0.23,0.45,0,0.175,0.0125",,,,"0,0,0,0,0/0,0,0,0,0",5.59E-09,0.1,,,,,,,,,,,,,Fitting Gif,FALSE
+Pulse Time,"0.01,0.0,0",,,"0.01,0.0,0,0.01,0.0",,,,,224.021656661843,0,,,,,,,,,,,,,Uncertainty Quantification,FALSE
+Mass List,"28,32,44,40,4",,,"28,32,44,40,4",,,,,,,,,,,,,,,,,,,,
+Advection,FALSE,nmol/cm3,,,,,,,,,,,,,,,,,,,,,,
+Advection Value,0.1,,,CO + ^ <-> CO^,0.001,15,,,,,,,,,,,,,,,,,CO + * -> CO*,0
+Initial Surface Composition,"0,12,12",,,,,,,,,,,,,,,,,,,,,,CO* + O* -> CO2 + 2*,0
+Number of Active Sites,1,,,0.001,0.5,,,,,,,,,,,,,,,,,,,
+Number of Inerts,0,,,1E-08,,,,,,,,,,,,,,,,,,,,
+,,,,0.0001,,,,,,,,,,,,,,,,,,,,
+Data_Storage_Options,,,,,,,,,,,,,,,,,,,,,,,,
+Store Outlet Flux,TRUE,,,0.00243,-2.16E-17,,,,,,,,,,,,,,,,,,,
+Store Graph,TRUE,,,6.32E-07,,,,,,,,,,,,,,,,,,,,
+Display Experimental Data,TRUE,,"None, pulse intensity",3.17E-13,,,,,,,,,,,,,,,,,,,,
+Infinite Inert,FALSE,,,,,,7080,908,,,,,,,,,,,,,,,,
+Scale Output,FALSE,,,0,0,,31.3,1,,,,,,,,,,,,,,,,
+Display Graph,TRUE,,,0,,,582,3410,,,,,,,,,,,,,,,,
+Sensitivity Analysis,FALSE,,,0,,,,,,,,,,,,,,,,,,,,
+RRM Analysis,FALSE,,,,Newton-CG,,,,,,,,,,,,,,,,,,,
+Thin-Zone Analysis,FALSE,,,,,,,,,,,,,,,,,,,,,,,
+Fit Parameters,FALSE,,,,0.00577,20.5,,,,,,,,,,,,,,,,,,
+Fit Inert,FALSE,,,,7.65E-10,0.313,,,,,,,,,,,,,,,,,,
+Optimization Method,L-BFGS-B,,,,188,1280,,,,,,,,,,,,,,,,,,
+Objective Points,all,,,,,,,,,,,,,,,,,,,,,,,
+Objective Species,"1,1,1",,,,0.005773667644512,20.4567832824248,,,3899.74202678706,,,,,,,,,,,,,,,
+Display Objective Points,FALSE,,,,7.65E-10,0.312734746967304,,,0.1,,,,,,,,,,,,,,,
+Fitting Gif,FALSE,,,,188,1284,,,0,,,,,,,,,,,,,,,
+Uncertainty Quantification,FALSE,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+Reaction_Information,,,,,,,,,,,,,,,,,,,,,,,,
+CO + * <-> CO*,347.448071397272,50.1815454685127,,,,,,,,,,,,,,,,,,,,,,
+O2 + 2* <-> 2O*,14.164204273452,1.42683404342077,,,,,,,,,,,,,,,,,,,,,,
+O* + CO* <-> CO2 + 2*,99.7364258432044,441.229969982111,,,,,,,,,,,,,,,,,,,,,,

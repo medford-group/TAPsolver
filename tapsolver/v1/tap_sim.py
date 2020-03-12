@@ -103,9 +103,6 @@ def tap_simulation_function(reactor_kinetics_input,constants_input,fitting_input
 	r_const = constants_input
 	r_fit = fitting_input
 
-	print(r_const)
-	print(r_fit)
-
 	for j in r_const:
 		r_const[j] = Constant(r_const[j])
 
