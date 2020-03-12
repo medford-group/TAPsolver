@@ -1,0 +1,79 @@
+ =========================================================================
+|                                                                         |
+|       A note about this anaconda and modules: This version of           |
+|       Anaconda doesn’t play well with modules - once you load the       |
+|       this module treat this module as the the VERY last one to load.   |
+|       We cannot undo changes that conda introduces, so start in a new   |
+|       shell if you need to switch or re-load modules                    |
+|                                                                         |
+ =========================================================================
+Moving new file over differing existing file:
+src: /scratch/27773217.shared-sched.pace.gatech.edu/tmpnwh93dv5/ffc_form_bb7ea2e05565ef6f03efd2e878024c09894ca9e4.cpp.gz
+dst: /nv/hp22/ayonge3/.conda/envs/fenicsproject/.cache/dijitso/src/ffc_form_bb7ea2e05565ef6f03efd2e878024c09894ca9e4.cpp.gz
+backup: /nv/hp22/ayonge3/.conda/envs/fenicsproject/.cache/dijitso/src/ffc_form_bb7ea2e05565ef6f03efd2e878024c09894ca9e4.cpp.gz.old
+Moving new file over differing existing file:
+src: /scratch/27773217.shared-sched.pace.gatech.edu/tmp6wm07w2u/ffc_form_5345dddb26dfed4235e8f115181b74f2a57d2c40.cpp.gz
+dst: /nv/hp22/ayonge3/.conda/envs/fenicsproject/.cache/dijitso/src/ffc_form_5345dddb26dfed4235e8f115181b74f2a57d2c40.cpp.gz
+backup: /nv/hp22/ayonge3/.conda/envs/fenicsproject/.cache/dijitso/src/ffc_form_5345dddb26dfed4235e8f115181b74f2a57d2c40.cpp.gz.old
+Moving new file over differing existing file:
+src: /scratch/27773217.shared-sched.pace.gatech.edu/tmphbugzmde/ffc_form_6529d1bef854b6a6e028aef9e758ee6245b04f3b.cpp.gz
+dst: /nv/hp22/ayonge3/.conda/envs/fenicsproject/.cache/dijitso/src/ffc_form_6529d1bef854b6a6e028aef9e758ee6245b04f3b.cpp.gz
+backup: /nv/hp22/ayonge3/.conda/envs/fenicsproject/.cache/dijitso/src/ffc_form_6529d1bef854b6a6e028aef9e758ee6245b04f3b.cpp.gz.old
+Moving new file over differing existing file:
+src: /scratch/27773217.shared-sched.pace.gatech.edu/tmp9micgxtz/ffc_form_f03f4e57514b7ab86deac9f539d3af5426e89c70.cpp.gz
+dst: /nv/hp22/ayonge3/.conda/envs/fenicsproject/.cache/dijitso/src/ffc_form_f03f4e57514b7ab86deac9f539d3af5426e89c70.cpp.gz
+backup: /nv/hp22/ayonge3/.conda/envs/fenicsproject/.cache/dijitso/src/ffc_form_f03f4e57514b7ab86deac9f539d3af5426e89c70.cpp.gz.old
+Traceback (most recent call last):
+  File "tap_sim.py", line 2042, in <module>
+    call_sim()
+  File "tap_sim.py", line 1761, in call_sim
+    graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters,Ao_in,Ea_in,Ga_in,dG_in,kin_fit,arrForward,arrBackward,gForward)
+  File "tap_sim.py", line 1431, in tap_simulation_function
+    u_opt_2 = minimize(rf_2, bounds = (low_bounds,up_bounds), tol=1e-9, options={"ftol":1e-9,"gtol":1e-9})
+  File "/nv/hp22/ayonge3/.conda/envs/fenicsproject/lib/python3.7/site-packages/pyadjoint/tape.py", line 46, in wrapper
+    return function(*args, **kwargs)
+  File "/nv/hp22/ayonge3/.conda/envs/fenicsproject/lib/python3.7/site-packages/pyadjoint/optimization/optimization.py", line 254, in minimize
+    opt = algorithm(rf_np, **kwargs)
+  File "/nv/hp22/ayonge3/.conda/envs/fenicsproject/lib/python3.7/site-packages/pyadjoint/optimization/optimization.py", line 133, in minimize_scipy_generic
+    res = scipy_minimize(J, m_global, method=method, bounds=bounds, **kwargs)
+  File "/nv/hp22/ayonge3/.conda/envs/fenicsproject/lib/python3.7/site-packages/scipy/optimize/_minimize.py", line 600, in minimize
+    callback=callback, **options)
+  File "/nv/hp22/ayonge3/.conda/envs/fenicsproject/lib/python3.7/site-packages/scipy/optimize/lbfgsb.py", line 335, in _minimize_lbfgsb
+    f, g = func_and_grad(x)
+  File "/nv/hp22/ayonge3/.conda/envs/fenicsproject/lib/python3.7/site-packages/scipy/optimize/lbfgsb.py", line 285, in func_and_grad
+    f = fun(x, *args)
+  File "/nv/hp22/ayonge3/.conda/envs/fenicsproject/lib/python3.7/site-packages/scipy/optimize/optimize.py", line 326, in function_wrapper
+    return function(*(wrapper_args + args))
+  File "/nv/hp22/ayonge3/.conda/envs/fenicsproject/lib/python3.7/site-packages/pyadjoint/reduced_functional_numpy.py", line 36, in __call__
+    return self.rf.__call__(self.set_local(m_copies, m_array))
+  File "/nv/hp22/ayonge3/.conda/envs/fenicsproject/lib/python3.7/site-packages/pyadjoint/tape.py", line 46, in wrapper
+    return function(*args, **kwargs)
+  File "/nv/hp22/ayonge3/.conda/envs/fenicsproject/lib/python3.7/site-packages/pyadjoint/reduced_functional.py", line 135, in __call__
+    blocks[i].recompute()
+  File "/nv/hp22/ayonge3/.conda/envs/fenicsproject/lib/python3.7/site-packages/pyadjoint/block.py", line 351, in recompute
+    prepared)
+  File "/nv/hp22/ayonge3/.conda/envs/fenicsproject/lib/python3.7/site-packages/fenics_adjoint/solving.py", line 545, in recompute_component
+    return self._forward_solve(lhs, rhs, func, bcs, **self.forward_kwargs)
+  File "/nv/hp22/ayonge3/.conda/envs/fenicsproject/lib/python3.7/site-packages/fenics_adjoint/variational_solver.py", line 141, in _forward_solve
+    solver.solve()
+RuntimeError: 
+
+*** -------------------------------------------------------------------------
+*** DOLFIN encountered an error. If you are not able to resolve this issue
+*** using the information listed below, you can ask for help at
+***
+***     fenics-support@googlegroups.com
+***
+*** Remember to include the error message listed below and, if possible,
+*** include a *minimal* running example to reproduce the error.
+***
+*** -------------------------------------------------------------------------
+*** Error:   Unable to solve nonlinear system with NewtonSolver.
+*** Reason:  Newton solver did not converge because maximum number of iterations reached.
+*** Where:   This error was encountered inside NewtonSolver.cpp.
+*** Process: 0
+*** 
+*** DOLFIN version: 2018.1.0
+*** Git changeset:  9e1777c0df7c762c7230189c87c13fd5ad33a4f0
+*** -------------------------------------------------------------------------
+

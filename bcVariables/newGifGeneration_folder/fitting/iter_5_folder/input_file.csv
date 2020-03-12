@@ -1,0 +1,61 @@
+Reactor_Information,,
+Pulse Duration,0.4,x
+Time Steps,400,x
+Reactor Length,5.788,x
+Mesh Size,400,x
+Catalyst Fraction,0.02,x
+Catalyst Mesh Density,5,x
+Reactor Radius,0.200267,x
+Catalyst Location,0.5,x
+Void Fraction Inert,0.4,x
+Void Fraction Catalyst,0.4,x
+Reactor Temperature,423,x
+Reference Diffusion Inert,13.5,x
+Reference Diffusion Catalyst,13.5,x
+Reference Temperature,25,x
+Reference Mass,40,x
+Output Folder Name,newGifGeneration_folder/fitting/iter_5,x
+Experimental Data Folder,./idealLang_folder,x
+Noise,FALSE,x
+Reactor Type,tap,x
+Knudsen Test,FALSE,x
+Solver Method,None,x
+Variational Solver,newton,x
+,,
+Feed_&_Surface_Composition,,
+Number of Reactants,2,x
+Number of Pulses,1,x
+Reference Pulse Size,1,x
+Pulse Ratio,"0.5,0.5,0,0.5",x
+Pulse Time,"0,0,0,0",x
+Mass List,"28,32,44,40",x
+Advection,FALSE,x
+Advection Value,0,x
+Initial Surface Composition,"0,0,277.7777778",x
+Number of Active Sites,1,x
+Number of Inerts,1,x
+,,
+Data_Storage_Options,,
+Store Outlet Flux,TRUE,x
+Store Graph,FALSE,x
+Display Experimental Data,TRUE,x
+Infinite Inert,FALSE,x
+Scale Output,FALSE,x
+Display Graph,FALSE,x
+Sensitivity Analysis,FALSE,x
+RRM Analysis,FALSE,x
+Thin-Zone Analysis,FALSE,x
+Fit Parameters,FALSE,x
+Fit Inert,FALSE,x
+Optimization Method,L-BFGS-B,x
+Objective Points,all,x
+Objective Species,FALSE,x
+Display Objective Points,FALSE,x
+Fitting Gif,TRUE,x
+Uncertainty Quantification,FALSE,x
+,,
+Reaction_Information,,
+CO + * <-> CO*,1.249951806292533,1.3926693196570912e-08
+O2 + 2* <-> 2O*,0.004624618121473703,0.0
+CO + O* <-> CO2 + *,10.385591505355576,0.003847517144429862
+CO* + O* <-> CO2 + 2*,25.015737692261958,1.6046894420661923e-06

@@ -1,55 +1,55 @@
-Reactor_Information,X,
-Pulse Duration,0.2,good
-Time Steps,200,good
-Reactor Length,1,good
-Mesh Size,400,good
-Catalyst Fraction,0.99,maybe
-Catalyst Mesh Density,0,good
-Reactor Radius,1,good
-Catalyst Location,0.5,good
-Void Fraction Inert,0.5,good
-Void Fraction Catalyst,0.5,good
-Reactor Temperature,23,good
-Reference Diffusion Inert,0.5,good
-Reference Diffusion Catalyst,0.5,good
-Reference Temperature,23,good
-Reference Mass,40,good
-Output Folder Name,test,good
-Experimental Data Folder,test_folder,good
-Noise,FALSE,good
-Reactor Type,tap,good
-Knudsen Test,FALSE,good
-,,
-Feed_&_Surface_Composition,,
-Number of Reactants,2,good
-Number of Pulses,1,good
-Reference Pulse Size,1,maybe
-Pulse Ratio,"1,1,0,1",good
-Pulse Time,"0.0,0.0",good
-Mass List,"40,40,40,40",good
-Advection Value,0.1,good
-Initial Surface Composition,"0.0, 0.0, 1000",nope
-Number of Active Sites,1,good
-Number of Inerts,1,good
-,,
-Data_Storage_Options,,
-Store Outlet Flux,TRUE,
-Store Graph,FALSE,
-Display Experimental Data,FALSE,
-Infinite Inert,FALSE,
-Scale Output,FALSE,
-Display Graph,TRUE,
-Sensitivity Analysis,FALSE,
-RRM Analysis,FALSE,
-Thin-Zone Analysis,FALSE,
-Fit Parameters,FALSE,
-Fit Inert,FALSE,
-Objective Species,"1,1,1",
-Display Objective Points,FALSE,
-Fitting Gif,FALSE,
-Uncertainty Quantification,FALSE,
-,,
-Reaction_Information,,
-CO + * <-> CO*,0.003,10
-O2 + * <-> O2*,0.003,10
-O2* + CO* <-> CO2 + 2*,0.003,10
+Reactor_Information,X,,,,
+Pulse Duration,1,good,,,
+Time Steps,1000,good,,,
+Reactor Length,1,good,,,
+Mesh Size,400,good,,,
+Catalyst Fraction,0.02,maybe,,,
+Catalyst Mesh Density,2,good,,,
+Reactor Radius,1,good,,,
+Catalyst Location,0.5,good,,,
+Void Fraction Inert,0.5,good,,,
+Void Fraction Catalyst,0.5,good,,,
+Reactor Temperature,340,good,,,
+Reference Diffusion Inert,0.5,good,,,
+Reference Diffusion Catalyst,0.5,good,,,
+Reference Temperature,300,good,,,
+Reference Mass,40,good,,,
+Output Folder Name,test,good,,,
+Experimental Data Folder,test_folder,good,,,
+Noise,FALSE,good,,,
+Reactor Type,tap,good,,,
+Knudsen Test,FALSE,good,,,
+,,,,,
+Feed_&_Surface_Composition,,,,,
+Number of Reactants,2,good,,,
+Number of Pulses,1,good,,,
+Reference Pulse Size,1,maybe,,,
+Pulse Ratio,"1,0.6,0,1",good,,,
+Pulse Time,"0.0,0.0,0.0,0.0",good,,,
+Mass List,"28,32,44,40",good,,,
+Advection Value,0.1,good,,,
+Initial Surface Composition,"0.0, 0.0, 1000",nope,,,
+Number of Active Sites,1,good,,,
+Number of Inerts,1,good,,,
+,,,,,
+Data_Storage_Options,,,,,
+Store Outlet Flux,TRUE,,,,
+Store Graph,TRUE,,,,
+Display Experimental Data,FALSE,,,,
+Infinite Inert,FALSE,,,1,0.1
+Scale Output,FALSE,,,0.1,0.07
+Display Graph,TRUE,,,100,0.0001
+Sensitivity Analysis,FALSE,,,,
+RRM Analysis,FALSE,,,40000#-80000',
+Thin-Zone Analysis,FALSE,,,30000#-20000',
+Fit Parameters,FALSE,,,39000#-100000',
+Fit Inert,FALSE,,,,
+Objective Species,"1,1,1",,,,
+Display Objective Points,FALSE,,,10$10,10$10
+Fitting Gif,FALSE,,,10$10,10$10
+Uncertainty Quantification,FALSE,,,10$10,10$10
+,,,,,
+Reaction_Information,,,,,
+CO + * <-> CO*,29.5889230970#-2.302585',,,,
+O2 + * <-> O2*,31.8915081#-0.356674943938728',,,,
+O2* + CO* <-> CO2 + 2*,24.9837529110#-13.815510',,,,

@@ -1,0 +1,17 @@
+conda create -n fenics-2019.1 -c uvilla -c conda-forge fenics==2019.1.0 matplotlib scipy jupyter
+
+pip install -e git+https://github.com/hippylib/hippylib@master#egg=hippylib
+
+conda install -c conda-forge dolfin-adjoint
+
+conda install -c conda-forge imageio
+
+conda install -c anaconda pandas
+
+(make sure conda-forge is in your list of channels by running the following commaned: "conda config --append channels conda-forge")
+
+conda install -c rmg muq2
+
+pip install git+https://bitbucket.org/dolfin-adjoint/pyadjoint.git@master
+
+conda install xlrd
