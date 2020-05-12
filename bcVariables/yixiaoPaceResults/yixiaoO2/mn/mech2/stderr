@@ -1,9 +1,0 @@
- =========================================================================
-|                                                                         |
-|       A note about this anaconda and modules: This version of           |
-|       Anaconda doesn’t play well with modules - once you load the       |
-|       this module treat this module as the the VERY last one to load.   |
-|       We cannot undo changes that conda introduces, so start in a new   |
-|       shell if you need to switch or re-load modules                    |
-|                                                                         |
- =========================================================================

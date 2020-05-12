@@ -1,1 +1,0 @@
-Parameters: ['kf0', 'kb0', 'kf1', 'kb1', 'kf2', 'kb2']Change: [0.0, 0.0]
