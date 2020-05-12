@@ -1,5 +1,0 @@
-Reactor Length: 2.9000000000000004
-Forward Rate: 1.6605778811026236e-18
-Inert pulse size: 1.1980398460652085e+19
-rangesurface_species: [3.011e+20, 1.5055e+20]
-reactions_test: ['CO  O* ->  CO2  *']
