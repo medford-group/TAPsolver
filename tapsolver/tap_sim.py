@@ -1,8 +1,8 @@
 from fenics import *
 from fenics_adjoint import *
-from .func_sim import *
-from .vari_form import *
-from .reac_odes import *
+from func_sim import *
+from vari_form import *
+from reac_odes import *
 import mpmath
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -24,7 +24,7 @@ from ufl import sqrt,exp,ln
 #from hippylib import *
 import warnings
 
-def run_tapsolver():
+def run_tapsolver(timeFunc,store_flux_func='TRUE',store_thin_func='FALSE',input_file = './input_file.csv'):
 
 	sampling = False
 	if sampling == True:
@@ -83,6 +83,11 @@ def run_tapsolver():
 		
 		kVals = constants_input.copy()
 		reac_input = reactor_kinetics_input
+
+		#!#!#!#!
+		reac_input['Pulse Duration'] = timeFunc 
+		reac_input['Thin-Zone Analysis'] = store_thin_func 
+		#store_thin_func=False
 
 		reac_input['Optimization Method'] = 'L-BFGS-B' #
 		reac_input['Objective Points'] = 'all'
@@ -156,8 +161,8 @@ def run_tapsolver():
 				legend_2.append(j)
 
 		# Store input file in output folder	
-		user_data = pd.read_csv('./input_file.csv',header=None)
-		user_data.to_csv(path+'input_file.csv',header=None,index=False)
+		user_data = pd.read_csv(input_file,header=None)
+		user_data.to_csv(path+input_file,header=None,index=False)
 		original_input_structure = user_data.copy()
 	
 		#############################################################
@@ -368,8 +373,6 @@ def run_tapsolver():
 		######## EVALUATE AND INITIALIZE PDE FOR FEniCS #############
 		#############################################################
 
-
-
 		try:
 			theta = 1
 			Ftemp = eval(necessary_values['F'])
@@ -456,7 +459,6 @@ def run_tapsolver():
 		#############################################################
 			
 		to_flux = fluxGeneration(reac_input['Reactor Type'],len(legend_label),reac_input['Number of Reactants'],reac_input['Reference Pulse Size'],D,eb,dx_r,reac_input['Reactor Radius'],dx2_r,reac_input['Scale Output'])
-	
 	
 		storeDataFunc(reac_input['Store Outlet Flux'],reac_input['Output Folder Name'])
 		
@@ -2042,5 +2044,16 @@ def run_tapsolver():
 		sys.exit()
 	
 	call_sim()
+
+def vary_Input(variableToChange, newValue, input_file='./input_file.csv'):
+	df1 = pd.read_csv(input_file,header = None)
+	#print(df1[0])
+	#print(variableToChange)
+	#print(df1[0].str.index(variableToChange))
+	cellRow = df1[df1[0]==variableToChange].index.values[0]
+	df1.iloc[cellRow,1] = newValue
 	
-#run_tapsolver()
+	df1.to_csv('./input_file.csv',header=None,index=False)
+	#print(df1[df1[0].str.match(variableToChange)])
+
+	#to_csv(fileName)
