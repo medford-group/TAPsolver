@@ -2237,6 +2237,7 @@ def input_construction(reactor_name='./reactor_definition.csv',reaction_name='./
 
 	for j_num,j in enumerate(gasses):
 		d.iloc[0,j_num+1] = j
+		d.iloc[3,j_num+1] = molecularProperties(gasses[j_num],'mass')
 
 	for j in range(len(gasses)+1,N_cols):
 		d.iloc[0,j] = ''
