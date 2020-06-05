@@ -8,5 +8,5 @@ setup(name='tapsolver',
       author_email='ayonge3@gatech.edu',
       license='MIT',
       packages=['tapsolver'],
-      install_requires=[],
+      install_requires=['fenics','dolfin-adjoint','imageio'],
       zip_safe=False)

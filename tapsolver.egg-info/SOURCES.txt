@@ -1,0 +1,14 @@
+README.md
+setup.py
+tapsolver/__init__.py
+tapsolver/func_sim.py
+tapsolver/reac_odes.py
+tapsolver/tap_sim.py
+tapsolver/tapsolver.py
+tapsolver/vari_form.py
+tapsolver.egg-info/PKG-INFO
+tapsolver.egg-info/SOURCES.txt
+tapsolver.egg-info/dependency_links.txt
+tapsolver.egg-info/not-zip-safe
+tapsolver.egg-info/requires.txt
+tapsolver.egg-info/top_level.txt
