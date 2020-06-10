@@ -5,6 +5,8 @@ from .vari_form import *
 from .reac_odes import *
 import mpmath
 import matplotlib.pyplot as plt
+import matplotlib
+#matplotlib.use('Agg')
 import pandas as pd
 import numpy as np
 import math as mp
@@ -1794,7 +1796,24 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		
 	call_sim()
 
-def run_tapsolver(timeFunc,store_flux_func='TRUE',includeNoise=None,pulseNumber = 1,store_thin_func='FALSE',inputFile = './input_file.csv',input_form = 'old'):
+def run_tapsolver(timeFunc,store_flux_func=True,includeNoise=False,pulseNumber = 1,store_thin_func=False,inputFile = './input_file.csv',input_form = 'new'):
+	
+	if store_thin_func == True:
+		store_thin_func = 'TRUE'
+	else:
+		store_thin_func = 'FALSE'
+	
+	if store_flux_func == True:
+		store_flux_func = 'TRUE'
+	else:
+		store_flux_func = 'FALSE'
+
+	if includeNoise == True:
+		includeNoise = 'TRUE'
+	else:
+		includeNoise = 'FALSE'
+
+
 	general_run(timeFunc,store_flux_func='TRUE',store_thin_func='FALSE',pulseNumber = pulseNumber,input_file = inputFile,noise=includeNoise,inputForm = input_form)
 
 def run_sensitivity(timeFunc,sensType=None,inputFile = './input_file.csv'):
@@ -1830,20 +1849,24 @@ def vary_Input(variableToChange, newValue, input_file='./input_file.csv'):
 
 	#to_csv(fileName)
 
-def fluxGraph(timeFunc,input_file = './input_file.csv',pulse=None,dispExper=None,analytical=None,objectivePoints=None,displayGraph=True,storeGraph=False,outputName='./flux.png',inputForm='old'):
+def fluxGraph(input_file = './input_file.csv',pulse=None,dispExper=False,analytical=False,objectivePoints=False,displayGraph=True,storeGraph=False,outputName='./flux.png',inputForm='old'):
+	timeFunc = 10000
+
 	reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(input_file,inputForm = inputForm)
 	#reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(input_file)
+
 	reac_input = reactor_kinetics_input
 	reac_input['Pulse Duration'] = timeFunc
 	reac_input['Infinite Inert'] = 'FALSE'
-	if dispExper != None:
+
+	if dispExper != False:
 		reac_input['Display Experimental Data'] = 'TRUE'
 #
-	if objectivePoints != None:
+	if objectivePoints != False:
 		reac_input['Display Objective Points'] = 'TRUE'
 		reac_input['Objective Points'] = 'all'
 #
-	if analytical != None:
+	if analytical != False:
 		reac_input['Infinite Inert'] = 'TRUE'
 
 	reac_input['Advection'] = 'FALSE'
@@ -1956,11 +1979,6 @@ def fluxGraph(timeFunc,input_file = './input_file.csv',pulse=None,dispExper=None
 #			#for k_fitting in range( int(len(legend_label)-reac_input['Number of Inerts']) ,len(legend_label[int(len(legend_label)+reac_input['Number of Inerts'])])):
 #				if objSpecies[k_fitting] == '1':
 #					ax2.scatter(output_fitting[legend_label[k_fitting]]['times'],output_fitting[legend_label[k_fitting]]['values'],marker='^',color=colors[k_fitting],label='Fitting'+legend_label[k_fitting], alpha=0.3)
-#
-#
-#
-#
-#
 #
 	# Inert Plot
 	if reac_input['Infinite Inert'].lower() == 'true':
@@ -2292,11 +2310,17 @@ def input_construction(reactor_name='./reactor_definition.csv',reaction_name='./
 			newOutputFile.iloc[len(start)+2+len(d)+j+2,k] = reaction_info.iloc[j,k]
 
 	newOutputFile.to_csv(new_name,header=None,index=False)
+
+def exampleReaction(reaction_file = './reaction_example.csv'):
+
+	parameters = ['CO + * <-> CO*',1,10]
+	newFile = np.asarray(parameters)
+	newFile.to_csv(reaction_file,header=None,index=False)	
 	
 def define_reactor(reactor_name='./reactor_definition.csv',transport_type=['Knudsen','Advection']):
 	
 	parameters = ['Reactor Radius','Reactor Temperature','Mesh Size','Catalyst Mesh Density','Output Folder Name','Experimental Data Folder']
-	initial_values = [0.2,700,400,2,'results','']
+	initial_values = [0.2,700,400,2,'results','None']
 	#parameters = ['Reactor_Information','Reactor Length','Mesh Size','Catalyst Fraction','Catalyst Mesh Density','Reactor Radius','Catalyst Location','Void Fraction Inert','Void Fraction Catalyst','Reactor Temperature','Reference Diffusion Inert','Reference Diffusion Catalyst','Reference Temperature','Reference Mass','Output Folder Name','Experimental Data Folder','Advection','','Feed_&_Surface_Composition']
 	#initial_values = ['',3.832,400,0.02,5,0.2,0.5,0.4,0.4,700,13.5,13.5,700,40,'results','./probeTruncated/Mn',0,'','']
 
@@ -2383,7 +2407,6 @@ def bulk_structure(reactor_setup,iterDict,baseName=None):
 				# Construct new base input_file
 				input_construction(reactor_name='./'+reactor_setup,reaction_name=iterDict["mechanisms"][j],new_name='./input_file.csv')				
 				newNpArray = iterativeGeneration(newNpArray,newdirectoryName,newList,currentkey+1,0)
-				
 
 		else:
 			for jnum,j in enumerate(iterDict[list(iterDict.keys())[currentkey]][list(iterDict[list(iterDict.keys())[currentkey]].keys())[currentSubKey]]):
