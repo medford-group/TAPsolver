@@ -1,8 +1,8 @@
 from fenics import *
 from fenics_adjoint import *
-from .func_sim import *
-from .vari_form import *
-from .reac_odes import *
+from func_sim import *
+from vari_form import *
+from reac_odes import *
 import mpmath
 import matplotlib.pyplot as plt
 import matplotlib
@@ -22,12 +22,13 @@ import scipy
 import pip
 import pkg_resources
 import ufl
+import re
 from ufl import sqrt,exp,ln
 from shutil import copyfile
 #from hippylib import *
 import warnings
 
-def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitting_gif=None,pulseNumber=1,store_flux_func='TRUE',store_thin_func='FALSE',input_file = './input_file.csv',sensitivityType=None,noise=None,fitInert=None,inputForm='old'):
+def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitting_gif=None,pulseNumber=1,store_flux_func='TRUE',store_thin_func='FALSE',input_file = './input_file.csv',sensitivityType=None,noise='FALSE',fitInert=None,inputForm='old'):
 	
 	### How much concentration data do you want stored for 'thin-zone analysis'
 	# 'point' = only center point in the catalyst zone
@@ -38,6 +39,9 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 	sampling = False
 
 	thinSize = 'cat'
+	#thinSize = 'point'
+	#thinSize = 'average'
+	#thinSize = 'all'
 	
 	### Fitting the temperature?
 	
@@ -87,6 +91,35 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			reac_input['Advection'] = 'true'
 		else:
 			reac_input['Advection'] = 'false'
+
+		if 'thermo equations' in reac_input.keys():
+			if len(reac_input['thermo equations']) > 0:
+				thermoConstraints = True
+
+			else:
+				thermoConstraints = False
+
+		else:
+			thermoConstraints = False
+
+		if thermoConstraints == True:
+			
+			for z in reac_input['thermo equations']:
+				thermoReactions = []
+				thermoStoich = []
+				tempValue = z.split('+')
+				for j in tempValue:
+					if j.find('*') != -1:
+						thermoSplit = j.split('*')
+						thermoSplit[1] = thermoSplit[1].replace('r','')
+						thermoReactions.append(int(thermoSplit[1]))
+						thermoSplit[0] = thermoSplit[0].replace('(','')
+						thermoSplit[0] = thermoSplit[0].replace(')','')
+						thermoStoich.append(float(thermoSplit[0]))
+					else:
+						j = j.replace('r','')
+						thermoReactions.append(int(j))
+						thermoStoich.append(1)
 	
 		path = './'+reac_input['Output Folder Name']+'_folder/'
 		generateFolder(path)
@@ -212,7 +245,85 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 	
 		# Construct the rate expression based on the microkinetic model
 		necessary_values, rate_array, rev_irr = make_f_equation(reac_input['reactions_test'],reac_input['Number of Reactants'],'tap',reac_input['Number of Inerts'],reac_input['Advection'],arrForward,arrBackward,gForward,fit_temperature)
-	
+		
+		if thermoConstraints == True:
+
+			thermoReactants = []
+			thermoProducts = []
+
+			thermoReactantsValue = []
+			thermoProductsValue = []
+
+			for jnum,jval in enumerate(thermoReactions):
+				if rev_irr[jval-1] != 1:
+					print('')
+					print('To set a thermodynamic constraints, all reactions must be reversible.')
+					print('Currently, elementary reaction '+str(jval)+' is irreversible and included in the thermo. equation.')
+					sys.exit()
+
+				else:
+					for zen in range(0,necessary_values['molecules_in_gas_phase']):
+						if rate_array[jval-1][zen] == 1:
+							thermoProductsValue.append(necessary_values['reactants'][zen])						
+							if thermoStoich[jnum] != 1:
+								thermoProducts.append('('+str(thermoStoich[jnum])+')*'+necessary_values['reactants'][zen])
+							else:
+								thermoProducts.append(necessary_values['reactants'][zen])	
+
+						elif rate_array[jval-1][zen] == -1:
+							thermoReactantsValue.append(necessary_values['reactants'][zen])
+							if thermoStoich[jnum] != 1:
+								thermoReactants.append('('+str(thermoStoich[jnum])+')*'+necessary_values['reactants'][zen])
+							else:
+								thermoReactants.append(necessary_values['reactants'][zen])		
+			
+			overallReactionString = ''
+			
+			for jnum in range(0,len(thermoReactants)):
+				overallReactionString = overallReactionString+thermoReactants[jnum]
+				if jnum != len(thermoReactants)-1:
+					overallReactionString = overallReactionString + ' + '
+			overallReactionString = overallReactionString + ' <-> '
+			
+			for jnum in range(0,len(thermoProducts)):	
+				overallReactionString = overallReactionString + thermoProducts[jnum]
+				if jnum == len(thermoReactants)-1:
+					overallReactionString = overallReactionString + ' + '
+
+			print('Thermodynamic Constraint Equation:')
+			print(overallReactionString)
+			print('')
+			if len(reactor_kinetics_input['thermo values']) == 0: 
+				freeEnergyValue = 0
+
+				try:
+					for jnum in range(0,len(thermoReactantsValue)):
+						freeEnergyValue += (-1)*(thermoStoich[jnum])*molecularProperties(thermoReactantsValue[jnum],'freeEnergy',temperature=reac_input['Reactor Temperature'])
+
+					for jnum in range(0,len(thermoProductsValue)):
+						freeEnergyValue += (thermoStoich[jnum])*molecularProperties(thermoProductsValue[jnum],'freeEnergy',temperature=reac_input['Reactor Temperature'])
+				except:
+					print('Failed to calculate free energy of reaction automatically. Please enter free energy manually.')
+					sys.exit()
+
+				reactor_kinetics_input['thermo values'].append(freeEnergyValue)
+				print('Free energy calculated automatically: ')
+				print(reactor_kinetics_input['thermo values'][0])
+
+			else:
+				print('Free energy entered manually: ')
+				print(reactor_kinetics_input['thermo values'][0])
+
+		#print(necessary_values['molecules_in_gas_phase'])
+
+		#print(thermoReactions)
+		#print(thermoStoich)
+		#print(rate_array)
+		#print(rev_irr)
+		#print(necessary_values['molecules_in_gas_phase'])
+		#print(necessary_values['reactants'])
+
+		#sys.exit()
 
 		if reactor_kinetics_input['Fit Parameters'].lower() == 'true' or (reactor_kinetics_input['Sensitivity Analysis'].lower() == 'true' and sens_type == 'total') or reactor_kinetics_input['Uncertainty Quantification'].lower() == 'true':
 			speciesString = ''
@@ -254,8 +365,6 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 					speciesString+='0'
 
 		reactor_kinetics_input['Objective Species'] = speciesString
-
-
 
 
 		#############################################################
@@ -544,12 +653,14 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			reactant_time = []
 			
 			try:
-				reactant_feed.append(reac_input['Pulse Size'].split(','))
+				#reactant_feed.append(reac_input['Pulse Size'].split(','))
+				reactant_feed = list(map(float, reac_input['Pulse Size'].split(',')))
 				reactant_time = list(map(float, reac_input['Pulse Time'].split(',')))
 			except AttributeError:
-				reactant_feed.append(reac_input['Pulse Size'])
+				#reactant_feed.append(reac_input['Pulse Size'])
+				reactant_feed = list(map(float, reac_input['Pulse Size'].split(',')))
 				reactant_time = list(map(float, reac_input['Pulse Time'].split(',')))
-	
+		
 		#############################################################
 		####### STORE DATA BASED ON USER SPECIFICATION ##############
 		#############################################################
@@ -641,7 +752,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				print("")
 				print("Simulation Status: "+"Pulse #"+str(k_pulse+1))
 	
-			species_pulse_list = reactant_feed[current_reac_set-1]
+			species_pulse_list = reactant_feed#reactant_feed[current_reac_set-1]
 			
 			if type(reactant_time[current_reac_set-1]) == list:
 				species_time = reactant_time[current_reac_set-1]
@@ -788,7 +899,21 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 	
 									except UnboundLocalError:
 										if legend_label[k_fitting] != 'Inert':
+											w_temp = Expression(str(1),degree=0) # str(freeEnergyValue)
+											w_temp2 = interpolate(w_temp,V_du)
+											w4 = project(w_temp2,V_du)		
+											thermoWeight = 1e-1#1e-2									
 											jfunc_2 = assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
+											if thermoConstraints == True:
+
+												for jnum,jval in enumerate(thermoReactions):
+													if jnum == 0:
+														tempFunc = thermoStoich[jnum]*(r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
+													else:
+														tempFunc += thermoStoich[jnum]*(-8.314*reac_input['Reactor Temperature'])*(r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
+												tempFunc = tempFunc*thermoWeight
+												jfunc_2 += assemble(inner(tempFunc-w4,tempFunc-w4)*dx())
+
 										else:
 											pass
 	
@@ -871,6 +996,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 									jfunc_2 = assemble(inner(u_n[necessary_values['surf_num']+k_fitting-2]*to_flux[k_fitting] - w3,u_n[necessary_values['surf_num']+k_fitting-2]*to_flux[k_fitting] - w3)*dP(1))
 	
 				if round(t,6) not in species_time:
+					#timeDiff = round(t,6)
 					try:
 						if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true' or reac_input['Sensitivity Analysis'].lower() == 'true':
 							# C.N. method
@@ -981,14 +1107,15 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 								for k in range(0,int(reac_input['Number of Reactants'])):
 									u_n.vector()[int((all_molecules)*((reac_input['Mesh Size']+1)+additionalCells))+k-(all_molecules)] = -1e-10
 	
-						if ',' in str(species_pulse_list):
-							for k in range(0,int(reac_input['Number of Reactants'])):
+						#if ',' in str(species_pulse_list):
+						
+						for k in range(0,int(reac_input['Number of Reactants'])):
 								
-								if species_time[k] == round(t,6):
-									u_n.vector()[int((all_molecules)*((reac_input['Mesh Size']+1)+(meshCells*2**(int(reac_input['Catalyst Mesh Density']))-meshCells)))+k-(all_molecules)] = float(species_pulse_list[k])*Inert_pulse_conc#list_species_pulse[k]
+							if species_time[k] == round(t,6):
+								u_n.vector()[int((all_molecules)*((reac_input['Mesh Size']+1)+(meshCells*2**(int(reac_input['Catalyst Mesh Density']))-meshCells)))+k-(all_molecules)] = float(species_pulse_list[k])*Inert_pulse_conc#list_species_pulse[k]
 									
-						else:
-							u_n.vector()[int((all_molecules)*(reac_input['Mesh Size']-10)-1)-(all_molecules)] = float(species_pulse_list)*Inert_pulse_conc
+						#else:
+						#	u_n.vector()[int((all_molecules)*(reac_input['Mesh Size']-10)-1)-(all_molecules)] = float(species_pulse_list)*Inert_pulse_conc
 	
 						for k_step in range(0,int(reac_input['Number of Inerts'])):
 							if species_time[-1-k_step] == round(t,6):
@@ -1233,9 +1360,12 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			#############################################################
 	
 			if reac_input['Thin-Zone Analysis'].lower() == 'true':
+				print('Storing Catalyst Zone Gas and Surface Data')
 				if int(reac_input['Number of Pulses']) == 1:
 					cat_dataRate = {}
+					#for j_species in range(0,all_molecules):
 					for j_species in range(0,all_molecules-int(reac_input['Number of Inerts'])):
+						timeBetween = time.time()
 						new_values = [] 
 						mol_values = []
 		
@@ -1256,26 +1386,45 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 						## Change so that only thin-zone data is being stored
 						if thinSize == 'cat':
 							cat_dataRate['convtime_'+str(j_species)] = np.flip(np.transpose(mol_values[top:bottom,:]),axis=1)
-							np.savetxt('./'+reac_input['Output Folder Name']+'_folder/thin_data/'+necessary_values['reactants'][j_species]+'.csv', np.flip(np.transpose(mol_values[top:bottom,:]),axis=1), delimiter=",")
+							tempSurface = pd.DataFrame(np.flip(np.transpose(mol_values[top:bottom,:])))
+							#tempSurface.to_csv(,header=None,index=False)
+							tempSurface.to_csv('./'+reac_input['Output Folder Name']+'_folder/thin_data/'+necessary_values['reactants'][j_species]+'.csv',header=None,index=False)	
+							#np.savetxt('./'+reac_input['Output Folder Name']+'_folder/thin_data/'+necessary_values['reactants'][j_species]+'.csv', np.flip(np.transpose(mol_values[top:bottom,:]),axis=1), delimiter=",")
 				
 						elif thinSize == 'point':
 							centerPoint = int((top + bottom)/2)
 							cat_dataRate['convtime_'+str(j_species)] = np.transpose(mol_values[centerPoint,:])
-							np.savetxt('./'+reac_input['Output Folder Name']+'_folder/thin_data/'+necessary_values['reactants'][j_species]+'.csv', np.transpose(mol_values[centerPoint,:]), delimiter=",")
+							tempSurface = pd.DataFrame(np.flip(np.transpose(mol_values[top:bottom,:])))
+							tempSurface.to_csv('./'+reac_input['Output Folder Name']+'_folder/thin_data/'+necessary_values['reactants'][j_species]+'.csv',header=None,index=False)
+							#np.savetxt('./'+reac_input['Output Folder Name']+'_folder/thin_data/'+necessary_values['reactants'][j_species]+'.csv', np.transpose(mol_values[centerPoint,:]), delimiter=",")
 				
 						elif thinSize == 'average':
 							cat_dataRate['convtime_'+str(j_species)] = np.mean(np.transpose(mol_values[top:bottom,:]),axis=1)
-							np.savetxt('./'+reac_input['Output Folder Name']+'_folder/thin_data/'+necessary_values['reactants'][j_species]+'.csv', np.mean(np.transpose(mol_values[top:bottom,:]),axis=1), delimiter=",")
+							tempSurface = pd.DataFrame(np.flip(np.transpose(mol_values[top:bottom,:])))
+							tempSurface.to_csv('./'+reac_input['Output Folder Name']+'_folder/thin_data/'+necessary_values['reactants'][j_species]+'.csv',header=None,index=False)
+							#np.savetxt('./'+reac_input['Output Folder Name']+'_folder/thin_data/'+necessary_values['reactants'][j_species]+'.csv', np.mean(np.transpose(mol_values[top:bottom,:]),axis=1), delimiter=",")
 	
 						elif thinSize == 'all':
 							cat_dataRate['convtime_'+str(j_species)] = np.flip(np.transpose(mol_values),axis=1)
-							np.savetxt('./'+reac_input['Output Folder Name']+'_folder/thin_data/'+necessary_values['reactants'][j_species]+'.csv', np.flip(np.transpose(mol_values),axis=1), delimiter=",")
-	
-	
+							tempSurface = pd.DataFrame(np.flip(np.transpose(mol_values[top:bottom,:])))
+							tempSurface.to_csv('./'+reac_input['Output Folder Name']+'_folder/thin_data/'+necessary_values['reactants'][j_species]+'.csv',header=None,index=False)
+							#np.savetxt('./'+reac_input['Output Folder Name']+'_folder/thin_data/'+necessary_values['reactants'][j_species]+'.csv', np.flip(np.transpose(mol_values),axis=1), delimiter=",")
+						
+					print('Storing Catalyst Zone Gas and Surface Rate Data')
 					for j_species in range(0,all_molecules-int(reac_input['Number of Inerts'])):
+						
 						rateTest = eval(rateStrings[j_species])
-						np.savetxt('./'+reac_input['Output Folder Name']+'_folder/thin_data/r_'+necessary_values['reactants'][j_species]+'.csv', np.array(rateTest), delimiter=",")			
-	
+						tempSurface = pd.DataFrame(rateTest)
+						tempSurface.to_csv('./'+reac_input['Output Folder Name']+'_folder/thin_data/r_'+necessary_values['reactants'][j_species]+'.csv',header=None,index=False)						
+						#sys.exit()
+						#timeBetween = time.time()
+
+						#(np.asarray(parameters))
+						#newFile.to_csv(reaction_file,header=None,index=False)	
+
+						#np.savetxt('./'+reac_input['Output Folder Name']+'_folder/thin_data/r_'+necessary_values['reactants'][j_species]+'.csv', np.array(rateTest), delimiter=",")			
+						#print(time.time()-timeBetween)
+						
 				else:
 					pulse_path = './'+reac_input['Output Folder Name']+'_folder/thin_data/pulse_'+str(k_pulse+1)+'/'
 					generateFolder(pulse_path)
@@ -1317,10 +1466,14 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 							cat_dataRate['convtime_'+str(j_species)] = np.flip(np.transpose(mol_values),axis=1)
 							np.savetxt(pulse_path+necessary_values['reactants'][j_species]+'.csv', np.flip(np.transpose(mol_values),axis=1), delimiter=",")
 	
-	
+					print('Storing Catalyst Zone Gas and Surface Rate Data')
 					for j_species in range(0,all_molecules-int(reac_input['Number of Inerts'])):
+						
 						rateTest = eval(rateStrings[j_species])
-						np.savetxt(pulse_path+'r_'+necessary_values['reactants'][j_species]+'.csv', np.array(rateTest), delimiter=",")		
+						tempSurface = pd.DataFrame(rateTest)
+						tempSurface.to_csv(pulse_path+'r_'+necessary_values['reactants'][j_species]+'.csv',header=None,index=False)
+						
+						#np.savetxt(pulse_path+'r_'+necessary_values['reactants'][j_species]+'.csv', np.array(rateTest), delimiter=",")		
 	
 	
 			#if reac_input['Thin-Zone Analysis'].lower() == 'true':
@@ -1350,7 +1503,16 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				start_time = time.time()
 				print()
 				print('Fitting Kinetic Parameters. Will take some time!')
-	
+				
+
+				#print(type(ln(r_const["kf0"]/r_const["kb0"])))
+				#print(type(r_const["kf0"]))
+				#print(jfunc_2)
+				#print(AdjFloat(inner((ln(r_const["kf0"]/r_const["kb0"])+ln(r_const["kf1"]/r_const["kb1"])+ln(r_const["kf2"]/r_const["kb2"])),1)))
+				#rf_2 = ReducedFunctional(jfunc_2+(r_const["kf0"]/r_const["kb0"])+(r_const["kf1"]/r_const["kb1"])+(r_const["kf2"]/r_const["kb2"]), controls,tape=tape2,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
+				#rf_2 = ReducedFunctional(jfunc_2+AdjFloat((ln(r_const["kf0"]/r_const["kb0"])+ln(r_const["kf1"]/r_const["kb1"])+ln(r_const["kf2"]/r_const["kb2"])) - 1), controls,tape=tape2,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
+				#rf_2 = ReducedFunctional(jfunc_2 + assemble(((Constant(8.314*350)*(ln(r_const["kf0"]/r_const["kb0"])+ln(r_const["kf1"]/r_const["kb1"])+ln(r_const["kf2"]/r_const["kb2"]))-w4)**2)*dx()), controls,tape=tape2,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
+			
 				rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
 	
 				taylorTest = False
@@ -1547,7 +1709,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			################## ADDITION OF WHITE NOISE ##################
 			#############################################################
 	
-			sig = 0.05
+			sig = 0.1
 			beta_2 = 0.00270
 			w_2 = 2*3.14159*70
 	
@@ -1570,7 +1732,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			#############################################################
 			################## SAVE OUTLET FLUX DATA ####################
 			#############################################################
-	
+			
 			for j_species in range(0,monitored_gas+int(reac_input['Number of Inerts'])):
 				tempDict = np.transpose(dictionary_of_numpy_data[legend_label[j_species]])
 				np.savetxt('./'+reac_input['Output Folder Name']+'_folder/flux_data/'+legend_label[j_species]+'.csv', tempDict, delimiter=",")
@@ -1699,8 +1861,10 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		else:
 			reactor_kinetics_input['Fitting Gif'] = 'FALSE'
 
-		if noise != None:
-			reactor_kinetics_input['Noise'] = 'TRUE'			
+		if noise != 'FALSE':
+			reactor_kinetics_input['Noise'] = 'TRUE'
+		else:
+			reactor_kinetics_input['Noise'] = 'FALSE'			
 
 		if optimization != None:
 			reactor_kinetics_input['Fit Parameters'] = 'TRUE'
@@ -1716,9 +1880,6 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 
 		if fitInert != None:
 			reactor_kinetics_input['Inert Fit'] =  'TRUE'
-
-
-			
 
 		sens_type = sensitivityType
 		if (sens_type != 'trans' and sens_type != 'total') and reactor_kinetics_input['Sensitivity Analysis'].lower() == 'true':
@@ -1746,7 +1907,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 					reactor_kinetics_input['Display Objective Points'] = 'FALSE'
 					reactor_kinetics_input['Sensitivity Analysis'] = 'FALSE'
 
-					if noise != None:
+					if noise != 'FALSE':
 						reactor_kinetics_input['Noise'] = 'TRUE'
 					else:
 						reactor_kinetics_input['Noise'] = 'FALSE'
@@ -1814,14 +1975,14 @@ def run_tapsolver(timeFunc,store_flux_func=True,includeNoise=False,pulseNumber =
 		includeNoise = 'FALSE'
 
 
-	general_run(timeFunc,store_flux_func='TRUE',store_thin_func='FALSE',pulseNumber = pulseNumber,input_file = inputFile,noise=includeNoise,inputForm = input_form)
+	general_run(timeFunc,store_flux_func='TRUE',store_thin_func=store_thin_func,pulseNumber = pulseNumber,input_file = inputFile,noise=includeNoise,inputForm = input_form)
 
 def run_sensitivity(timeFunc,sensType=None,inputFile = './input_file.csv'):
 	if sensType == None:
 		sensType = 'total'
 	general_run(timeFunc,store_flux_func='FALSE',store_thin_func='FALSE',input_file = inputFile,sensitivityType=sensType,input_form = 'old')
 
-def fit_parameters(timeFunc,optim = 'L-BFGS-B',inputFile = './input_file.csv',inertFitting=None):
+def fit_parameters(timeFunc,optim = 'L-BFGS-B',inputFile = './input_file.csv',input_form='new',inertFitting=None):
 	if inertFitting == None:
 		general_run(timeFunc,optimization=optim,input_file = inputFile,inputForm = input_form)
 	else:
@@ -1850,7 +2011,7 @@ def vary_Input(variableToChange, newValue, input_file='./input_file.csv'):
 	#to_csv(fileName)
 
 def fluxGraph(input_file = './input_file.csv',pulse=None,dispExper=False,analytical=False,objectivePoints=False,displayGraph=True,storeGraph=False,outputName='./flux.png',inputForm='old'):
-	timeFunc = 10000
+	timeFunc = 0.4
 
 	reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(input_file,inputForm = inputForm)
 	#reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(input_file)
@@ -1861,7 +2022,9 @@ def fluxGraph(input_file = './input_file.csv',pulse=None,dispExper=False,analyti
 
 	if dispExper != False:
 		reac_input['Display Experimental Data'] = 'TRUE'
-#
+		reac_input['Display Objective Points'] = 'TRUE'
+		reac_input['Objective Points'] = 'all'
+
 	if objectivePoints != False:
 		reac_input['Display Objective Points'] = 'TRUE'
 		reac_input['Objective Points'] = 'all'
@@ -1874,9 +2037,9 @@ def fluxGraph(input_file = './input_file.csv',pulse=None,dispExper=False,analyti
 	dt = 0.001
 	reac_input['Reference Pulse Size'] = 1
 
-
 	fit_temperature = False
 	necessary_values, rate_array, rev_irr = make_f_equation(reac_input['reactions_test'],reac_input['Number of Reactants'],'tap',reac_input['Number of Inerts'],reac_input['Advection'],arrForward,arrBackward,gForward,fit_temperature)
+
 	reactor_kinetics_input['Reactor Type'] = 'tap'
 	fig2,ax2,legend_label,header,colors = establishOutletGraph(reac_input['Reactor Type'],necessary_values['molecules_in_gas_phase'],necessary_values['reactants'],int(reac_input['Number of Inerts']),'FALSE')
 
@@ -1921,7 +2084,7 @@ def fluxGraph(input_file = './input_file.csv',pulse=None,dispExper=False,analyti
 		print(reac_input['Objective Species'])
 		objSpecies = [str(int(reac_input['Objective Species']))]
 
-	if dispExper != None:
+	if dispExper != False:
 		output_fitting = curveFitting(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],objSpecies)
 
 
@@ -1966,20 +2129,31 @@ def fluxGraph(input_file = './input_file.csv',pulse=None,dispExper=False,analyti
 	# Experimental Plot
 #
 
-#	if reac_input['Experimental Data Folder'].lower() != 'none' and reac_input['Display Experimental Data'].lower() == 'true':
+	if reac_input['Experimental Data Folder'].lower() != 'none' and reac_input['Display Experimental Data'].lower() == 'true':
 #
-#		if reac_input['Display Objective Points'].lower() == 'true':
-#			for k_fitting in range(0,len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])])):
-#				if objSpecies[k_fitting] == '1':
-#					ax2.scatter(output_fitting[legend_label[k_fitting]]['times'],output_fitting[legend_label[k_fitting]]['values'],marker='^',color=colors[k_fitting],label='Fitting'+legend_label[k_fitting])
+		#if reac_input['Display Objective Points'].lower() == 'true':
+		#	for k_fitting in range(0,len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])])):
+		#		print(legend_label[k_fitting])
+		#		if objSpecies[k_fitting] == '1':
+		#			ax2.scatter(output_fitting[legend_label[k_fitting]]['times'],output_fitting[legend_label[k_fitting]]['values'],marker='^',color=colors[k_fitting],label='Fitting'+legend_label[k_fitting])
 #	
-#		if reac_input['Display Objective Points'].lower() == 'true':# and reac_input['Fit Inert'].lower() == 'true':
-#			#if k_pulse > 0:
-#			for k_fitting in range(len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])]),len(legend_label)):
-#			#for k_fitting in range( int(len(legend_label)-reac_input['Number of Inerts']) ,len(legend_label[int(len(legend_label)+reac_input['Number of Inerts'])])):
-#				if objSpecies[k_fitting] == '1':
-#					ax2.scatter(output_fitting[legend_label[k_fitting]]['times'],output_fitting[legend_label[k_fitting]]['values'],marker='^',color=colors[k_fitting],label='Fitting'+legend_label[k_fitting], alpha=0.3)
+		#if reac_input['Display Objective Points'].lower() == 'true':# and reac_input['Fit Inert'].lower() == 'true':
+		#	#if k_pulse > 0:
+		#	for k_fitting in range(len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])]),len(legend_label)):
+		#	#for k_fitting in range( int(len(legend_label)-reac_input['Number of Inerts']) ,len(legend_label[int(len(legend_label)+reac_input['Number of Inerts'])])):
+		#		print(legend_label[k_fitting])
+		#		if objSpecies[k_fitting] == '1':
+		#			ax2.scatter(output_fitting[legend_label[k_fitting]]['times'],output_fitting[legend_label[k_fitting]]['values'],marker='^',color=colors[k_fitting],label='Fitting'+legend_label[k_fitting], alpha=0.3)
 #
+		
+		for k,j in enumerate(legend_label):
+			if j != 'timing': #and j != 'conVtime_1' and j != 'conVtime_2' and j != 'conVtime_3' and j != 'conVtime_0' 
+				dfNew = pd.read_csv(reac_input['Experimental Data Folder']+'/flux_data/'+legend_label[k]+'.csv',header=None)
+				ax2.scatter(dfNew[0][:],dfNew[1][:],color=colors[k],label='exp '+legend_label[k], alpha=0.2) #, ls = '--'
+			else:
+				pass
+
+
 	# Inert Plot
 	if reac_input['Infinite Inert'].lower() == 'true':
 		# For reactant / product species
@@ -2043,7 +2217,9 @@ def fluxGraph(input_file = './input_file.csv',pulse=None,dispExper=False,analyti
 
 	for knum,k in enumerate(necessary_values['reactants']):
 		if knum < necessary_values['molecules_in_gas_phase']:
+
 			dfTemp = pd.read_csv(reac_input['Output Folder Name']+'_folder/flux_data/'+k+'.csv',header=None)
+			graphLimit = dfTemp[0][len(dfTemp[0]) - 1]
 			
 			if type(pulse) == int:
 				ax2.plot(dfTemp[0],dfTemp[pulse],color=colors[knum], ls = '--',label=legend_label[knum], alpha=0.7)
@@ -2064,29 +2240,32 @@ def fluxGraph(input_file = './input_file.csv',pulse=None,dispExper=False,analyti
 						legendInclude = False
 					else:
 						ax2.plot(dfTemp[0],dfTemp[j],color=colors[knum], ls = '--', label='_nolegend_', alpha=0.7)
-
-	for k in range(1,int(reac_input['Number of Inerts'])+1):
-		dfTemp = pd.read_csv(reac_input['Output Folder Name']+'_folder/flux_data/Inert-'+str(k)+'.csv',header=None)
+	ax2.set_xlim(0,graphLimit)
+	for k in range(0,int(reac_input['Number of Inerts'])):
+		
+		dfTemp = pd.read_csv(reac_input['Output Folder Name']+'_folder/flux_data/Inert-'+str(k+1)+'.csv',header=None)
 		if type(pulse) == int:
-			ax2.plot(dfTemp[0],dfTemp[pulse],color=colors[necessary_values['molecules_in_gas_phase']+k-1], ls = '--', label=legend_label[k], alpha=0.7)
+			ax2.plot(dfTemp[0],dfTemp[pulse],color=colors[necessary_values['molecules_in_gas_phase']+k], ls = '--', label=legend_label[necessary_values['molecules_in_gas_phase']+k], alpha=0.7)
 			
 		elif type(pulse) == list:
 			legendInclude = True
 			for j in pulse:
 				if legendInclude == True:
-					ax2.plot(dfTemp[0],dfTemp[j],color=colors[necessary_values['molecules_in_gas_phase']+k-1], ls = '--', label=legend_label[necessary_values['molecules_in_gas_phase']+k-1], alpha=0.7)
+					print(legend_label[necessary_values['molecules_in_gas_phase']+k-1])
+					ax2.plot(dfTemp[0],dfTemp[j],color=colors[necessary_values['molecules_in_gas_phase']+k], ls = '--', label=legend_label[necessary_values['molecules_in_gas_phase']+k], alpha=0.7)
 					legendInclude = False
 				else:
-					ax2.plot(dfTemp[0],dfTemp[j],color=colors[necessary_values['molecules_in_gas_phase']+k-1], ls = '--', label='_nolegend_', alpha=0.7)
+					ax2.plot(dfTemp[0],dfTemp[j],color=colors[necessary_values['molecules_in_gas_phase']+k], ls = '--', label='_nolegend_', alpha=0.7)
 
 		else:
 			legendInclude = True
 			for j in range(1, len(dfTemp.columns)):
 				if legendInclude == True:
-					ax2.plot(dfTemp[0],dfTemp[j],color=colors[necessary_values['molecules_in_gas_phase']+k-1], ls = '--', label=legend_label[necessary_values['molecules_in_gas_phase']+k-1], alpha=0.7)
+					print(legend_label[necessary_values['molecules_in_gas_phase']+k-1])
+					ax2.plot(dfTemp[0],dfTemp[j],color=colors[necessary_values['molecules_in_gas_phase']+k], ls = '--', label=legend_label[necessary_values['molecules_in_gas_phase']+k], alpha=0.7)
 					legendInclude = False
 				else:
-					ax2.plot(dfTemp[0],dfTemp[j],color=colors[necessary_values['molecules_in_gas_phase']+k-1], ls = '--', label='_nolegend_', alpha=0.7)
+					ax2.plot(dfTemp[0],dfTemp[j],color=colors[necessary_values['molecules_in_gas_phase']+k], ls = '--', label='_nolegend_', alpha=0.7)
 
 	ax2.legend(title="Gas Species",loc = 1)
 
@@ -2172,6 +2351,7 @@ def concnDistGif(input_file = './input_file.csv',dataType='surf',fileName='./cat
 			else:
 				if necessary_values['reactants'] in dataType:
 					ax.plot(dataDictionary[k].iloc[:,time],label = k)
+
 		ax.legend('Species')
 		fig.canvas.draw()
 		image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
@@ -2179,16 +2359,25 @@ def concnDistGif(input_file = './input_file.csv',dataType='surf',fileName='./cat
 	
 		return image
 	print(dfColumns[0].count())
-	#sys.exit()
+	
 	imageio.mimsave(fileName, [plotCat(i,dataType) for i in list(range(0,dfColumns[0].count()))], fps=4)
 
-def concnDistPlot(input_file = './input_file.csv',dataType='surf',fileName='./cat.gif',pulse=1,input_form='old'):
+def concDistPlot(input_file = './input_file.csv',dataType='surf',fileName='./cat.gif',pulse=1,input_form='old'):
 	
 	reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(input_file,inputForm = input_form)
 	reac_input = reactor_kinetics_input
 	fit_temperature = False
+	reac_input['Advection'] = 'FALSE'
+	reac_input['Reactor Type'] = 'tap'
+	reac_input['Scale Output'] = 'FALSE'
+	fit_temperature = False
 	necessary_values, rate_array, rev_irr = make_f_equation(reac_input['reactions_test'],reac_input['Number of Reactants'],'tap',reac_input['Number of Inerts'],reac_input['Advection'],arrForward,arrBackward,gForward,fit_temperature)
 	#fig2,ax2,legend_label,header,colors = establishOutletGraph(reac_input['Reactor Type'],necessary_values['molecules_in_gas_phase'],necessary_values['reactants'],int(reac_input['Number of Inerts']),reac_input['Scale Output'])
+
+	reac_input['Advection'] = 'FALSE'
+	reac_input['Reactor Type'] = 'tap'
+	reac_input['Scale Output'] = 'FALSE'
+	fit_temperature = False
 
 	try:
 		dataLocation = reac_input['Output Folder Name']+'_folder/thin_data/'
@@ -2255,6 +2444,7 @@ def input_construction(reactor_name='./reactor_definition.csv',reaction_name='./
 
 	for j_num,j in enumerate(gasses):
 		d.iloc[0,j_num+1] = j
+		d.iloc[1,j_num+1] = 1
 		d.iloc[3,j_num+1] = molecularProperties(gasses[j_num],'mass')
 
 	for j in range(len(gasses)+1,N_cols):
@@ -2268,7 +2458,8 @@ def input_construction(reactor_name='./reactor_definition.csv',reaction_name='./
 
 	for j_num,j in enumerate(surface):
 		d.iloc[5,j_num+1] = j
-
+		if j_num+1 == len(surface):
+			d.iloc[6,j_num+1] = 100
 	for j in range(len(surface)+1,N_cols):
 		d.iloc[5,j] = ''
 		d.iloc[6,j] = ''
@@ -2314,7 +2505,7 @@ def input_construction(reactor_name='./reactor_definition.csv',reaction_name='./
 def exampleReaction(reaction_file = './reaction_example.csv'):
 
 	parameters = ['CO + * <-> CO*',1,10]
-	newFile = np.asarray(parameters)
+	newFile = pd.DataFrame(np.asarray(parameters))
 	newFile.to_csv(reaction_file,header=None,index=False)	
 	
 def define_reactor(reactor_name='./reactor_definition.csv',transport_type=['Knudsen','Advection']):
@@ -2323,6 +2514,7 @@ def define_reactor(reactor_name='./reactor_definition.csv',transport_type=['Knud
 	initial_values = [0.2,700,400,2,'results','None']
 	#parameters = ['Reactor_Information','Reactor Length','Mesh Size','Catalyst Fraction','Catalyst Mesh Density','Reactor Radius','Catalyst Location','Void Fraction Inert','Void Fraction Catalyst','Reactor Temperature','Reference Diffusion Inert','Reference Diffusion Catalyst','Reference Temperature','Reference Mass','Output Folder Name','Experimental Data Folder','Advection','','Feed_&_Surface_Composition']
 	#initial_values = ['',3.832,400,0.02,5,0.2,0.5,0.4,0.4,700,13.5,13.5,700,40,'results','./probeTruncated/Mn',0,'','']
+
 
 	if 'Knudsen' in transport_type:
 		knudsenList = ['Reference Diffusion Inert','Reference Diffusion Catalyst','Reference Temperature','Reference Mass']
@@ -2336,7 +2528,7 @@ def define_reactor(reactor_name='./reactor_definition.csv',transport_type=['Knud
 		advectionValues = [0.0]
 		for jnum,j in enumerate(advectionList):
 			parameters.append(j)
-			initial_values.append(knudsenValues[jnum])
+			initial_values.append(0)
 
 	d = pd.DataFrame(np.zeros((len(parameters)+3, 4)))
 	
@@ -2346,9 +2538,9 @@ def define_reactor(reactor_name='./reactor_definition.csv',transport_type=['Knud
 	d.iloc[0,3] = ''
 
 	d.iloc[1,0] = 'Zone Length'
-	d.iloc[1,1] = 0.48
-	d.iloc[1,2] = 0.04
-	d.iloc[1,3] = 0.48
+	d.iloc[1,1] = 2.95
+	d.iloc[1,2] = 0.15
+	d.iloc[1,3] = 2.95
 
 	d.iloc[2,0] = 'Zone Void'
 	d.iloc[2,1] = 0.4

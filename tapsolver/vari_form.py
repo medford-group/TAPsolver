@@ -4,7 +4,7 @@ import pandas as pd
 import random
 import sys
 import time
-from .reac_odes import deriv_and_const,variational_list_parsing
+from reac_odes import deriv_and_const,variational_list_parsing
 
 def make_f_equation(reactions_n,reactants_number,reactor_type,number_of_inerts,advection,arrForward,arrBackward,gForward,temp_change=False):
 
@@ -312,6 +312,9 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,number_of_inerts,a
 #test_new_again = make_f_equation(reactions_test)
 
 #print(test_new_again['reactants'])
+
+#def thermoConstraints():
+
 
 def rateEqs(rate_array,rev_irr,gForward,arrForward,arrBackward):
 
