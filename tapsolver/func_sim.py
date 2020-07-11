@@ -259,6 +259,8 @@ def readInput(input_file,inputForm = 'old'):
 			try:
 				if type(float(thermo_constraints.iloc[j,1])) == float and math.isnan(float(thermo_constraints.iloc[j,1])) == False:
 					thermo_values.append(thermo_constraints.iloc[j,1])
+				else:
+					thermo_values.append('none')
 			except:
 				print(type(thermo_constraints.iloc[j,1]))
 				pass
@@ -267,6 +269,198 @@ def readInput(input_file,inputForm = 'old'):
 	reactor_kinetics_input['thermo values'] = thermo_values
 
 	return reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,fittingParametersList,arrForward,arrBackward
+
+def readBatchInput(input_file):
+
+	user_data = pd.read_csv(input_file,header=None)
+		
+	rows_1, cols_1 = np.where(user_data == 'Reactor_Information')
+	rows_2, cols_2 = np.where(user_data == 'Feed_&_Surface_Composition')
+	rows_4, cols_4 = np.where(user_data == 'Reaction_Information')
+
+	thermoConstraints = False
+	if user_data[0].str.contains('Thermodynamic Constraints').any():
+		thermoConstraints = True
+		rows_5, cols_5 = np.where(user_data == 'Thermodynamic Constraints')    		
+
+	reactor_info = user_data.iloc[(1+rows_1[0]):(rows_2[0]-1),:] 
+	feed_surf_info = user_data.iloc[1+rows_2[0]:rows_4[0]-1,:]
+#	data_storage = user_data.iloc[1+rows_3[0]:rows_4[0]-1,:]
+
+	if thermoConstraints == False:
+		reaction_info = user_data.iloc[1+rows_4[0]:,:]
+	else:
+		reaction_info = user_data.iloc[(1+rows_4[0]):(rows_5[0]-1),:]
+		thermo_constraints = user_data.iloc[1+rows_5[0]:,:]
+
+	reactor_kinetics_input = {}
+	
+	number_of_gasses = 0
+	number_of_surface = 0
+	for z in feed_surf_info.iloc[0,1:]:
+		if type(z) == (str):
+			number_of_gasses += 1 
+	for z in feed_surf_info.iloc[5,1:]:
+		if type(z) == (str):
+			number_of_surface += 1 
+
+	gas_species = feed_surf_info.iloc[0,1:number_of_gasses+1]
+	surface_species = feed_surf_info.iloc[5,1:number_of_surface+1]
+		
+	reactor_kinetics_input['Pulse Size'] = ''
+	reactor_kinetics_input['Pulse Time'] = ''
+	reactor_kinetics_input['Number of Reactants'] = 0
+
+	for jnum,j in enumerate(gas_species):
+			
+		if j.find('Inert') == 0:
+			reactor_kinetics_input['Number of Inerts'] += 1
+		if jnum == len(gas_species)-1:
+
+			reactor_kinetics_input['Pulse Size'] = reactor_kinetics_input['Pulse Size']+str(feed_surf_info.iloc[1,1+jnum])
+			reactor_kinetics_input['Pulse Time'] = reactor_kinetics_input['Pulse Time']+str(feed_surf_info.iloc[2,1+jnum])
+				
+		else:
+			#if (float(feed_surf_info.iloc[1,1+jnum]) != 0.0) and (j.find('Inert') == False):
+			#	reactor_kinetics_input['Number of Reactants'] += 1
+			reactor_kinetics_input['Pulse Size'] = reactor_kinetics_input['Pulse Size']+str(feed_surf_info.iloc[1,1+jnum])+','
+			reactor_kinetics_input['Pulse Time'] = reactor_kinetics_input['Pulse Time']+str(feed_surf_info.iloc[2,1+jnum])+','
+		reactor_kinetics_input['Number of Reactants'] += 1
+	reactor_kinetics_input['Initial Surface Composition'] = ''
+
+	for jnum,j in enumerate(surface_species):
+
+		if jnum == len(surface_species)-1:
+			reactor_kinetics_input['Initial Surface Composition'] = reactor_kinetics_input['Initial Surface Composition']+str(feed_surf_info.iloc[5,1+jnum])
+		else:
+			reactor_kinetics_input['Initial Surface Composition'] = reactor_kinetics_input['Initial Surface Composition']+str(feed_surf_info.iloc[5,1+jnum])+','
+
+	for k in range(0,len(reactor_info.index)):
+		try:
+			reactor_kinetics_input[reactor_info.iloc[k,0]] = float(reactor_info.iloc[k,1])
+		except ValueError:
+			reactor_kinetics_input[reactor_info.iloc[k,0]] = reactor_info.iloc[k,1]
+			
+	reactor_kinetics_input['reactions_test'] = reaction_info.iloc[:,0].tolist()
+
+
+	
+	kinetic_parameters = {}
+	Ao = {}
+	Ea = {}
+	Ga = {}
+	dG = {}
+
+	fittingParametersList = []
+
+	gForward = []
+	arrForward = []
+	arrBackward = []
+	
+	for j in range(0,len(reaction_info.index)):
+		if reaction_info.iloc[j,1].find("#") > 0:
+			Anew, Eanew = reaction_info.iloc[j,1].split("#")
+			if Anew.find("!") < 0:
+				Ga['Ga'+str(j)] = float(Anew)
+				kinetic_parameters['Ga'+str(j)] = float(Anew)
+				fittingParametersList.append('Ga'+str(j))
+			
+			else:
+				Ga['Ga'+str(j)] = float(Anew[:-1])
+
+			if Eanew.find("!") < 0:
+				dG['dG'+str(j)] = float(Eanew)
+				fittingParametersList.append('dG'+str(j))
+			
+			else:
+				dG['dG'+str(j)] = float(Eanew[:-1])
+
+			gForward.append(j)
+
+		elif reaction_info.iloc[j,1].find("$") > 0:
+			Anew, Eanew = reaction_info.iloc[j,1].split("$")
+			if Anew.find("!") < 0:
+				Ao['Aof'+str(j)] = float(Anew)
+				fittingParametersList.append('Aof'+str(j))
+			
+			else:
+				Ao['Aof'+str(j)] = float(Anew[:-1])
+
+			if Eanew.find("!") < 0:
+				Ea['Eaf'+str(j)] = float(Eanew)
+				fittingParametersList.append('Eaf'+str(j))
+			
+			else:
+				Ea['Eaf'+str(j)] = float(Eanew[:-1])
+
+			arrForward.append(j)
+
+		else:
+			if reaction_info.iloc[j,1].find("!") < 0:
+				kinetic_parameters['kf'+str(j)] = float(reaction_info.iloc[j,1])
+				fittingParametersList.append('kf'+str(j))
+			
+			else:
+				new_value = float(reaction_info.iloc[j,1][:-1])
+				kinetic_parameters['kf'+str(j)] = new_value#float(reaction_info.iloc[j,1])
+
+		if str(reaction_info.iloc[j,2]) != 'nan':
+			if str(reaction_info.iloc[j,2]).find("$") > 0:
+				Anew, Eanew = str(reaction_info.iloc[j,2]).split("$")
+				if Anew.find("!") < 0:
+					Ao['Aob'+str(j)] = float(Anew)
+					fittingParametersList.append('Aob'+str(j))
+					
+				else:
+					Ao['Aob'+str(j)] = float(Anew[:-1])						
+
+				if Eanew.find("!") < 0:
+					Ea['Eab'+str(j)] = float(Eanew)
+					fittingParametersList.append('Eab'+str(j))
+					
+				else:
+					Ea['Eab'+str(j)] = float(Eanew[:-1])
+
+				arrBackward.append(j)
+
+			else:
+
+				if str(reaction_info.iloc[j,2]).find("!") < 0:
+					kinetic_parameters['kb'+str(j)] = float(reaction_info.iloc[j,2])
+					fittingParametersList.append('kb'+str(j))
+
+				else:
+					new_value = float(reaction_info.iloc[j,2][:-1])
+					kinetic_parameters['kb'+str(j)] = new_value
+		else:
+			pass
+
+	kin_in = kinetic_parameters.copy()
+	Ao_in = Ao.copy()
+	Ea_in = Ea.copy()
+	Ga_in = Ga.copy()
+	dG_in = dG.copy()
+
+	thermo_equations = []
+	thermo_values = []
+	if thermoConstraints == True:
+		for j in range(0,len(thermo_constraints.index)):
+			thermo_equations.append(thermo_constraints.iloc[j,0])
+			try:
+				if type(float(thermo_constraints.iloc[j,1])) == float and math.isnan(float(thermo_constraints.iloc[j,1])) == False:
+					thermo_values.append(thermo_constraints.iloc[j,1])
+				else:
+					thermo_values.append('none')
+			except:
+				print(type(thermo_constraints.iloc[j,1]))
+				pass
+
+	reactor_kinetics_input['thermo equations'] = thermo_equations
+	reactor_kinetics_input['thermo values'] = thermo_values
+
+	return reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,fittingParametersList,arrForward,arrBackward
+
+
 
 def solverIteration(time_step,method,solver,dk,dec_tim,inc_tim):
 	
@@ -459,6 +653,7 @@ def establishOutletGraph(reactor,gas_phase,reacs,inerts,scaleGraph):
 
 	fig2, ax2 = plt.subplots()
 	ax2.set_xlabel('$Time\ (s)$', fontsize = 14)
+
 	if reactor == 'tap':
 		if scaleGraph.lower() == 'true':
 			ax2.set_ylabel('$Outlet\ Flow\ (1/s)$', fontsize = 14)
@@ -466,15 +661,21 @@ def establishOutletGraph(reactor,gas_phase,reacs,inerts,scaleGraph):
 			ax2.set_ylabel('$Outlet\ Flow\ (nmol/s)$', fontsize = 14)
 	elif reactor == 't_pfr' or 't_pfr_diff':
 		ax2.set_ylabel('$Outlet Concentration (molecules/cm3)$')
-	
+
+	elif reactor == 'batch':
+		print('batch')
+		ax2.set_ylabel('$Concentration$')
+
 	legend_label = []
 	header = "time"
 	for k in range(0,gas_phase):
 		legend_label.append(reacs[k])
 		header = header+","+reacs[k]
-	for j in range(0,inerts):
-		legend_label.append("Inert-"+str(1+j))
-	header = header+",Inert"
+	if reactor != 'batch':
+		for j in range(0,inerts):
+			legend_label.append("Inert-"+str(1+j))
+		header = header+",Inert"
+	
 	colors = ['b','orange','g','r','k','y','c','m','brown','darkgreen','goldenrod','lavender','lime']
 
 	return fig2,ax2,legend_label,header,colors
@@ -516,23 +717,29 @@ def curveFitting(species_list,sim_steps,folder,timeTot,points,objSpecies):
 		for klabel,k in enumerate(objSpecies):
 
 			if objSpecies[klabel] == '1':
-
-				user_data[species_list[klabel]] = pd.read_csv(folder+'/flux_data/'+species_list[klabel]+'.csv',header=None)
-		
+				try:
+					fitStartValue = False
+					user_data[species_list[klabel]] = pd.read_csv(folder+'/flux_data/'+species_list[klabel]+'.csv',header=None)
+				except:
+					fitStartValue = True
+					user_data[species_list[klabel]] = pd.read_csv(folder+'/species_data/'+species_list[klabel]+'.csv',header=None)
 	else:
 		species_list = species_list[:len(species_list)]#'./experimental_data/'
 
 		for k in range(0,len(species_list)):
 			if objSpecies[k] == '1':
-				user_data[species_list[k]] = pd.read_csv(folder+'/flux_data/'+species_list[k]+'.csv',header=None)
-	
+				try:
+					fitStartValue = False
+					user_data[species_list[k]] = pd.read_csv(folder+'/flux_data/'+species_list[k]+'.csv',header=None)
+				except:
+					fitStartValue = True
+					user_data[species_list[k]] = pd.read_csv(folder+'/species_data/'+species_list[k]+'.csv',header=None)
 	curve_fitting = {}
 	exp_data = user_data
 	
 	for k_newNum, k_new in enumerate(species_list):
 
 		if objSpecies[k_newNum] == '1':
-
 			def find_experimental_point(n,exp_step):
 				""" Find an appropriate intensity point for the fitting process """
 
@@ -561,8 +768,14 @@ def curveFitting(species_list,sim_steps,folder,timeTot,points,objSpecies):
 
 			exp_time_step = user_data[k_new][0][user_data[k_new].shape[0]-2] - user_data[k_new][0][user_data[k_new].shape[0]-3]
 			near_start = round(user_data[k_new].iloc[30,0],6)/(timeTot/sim_steps)
-			
-			for k in range(15,int(sim_steps),frequency):
+			if fitStartValue == True:
+				fitStartTime = 0
+				frequency = 10
+			else: 
+				fitStartTime = 30
+				frequency = 10
+
+			for k in range(fitStartTime,int(sim_steps),frequency):
 				time_step.append(k)
 				times.append(k*(syn_time_step))
 				#print(exp_time_step)
@@ -931,8 +1144,8 @@ def molecularProperties(gasSpecies,propValue,temperature=398):
 	def thermoCalculation(T,dH,A,B,C,D,E,F,G,H):
 		temp = T/1000
 
-		h = dH + (A*temp + B*(temp**2)/2 + C*(temp**3)/3 + D*(temp**4)/4 - E/temp + F + H)/1000
-		s = A*math.log(temp) + B*temp + C*(temp**2)/2 +D*(temp**3)/3 -E/(2*temp**2) + G
+		h = dH + (A*temp + (B*(temp**2)/2) + (C*(temp**3)/3) + (D*(temp**4)/4) - (E/temp) + F - H)#/1000
+		s = A*math.log(temp) + B*temp + C*(temp**2)/2 + D*(temp**3)/3 - E/(2*temp**2) + G
 
 		return h,s/1000
 
@@ -986,7 +1199,7 @@ def molecularProperties(gasSpecies,propValue,temperature=398):
 	molecularValues['HCl'] = {'mass':36.5,'shomate':{'dH':-92.312,'A':32.12392,'B':-13.45805,'C':19.86852,'D':-6.853936,'E':-0.049672,'F':-101.6206,'G':228.6866,'H':-92.312,'Trange':[298,1200]}}
 
 	molecularValues['He'] = {'mass':4,'shomate':{'dH':0.0,'A':20.78603,'B':4.8506e-10,'C':-1.5829e-10,'D':1.5251e-11,'E':3.1963e-11,'F':-6.197341,'G':151.3064,'H':0.0,'Trange':[298,6000]}}
-	molecularValues['Ne'] = {'mass':20.18,'shomate':{'dH':0.0,'A':20.78603,'B'4.8506e-10:,'C':-1.5829e-10,'D':1.525102e-11,'E':3.1963e-11,'F':-6.197341,'G':171.48,'H':0.0,'Trange':[298,6000]}}
+	molecularValues['Ne'] = {'mass':20.18,'shomate':{'dH':0.0,'A':20.78603,'B':4.8506e-10,'C':-1.5829e-10,'D':1.525102e-11,'E':3.1963e-11,'F':-6.197341,'G':171.48,'H':0.0,'Trange':[298,6000]}}
 	molecularValues['Ar'] = {'mass':40,'shomate':{'dH':0.0,'A':20.786,'B':2.825911e-7,'C':-1.46419e-7,'D':1.092131e-8,'E':-3.661371e-8,'F':-6.197350,'G':179.999,'H':0.0,'Trange':[298,6000]}}
 	molecularValues['Kr'] = {'mass':83.798,'shomate':{'dH':0.0,'A':20.78603,'B':4.850638e-10,'C':-1.582916e-10,'D':1.525102e-11,'E':3.196347e-11,'F':-6.197341,'G':189.239,'H':0.0,'Trange':[298,6000]}}
 	molecularValues['Xe'] = {'mass':131.293,'shomate':{'dH':0.0,'A':20.786,'B':7.4493e-7,'C':-2.0494e-7,'D':1.066e-8,'E':2.500261e-8,'F':-6.197350,'G':194.8380,'H':0.0,'Trange':[298,6000]}}
@@ -998,6 +1211,7 @@ def molecularProperties(gasSpecies,propValue,temperature=398):
 
 			tempShomate = molecularValues[gasSpecies]['shomate']
 			hnew,snew = thermoCalculation(temperature,tempShomate['dH'],tempShomate['A'],tempShomate['B'],tempShomate['C'],tempShomate['D'],tempShomate['E'],tempShomate['F'],tempShomate['G'],tempShomate['H'])
+			
 			return hnew-temperature*snew
 	else:
 		return ''

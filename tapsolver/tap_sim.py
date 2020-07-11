@@ -27,8 +27,13 @@ from ufl import sqrt,exp,ln
 from shutil import copyfile
 #from hippylib import *
 import warnings
+#from ipyopt import *
+#from ipopt import *
+#from pyadjoint import ipopt
 
-def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitting_gif=None,pulseNumber=1,store_flux_func='TRUE',store_thin_func='FALSE',input_file = './input_file.csv',sensitivityType=None,noise='FALSE',fitInert=None,inputForm='old'):
+#from gryphon import *
+
+def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitting_gif=None,pulseNumber=1,store_flux_func='TRUE',store_thin_func='FALSE',input_file = './input_file.csv',sensitivityType=None,noise='FALSE',fitInert=None,inputForm='old',experiment_design=None):
 	
 	### How much concentration data do you want stored for 'thin-zone analysis'
 	# 'point' = only center point in the catalyst zone
@@ -79,6 +84,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			print('Error: sensitivity analysis must be "trans" or "total"')
 			sys.exit()
 
+		#reac_input['Optimization Method'] = 'nonlinear'
 		reac_input['Optimization Method'] = 'L-BFGS-B' #
 		reac_input['Objective Points'] = 'all'
 		reac_input['Store Outlet Flux'] = 'TRUE'
@@ -103,24 +109,25 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			thermoConstraints = False
 
 		if thermoConstraints == True:
-			
-			for z in reac_input['thermo equations']:
-				thermoReactions = []
-				thermoStoich = []
+			thermoReactions = {}
+			thermoStoich = {}
+			for znum,z in enumerate(reac_input['thermo equations']):
+				thermoReactions[znum] = []
+				thermoStoich[znum] = []
 				tempValue = z.split('+')
 				for j in tempValue:
 					if j.find('*') != -1:
 						thermoSplit = j.split('*')
 						thermoSplit[1] = thermoSplit[1].replace('r','')
-						thermoReactions.append(int(thermoSplit[1]))
+						thermoReactions[znum].append(int(thermoSplit[1]))
 						thermoSplit[0] = thermoSplit[0].replace('(','')
 						thermoSplit[0] = thermoSplit[0].replace(')','')
-						thermoStoich.append(float(thermoSplit[0]))
+						thermoStoich[znum].append(float(thermoSplit[0]))
 					else:
 						j = j.replace('r','')
-						thermoReactions.append(int(j))
-						thermoStoich.append(1)
-	
+						thermoReactions[znum].append(int(j))
+						thermoStoich[znum].append(1)
+		
 		path = './'+reac_input['Output Folder Name']+'_folder/'
 		generateFolder(path)
 			
@@ -138,6 +145,8 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			path_6 = './'+reac_input['Output Folder Name']+'_folder/fitting/'
 			generateFolder(path_6)
 	
+		runge_kutta_approach = False
+
 		# Declare and define the constants of interest
 		r_const = constants_input
 		r_Ao = Ao_in
@@ -159,7 +168,14 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 	
 		for j in r_Ea:
 			r_Ea[j] = Constant(r_Ea[j])
-	
+
+		if reac_input['experiment_design'] != None:
+
+			doe_form_pulse = True
+			doe_form_surf = True
+		else:
+			doe_form_pulse = False
+			doe_form_surf = False
 	
 		if reac_input['Fit Parameters'].lower() == 'true' or (sens_type == 'total' and reac_input['Sensitivity Analysis'].lower() == 'true'):
 			controls = []
@@ -210,9 +226,11 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		dk = Constant(reac_input['Pulse Duration']/reac_input['Time Steps'])
 		eb = np.array((reac_input['Void Fraction Inert'],reac_input['Void Fraction Catalyst'],reac_input['Void Fraction Inert']))
 		ca = (reac_input['Reactor Radius']**2)*3.14159 
+
+		# Define: Pulse
 		point_volume = dx_r * ca * eb[0]
-		Inert_pulse_conc = reac_input['Reference Pulse Size']/(point_volume)
-		
+		Inert_pulse_conc = reac_input['Reference Pulse Size']/(point_volume)		
+
 		# Define the diffusion constants
 		ref_rate = np.append(reac_input['Reference Diffusion Inert'],reac_input['Reference Diffusion Catalyst'])
 		ref_rate = np.append(ref_rate,ref_rate[0])  	
@@ -247,73 +265,100 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		necessary_values, rate_array, rev_irr = make_f_equation(reac_input['reactions_test'],reac_input['Number of Reactants'],'tap',reac_input['Number of Inerts'],reac_input['Advection'],arrForward,arrBackward,gForward,fit_temperature)
 		
 		if thermoConstraints == True:
+			
+			thermoReactants = {}
+			thermoProducts = {}
+			thermoReactantsValue = {}
+			thermoProductsValue = {}
 
-			thermoReactants = []
-			thermoProducts = []
-
-			thermoReactantsValue = []
-			thermoProductsValue = []
+			#thermoReactants = []
+			#thermoProducts = []
+			#thermoReactantsValue = []
+			#thermoProductsValue = []
 
 			for jnum,jval in enumerate(thermoReactions):
-				if rev_irr[jval-1] != 1:
+				thermoReactants[jnum] = []
+				thermoProducts[jnum] = []
+				thermoReactantsValue[jnum] = []
+				thermoProductsValue[jnum] = []
+
+				for znum,zval in enumerate(thermoReactions[jval]):
+
+					if rev_irr[jval-1] != 1:
+						print('')
+						print('To set a thermodynamic constraints, all reactions must be reversible.')
+						print('Currently, elementary reaction '+str(jval)+' is irreversible and included in the thermo. equation.')
+						sys.exit()
+
+					else:
+						for zen in range(0,necessary_values['molecules_in_gas_phase']):
+							print(rate_array[zval-1])
+							if rate_array[zval-1][zen] == 1:
+
+								thermoProductsValue[jnum].append(necessary_values['reactants'][zen])						
+								
+								if thermoStoich[jnum][znum] != 1:
+									thermoProducts[jnum].append('('+str(thermoStoich[jnum][znum])+')*'+necessary_values['reactants'][zen])
+									
+								else:
+									thermoProducts[jnum].append(necessary_values['reactants'][zen])	
+
+							elif rate_array[zval-1][zen] == -1:
+
+								thermoReactantsValue[jnum].append(necessary_values['reactants'][zen])
+								if thermoStoich[jnum][znum] != 1:
+									thermoReactants[jnum].append('('+str(thermoStoich[jnum][znum])+')*'+necessary_values['reactants'][zen])
+								else:
+									thermoReactants[jnum].append(necessary_values['reactants'][zen])		
+				print(thermoReactantsValue)
+				print(thermoProductsValue)
+				print(thermoStoich)
+
+				overallReactionString = ''
+			
+				for znum in range(0,len(thermoReactants[jnum])):
+					overallReactionString = overallReactionString+thermoReactants[jnum][znum]
+					if znum != len(thermoReactants[jnum])-1:
+						overallReactionString = overallReactionString + ' + '
+
+				overallReactionString = overallReactionString + ' <-> '
+				
+				for znum in range(0,len(thermoProducts[jnum])):	
+					overallReactionString = overallReactionString + thermoProducts[jnum][znum]
+					if znum != len(thermoProducts[jnum])-1:
+						overallReactionString = overallReactionString + ' + '
+				print('Thermodynamic Constraint Equation:')
+				print(overallReactionString)
+				print('')
+
+				if reactor_kinetics_input['thermo values'][jnum] == 'none':
+					freeEnergyValue = 0
+
+					try:
+						for znum in range(0,len(thermoReactantsValue[jnum])):
+							calcValue = (-1)*(thermoStoich[jnum][znum])*molecularProperties(thermoReactantsValue[jnum][znum],'freeEnergy',temperature=reac_input['Reactor Temperature'])
+							freeEnergyValue += calcValue
+
+						for znum in range(0,len(thermoProductsValue[jnum])):
+
+							calcValue = (thermoStoich[jnum][znum])*molecularProperties(thermoProductsValue[jnum][znum],'freeEnergy',temperature=reac_input['Reactor Temperature'])
+							
+							freeEnergyValue += calcValue
+					except:
+						print('Failed to calculate free energy of reaction automatically. Please enter free energy manually.')
+						sys.exit()
+
+					reactor_kinetics_input['thermo values'][jnum] = freeEnergyValue
+					print('Free energy calculated automatically: ')
+					print(reactor_kinetics_input['thermo values'][jnum])
 					print('')
-					print('To set a thermodynamic constraints, all reactions must be reversible.')
-					print('Currently, elementary reaction '+str(jval)+' is irreversible and included in the thermo. equation.')
-					sys.exit()
+					
 
 				else:
-					for zen in range(0,necessary_values['molecules_in_gas_phase']):
-						if rate_array[jval-1][zen] == 1:
-							thermoProductsValue.append(necessary_values['reactants'][zen])						
-							if thermoStoich[jnum] != 1:
-								thermoProducts.append('('+str(thermoStoich[jnum])+')*'+necessary_values['reactants'][zen])
-							else:
-								thermoProducts.append(necessary_values['reactants'][zen])	
-
-						elif rate_array[jval-1][zen] == -1:
-							thermoReactantsValue.append(necessary_values['reactants'][zen])
-							if thermoStoich[jnum] != 1:
-								thermoReactants.append('('+str(thermoStoich[jnum])+')*'+necessary_values['reactants'][zen])
-							else:
-								thermoReactants.append(necessary_values['reactants'][zen])		
-			
-			overallReactionString = ''
-			
-			for jnum in range(0,len(thermoReactants)):
-				overallReactionString = overallReactionString+thermoReactants[jnum]
-				if jnum != len(thermoReactants)-1:
-					overallReactionString = overallReactionString + ' + '
-			overallReactionString = overallReactionString + ' <-> '
-			
-			for jnum in range(0,len(thermoProducts)):	
-				overallReactionString = overallReactionString + thermoProducts[jnum]
-				if jnum == len(thermoReactants)-1:
-					overallReactionString = overallReactionString + ' + '
-
-			print('Thermodynamic Constraint Equation:')
-			print(overallReactionString)
-			print('')
-			if len(reactor_kinetics_input['thermo values']) == 0: 
-				freeEnergyValue = 0
-
-				try:
-					for jnum in range(0,len(thermoReactantsValue)):
-						freeEnergyValue += (-1)*(thermoStoich[jnum])*molecularProperties(thermoReactantsValue[jnum],'freeEnergy',temperature=reac_input['Reactor Temperature'])
-
-					for jnum in range(0,len(thermoProductsValue)):
-						freeEnergyValue += (thermoStoich[jnum])*molecularProperties(thermoProductsValue[jnum],'freeEnergy',temperature=reac_input['Reactor Temperature'])
-				except:
-					print('Failed to calculate free energy of reaction automatically. Please enter free energy manually.')
-					sys.exit()
-
-				reactor_kinetics_input['thermo values'].append(freeEnergyValue)
-				print('Free energy calculated automatically: ')
-				print(reactor_kinetics_input['thermo values'][0])
-
-			else:
-				print('Free energy entered manually: ')
-				print(reactor_kinetics_input['thermo values'][0])
-
+					print('Free energy entered manually: ')
+					print(reactor_kinetics_input['thermo values'][jnum])
+					print('')
+		
 		#print(necessary_values['molecules_in_gas_phase'])
 
 		#print(thermoReactions)
@@ -424,6 +469,9 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		all_molecules = necessary_values['gas_num']
 	
 		u = Function(V)
+		if runge_kutta_approach == True:
+			W = Function(V)
+			W.interpolate(Constant(0.0))
 		u_n = Function(V)
 		u_temp = Function(V)
 		
@@ -516,7 +564,89 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			F = eval(necessary_values['F'])
 		except NameError:
 			errorOutput(reac_input['reactions_test'])
-	
+		
+		constantT = Constant(0)
+		if doe_form_pulse == True:
+			controls = []
+			b0Test2 = Expression(' x[0] < 0.002500001 ? 1 : 0', degree=0) # < - Smallest point in the mesh?
+			
+			#pulseIntensities = [Inert_pulse_conc/2,Inert_pulse_conc,Inert_pulse_conc*0,Inert_pulse_conc/2,Inert_pulse_conc/2]
+			#pulseTimes = [0.01,0.001,0.001,0.001,0.001]
+			reactant_feed = list(map(float, reac_input['Pulse Size'].split(',')))
+
+			intensityFunctions ={}
+			intensConst = {}
+			for jk in range(0,len(reactant_feed)):
+				intensConst['inten_'+str(jk)] = Constant(reactant_feed[jk]*Inert_pulse_conc)
+				controls.append(Control(intensConst['inten_'+str(jk)]))
+			
+			reactant_time = list(map(float, reac_input['Pulse Time'].split(',')))
+			
+			timeConst = {}
+
+			for jk in range(0,len(reactant_time)):
+				timeConst['sST_'+str(jk)] = Constant(reactant_time[jk]+0.001)
+
+			#pulseIntensities = [Inert_pulse_conc,Inert_pulse_conc,Inert_pulse_conc,Inert_pulse_conc,Inert_pulse_conc]
+			#intensConst['inten_0'] = Constant(pulseIntensities[0])
+			#intensConst['inten_1'] = Constant(pulseIntensities[1])
+			#intensConst['inten_2'] = Constant(pulseIntensities[2])
+			#intensConst['inten_3'] = Constant(pulseIntensities[3])
+			#intensConst['inten_4'] = Constant(pulseIntensities[4])
+
+			#pulseTimes = [0.001,0.011,0.001,0.001,0.001]
+			#pulseTimes = [0.001,0.011,0.001,0.001,0.001]
+			#timeConst = {}
+			#timeConst['sST_0'] = Constant(pulseTimes[0])
+			#timeConst['sST_1'] = Constant(pulseTimes[1])
+			#timeConst['sST_2'] = Constant(pulseTimes[2])
+			#timeConst['sST_3'] = Constant(pulseTimes[3])
+			#timeConst['sST_4'] = Constant(pulseTimes[4])
+
+			fnew = eval(pulse_functions(reac_input['reactions_test'],reac_input['Number of Inerts']))
+			
+
+			#sSI1 = Constant(pulseIntensities[0]) 
+			#sSI2 = Constant(pulseIntensities[1]) 
+			#sSI3 = Constant(pulseIntensities[2])
+			#sSI4 = Constant(pulseIntensities[3])
+			#sST1 = Constant(pulseTimes[0])
+			#sST2 = Constant(pulseTimes[1])
+			#sST3 = Constant(pulseTimes[2])
+			#sST4 = Constant(pulseTimes[3])
+			##f_doe = Expression('x[0]>=((1-0.5) - 0.5*0.01) - 2*0.0025 && x[0]<=((1-0.5) + 0.5*0.01) + 2*0.0025 ? 1 : 0', degree=0)
+			#F += -sSI1*b0Test2*exp(-(constantT - sST1)*(constantT - sST1)/(4*0.00000000001))*v_d['v_1']*dx
+			#F += -sSI2*b0Test2*exp(-(constantT - sST2)*(constantT - sST2)/(4*0.00000000001))*v_d['v_2']*dx
+			#F += -sSI3*b0Test2*exp(-(constantT - sST3)*(constantT - sST3)/(4*0.00000000001))*v_d['v_3']*dx
+			#F += -sSI4*b0Test2*exp(-(constantT - sST4)*(constantT - sST4)/(4*0.00000000001))*v_d['v_7']*dx
+			F += fnew
+			#sys.exit()
+
+		if doe_form_surf == True:
+			#f = Expression('x[0]>=((1-0.5) - 0.5*0.01) - 2*0.0025 && x[0]<=((1-0.5) + 0.5*0.01) + 2*0.0025 ? 1 : 0', degree=0)
+			initialCompositions = [0,12,12]
+
+			inComp = {}
+			reac_input['Initial Surface Composition'].reverse()
+
+			for z_num,z_sur in enumerate(reac_input['Initial Surface Composition']):
+				inComp[z_num] = Constant(z_sur)
+
+			#inComp[0] = Constant(initialCompositions[0])
+			#inComp[1] = Constant(initialCompositions[1])
+			#inComp[2] = Constant(initialCompositions[1])
+
+			#initialComp1 = Constant(initialCompositions[0])
+			#initialComp2 = Constant(initialCompositions[1])
+			
+			F += eval(surface_functions(reac_input['reactions_test'],reac_input['Number of Inerts']))
+			
+			#initialComp3 = Constant(277.77778)
+			#initialComp3 = Constant(initialCompositions[2])
+			#F += -initialComp1*exp(-(constantT-0.001)*(constantT-0.001)/(4*0.000000001))*v_d['v_4']*dx(1)#*b0Test2#
+			#F += -initialComp2*exp(-(constantT-0.001)*(constantT-0.001)/(4*0.000000001))*v_d['v_5']*dx(1)#*b0Test2#
+			#F += -initialComp3*exp(-(constantT-0.001)*(constantT-0.001)/(4*0.000000001))*v_d['v_6']*dx(1)#*b0Test2#
+
 		#############################################################
 		##### DEFINE METHOD OF OPTIMIZATION (OBJECTIVE FUNC.) #######
 		#############################################################
@@ -529,6 +659,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				if type(reac_input['Objective Points']) == float:
 					output_fitting = pointFitting(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],objSpecies)
 				elif reac_input['Objective Points'] == 'all':
+					print('objSpecies')
 					output_fitting = curveFitting(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],objSpecies)
 					
 				else:
@@ -834,6 +965,8 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			#############################################################
 			############ SOLVE PDEs AT EACH TIME STEP ###################
 			#############################################################
+
+			# Design of experiment form
 	
 			while t <= reac_input['Pulse Duration']:
 				graph_data['timing'].append(t)
@@ -868,7 +1001,13 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				#############################################################
 				######## STEP FOR CONSTRUCTING OBJECTIVE FUNCTION ###########
 				#############################################################
-	
+
+				if doe_form_pulse == True:
+					if t > 0:
+						jfunc_2 += assemble(inner(u_n[4]*u_n[5],u_n[4]*u_n[5])*dx(1))
+					else:
+						jfunc_2 = assemble(inner(u_n[4]*u_n[5],u_n[4]*u_n[5])*dx(1))
+
 				if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or sampling == True or (sens_type == 'total' and reac_input['Sensitivity Analysis'].lower() == 'true') or fit_temperature == True:
 	
 					# Define the objective function 	
@@ -881,9 +1020,9 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 						for k_fitting in range(0,len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])])):
 						
 							if objSpecies[k_fitting] == '1':
-															
+									
 								if round(t,6) in output_fitting[legend_label[k_fitting]]['times']:
-										
+									
 									c_exp = output_fitting[legend_label[k_fitting]]['values'][output_fitting[legend_label[k_fitting]]['times'].index(round(t,6))]
 									slope = (-c_exp)/(1/mesh_size)
 									intercept = c_exp - ((1-(1/mesh_size))*slope)
@@ -899,24 +1038,43 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 	
 									except UnboundLocalError:
 										if legend_label[k_fitting] != 'Inert':
-											w_temp = Expression(str(1),degree=0) # str(freeEnergyValue)
-											w_temp2 = interpolate(w_temp,V_du)
-											w4 = project(w_temp2,V_du)		
-											thermoWeight = 1e-1#1e-2									
+											w_temp_2 = Expression('1',degree=0) # deltaG = sum(-R*T*ln(kf/kb))
+											w_temp2_2 = interpolate(w_temp_2,V_du)
+											w4_2 = project(w_temp2_2,V_du)		
+	
 											jfunc_2 = assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))
+											
 											if thermoConstraints == True:
+												w_temp = {}
+												w_temp2 = {}
+												w4 = {}
+												tempFunc = {}
 
-												for jnum,jval in enumerate(thermoReactions):
-													if jnum == 0:
-														tempFunc = thermoStoich[jnum]*(r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
-													else:
-														tempFunc += thermoStoich[jnum]*(-8.314*reac_input['Reactor Temperature'])*(r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
-												tempFunc = tempFunc*thermoWeight
-												jfunc_2 += assemble(inner(tempFunc-w4,tempFunc-w4)*dx())
+												for kip in thermoReactions.keys():
+													w_temp[kip] = Expression(str(reactor_kinetics_input['thermo values'][kip]),degree=0) # deltaG = sum(-R*T*ln(kf/kb))
+													w_temp2[kip] = interpolate(w_temp[kip],V_du)
+													w4[kip] = project(w_temp2[kip],V_du)		
+													thermoWeight = 1e-2	
 
+													for jnum,jval in enumerate(thermoReactions[kip]):
+																				
+														if jnum == 0:
+															tempFunc[kip] = thermoStoich[kip][jnum]*(-0.008314*reac_input['Reactor Temperature'])*ln(r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
+														else:
+															tempFunc[kip] += thermoStoich[kip][jnum]*(-0.008314*reac_input['Reactor Temperature'])*ln(r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
+
+													#tempFunc = (-w4)*thermoWeight
+													#tempFunc = (tempFunc)*thermoWeight
+													#tempFunc_2 = (w4_2)*thermoWeight
+													tempFunc[kip] = (tempFunc[kip]-w4[kip])*thermoWeight
+													jfunc_2 += assemble(inner(tempFunc[kip],tempFunc[kip])*dx())
+													#jfunc_2 += assemble(inner(tempFunc,tempFunc)*dx())
+													print('Simulated Thermo Value')
+													print(jfunc_2)
+													#sys.exit()
 										else:
 											pass
-	
+										
 					if selectivity == True:
 						w_new = Expression('1',degree=0)
 						w_new2 = interpolate(w_new,V_du)
@@ -994,231 +1152,247 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 									
 								except UnboundLocalError:
 									jfunc_2 = assemble(inner(u_n[necessary_values['surf_num']+k_fitting-2]*to_flux[k_fitting] - w3,u_n[necessary_values['surf_num']+k_fitting-2]*to_flux[k_fitting] - w3)*dP(1))
-	
-				if round(t,6) not in species_time:
-					#timeDiff = round(t,6)
-					try:
-						if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true' or reac_input['Sensitivity Analysis'].lower() == 'true':
-							# C.N. method
-							if t > 0.0011+timeDiff:
-								solver.solve()
-							# B.E. method
-							else:
-								solvertemp.solve()
-	
-								if round(t,6) == 0.001+timeDiff:
-									dt = reac_input['Pulse Duration']/reac_input['Time Steps']
-									dk.assign(dt)
-									u_n.assign(u)
+				if runge_kutta_approach == False:	
+					if round(t,6) not in species_time:
+						#timeDiff = round(t,6)
+						try:
+							if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true' or reac_input['Sensitivity Analysis'].lower() == 'true':
+								# C.N. method
+								if t > 0.0011+timeDiff:
 									solver.solve()
-						else:
-							if t > 0.0011+timeDiff:
-								solver.solve(annotate = False)
+								# B.E. method
+								else:
+									solvertemp.solve()
+		
+									if round(t,6) == 0.001+timeDiff:
+										dt = reac_input['Pulse Duration']/reac_input['Time Steps']
+										dk.assign(dt)
+										u_n.assign(u)
+										solver.solve()
 							else:
-								solvertemp.solve(annotate=False)
-	
-								if round(t,6) == 0.001+timeDiff:
-									dt = reac_input['Pulse Duration']/reac_input['Time Steps']
-									dk.assign(dt)
-									u_n.assign(u)
-									solver.solve()
+								if t > 0.0011+timeDiff:
+									solver.solve(annotate = False)
+								else:
+									solvertemp.solve(annotate=False)
+		
+									if round(t,6) == 0.001+timeDiff:
+										dt = reac_input['Pulse Duration']/reac_input['Time Steps']
+										dk.assign(dt)
+										u_n.assign(u)
+										solver.solve()
 								
-						#############################################################
-						################### STORE THIN-ZONE DATA ####################
-						#############################################################
-	
-						if reac_input['Thin-Zone Analysis'].lower() == 'true':
-							
-							#if len(cat_data['rawData'].shape) > 1:
-							#	print('greater')
-							arrayNew = np.vstack((cat_data['rawData'],u_n.vector().get_local()))
-							#else:	
-							#	print('less')
-							#arrayNew = np.stack((cat_data['rawData'],u_n.vector().get_local()[:,0]),axis=1)
-							cat_data['rawData'] = arrayNew
-							#np.append(cat_data['rawData'],u_n.vector().get_local())
-							#cat_data['rawData'].append(u_n.vector().get_local())
-	
-							#for jk in range(0,all_molecules+1):
-							#	new_values = [] 
-							#	cat_values = []
-							#
-							#	#for z in range(0,100):
-							#	#### for z in range(4500,int((reac_input['Mesh Size'])+1)+additionalCells):
-							#	#for z in range(0,100):
-							#	#for z in range(4000,int((reac_input['Mesh Size'])-1)+additionalCells+3):
-							#	#print(mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])-1)
-							#	#print((int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])-1)+additionalCells)
-							#	#sys.exit()
-							#	#for z in range(0,int((reac_input['Mesh Size'])+1)+additionalCells):
-							#	
-							#	#for z in range(mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])-1,int((cat_location + 0.5*frac_length)*reac_input['Mesh Size'])):
-							#	if additionalCells == 0:
-							#		#print(mp.int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])-1)
-							#		#print(int((cat_location + 0.5*frac_length)*reac_input['Mesh Size']))
-							#		#sys.exit()
-							#		for z in range(0, int(reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))-meshCells):
-							#		#for z in range(mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size']),int((cat_location + 0.5*frac_length)*reac_input['Mesh Size'])):
-							#			try:
-							#				#value_cat = u_n.vector().get_local()[z*(all_molecules)-(all_molecules)+jk]
-							#				value_cat = u_n.vector().get_local()[z*(all_molecules)+jk]
-							#				cat_values.append(value_cat)
-							#	
-							#			except AttributeError:
-							#				value_cat = u_n.vector().get_local()[z*(all_molecules)]
-							#				sys.exit()
-							#				#cat_values[0] += value_cat*dx_r
-							#				cat_values[0] += value_cat*dx_r/(2**(int(reac_input['Catalyst Mesh Density'])))
-							#	else:
-							#		#print(mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size']))
-							#		#print(int((cat_location + 0.5*frac_length)*reac_input['Mesh Size']))
-							#		#sys.exit()
-							#		for z in range(0, int(reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))-meshCells):
-							#
-							#		#for z in range(mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size']),int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))):
-							#			#print(z)
-							#			try:
-							#				value_cat = u_n.vector().get_local()[z*(all_molecules)+jk]
-							#				cat_values.append(value_cat)
-							#	
-							#			except AttributeError:
-							#				value_cat = u_n.vector().get_local()[z*(all_molecules)]
-							#				sys.exit()
-							#				cat_values[0] += value_cat*dx_r/(2**(int(reac_input['Catalyst Mesh Density'])))
-							#		###sys.exit()
-							#
-							#	cat_data['conVtime_'+str(jk)].append(cat_values)
-	
-					except RuntimeError:
-						print('Time Step Failure')
-						sys.exit()
-					
-				else:
-					dt = 0.0001
-					dk.assign(dt)
-	
-					if round(t,6) in species_time:
-						timeDiff = round(t,6)
-	
-					if reac_input['Reactor Type'] == 'tap':
-						
-						if reac_input['Fit Parameters'].lower() == 'true':
-							if t == 0:
-								for k in range(0,int(reac_input['Number of Reactants'])):
-									u_n.vector()[int((all_molecules)*((reac_input['Mesh Size']+1)+additionalCells))+k-(all_molecules)] = -1e-10
-	
-						#if ',' in str(species_pulse_list):
-						
-						for k in range(0,int(reac_input['Number of Reactants'])):
+							#############################################################
+							################### STORE THIN-ZONE DATA ####################
+							#############################################################
+		
+							if reac_input['Thin-Zone Analysis'].lower() == 'true':
 								
-							if species_time[k] == round(t,6):
-								u_n.vector()[int((all_molecules)*((reac_input['Mesh Size']+1)+(meshCells*2**(int(reac_input['Catalyst Mesh Density']))-meshCells)))+k-(all_molecules)] = float(species_pulse_list[k])*Inert_pulse_conc#list_species_pulse[k]
-									
-						#else:
-						#	u_n.vector()[int((all_molecules)*(reac_input['Mesh Size']-10)-1)-(all_molecules)] = float(species_pulse_list)*Inert_pulse_conc
-	
-						for k_step in range(0,int(reac_input['Number of Inerts'])):
-							if species_time[-1-k_step] == round(t,6):
-								u_n.vector()[int((all_molecules)*((reac_input['Mesh Size']+1)+(meshCells*2**(int(reac_input['Catalyst Mesh Density']))-meshCells))-1-k_step)] = float(species_pulse_list[-1-k_step])*Inert_pulse_conc###??? Added the porosity contribution
-								
-						#############################################################
-						################### STORE THIN-ZONE DATA ####################
-						#############################################################
-	
-						if reac_input['Thin-Zone Analysis'].lower() == 'true':
-							
-							if round(t,6) != 0:
+								#if len(cat_data['rawData'].shape) > 1:
+								#	print('greater')
 								arrayNew = np.vstack((cat_data['rawData'],u_n.vector().get_local()))
+								#else:	
+								#	print('less')
+								#arrayNew = np.stack((cat_data['rawData'],u_n.vector().get_local()[:,0]),axis=1)
 								cat_data['rawData'] = arrayNew
-							else:
-								cat_data['rawData'] = u_n.vector().get_local()
+								#np.append(cat_data['rawData'],u_n.vector().get_local())
+								#cat_data['rawData'].append(u_n.vector().get_local())
+		
+								#for jk in range(0,all_molecules+1):
+								#	new_values = [] 
+								#	cat_values = []
+								#
+								#	#for z in range(0,100):
+								#	#### for z in range(4500,int((reac_input['Mesh Size'])+1)+additionalCells):
+								#	#for z in range(0,100):
+								#	#for z in range(4000,int((reac_input['Mesh Size'])-1)+additionalCells+3):
+								#	#print(mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])-1)
+								#	#print((int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])-1)+additionalCells)
+								#	#sys.exit()
+								#	#for z in range(0,int((reac_input['Mesh Size'])+1)+additionalCells):
+								#	
+								#	#for z in range(mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])-1,int((cat_location + 0.5*frac_length)*reac_input['Mesh Size'])):
+								#	if additionalCells == 0:
+								#		#print(mp.int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])-1)
+								#		#print(int((cat_location + 0.5*frac_length)*reac_input['Mesh Size']))
+								#		#sys.exit()
+								#		for z in range(0, int(reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))-meshCells):
+								#		#for z in range(mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size']),int((cat_location + 0.5*frac_length)*reac_input['Mesh Size'])):
+								#			try:
+								#				#value_cat = u_n.vector().get_local()[z*(all_molecules)-(all_molecules)+jk]
+								#				value_cat = u_n.vector().get_local()[z*(all_molecules)+jk]
+								#				cat_values.append(value_cat)
+								#	
+								#			except AttributeError:
+								#				value_cat = u_n.vector().get_local()[z*(all_molecules)]
+								#				sys.exit()
+								#				#cat_values[0] += value_cat*dx_r
+								#				cat_values[0] += value_cat*dx_r/(2**(int(reac_input['Catalyst Mesh Density'])))
+								#	else:
+								#		#print(mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size']))
+								#		#print(int((cat_location + 0.5*frac_length)*reac_input['Mesh Size']))
+								#		#sys.exit()
+								#		for z in range(0, int(reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))-meshCells):
+								#
+								#		#for z in range(mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size']),int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))):
+								#			#print(z)
+								#			try:
+								#				value_cat = u_n.vector().get_local()[z*(all_molecules)+jk]
+								#				cat_values.append(value_cat)
+								#	
+								#			except AttributeError:
+								#				value_cat = u_n.vector().get_local()[z*(all_molecules)]
+								#				sys.exit()
+								#				cat_values[0] += value_cat*dx_r/(2**(int(reac_input['Catalyst Mesh Density'])))
+								#		###sys.exit()
+								#
+								#	cat_data['conVtime_'+str(jk)].append(cat_values)
 	
-							#for jk in range(0,all_molecules+1):
-								#new_values = [] 
-								#cat_values = []
-	
-								#if additionalCells == 0:
-								#	for z in range(0, int(reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))-meshCells):
-							
-								#		try:
-								#			value_cat = u_n.vector().get_local()[z*(all_molecules)+jk]
-								#			cat_values.append(value_cat)
-								#		except AttributeError:
-								#			value_cat = u_n.vector().get_local()[z*(all_molecules)]
-								#			sys.exit()
-								#			
-								#			cat_values[0] += value_cat*dx_r/(2**(int(reac_input['Catalyst Mesh Density'])))
-								#else:
-								#	for z in range(0, int(reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))-meshCells):
-								#		try:
-								#			value_cat = u_n.vector().get_local()[z*(all_molecules)+jk]
-								#			cat_values.append(value_cat)
-								#		except AttributeError:
-								#			value_cat = u_n.vector().get_local()[z*(all_molecules)]
-								#			sys.exit()
-								#			cat_values[0] += value_cat*dx_r/(2**(int(reac_input['Catalyst Mesh Density'])))							
-	
-								#cat_data['conVtime_'+str(jk)].append(cat_values)
-	
-					#############################################################
-					############### DEFINE INITIAL COMPOSITION ##################
-					#############################################################
-	
-					if k_pulse == 0 and round(t,6) == 0:
-						if additionalCells == 0:
-	
-							for z in range(mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])+1,int((cat_location + 0.5*frac_length)*reac_input['Mesh Size'])+2):
-								if ',' in str(reac_input['Initial Surface Composition']):
-									for z_num,z_sur in enumerate(reac_input['Initial Surface Composition']):	
-										if int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])-1 <= 0:
-											u_n.vector()[(all_molecules)-(int(reac_input['Number of Inerts'])+z_num+1)] = float(z_sur)
-										else:
-											u_n.vector()[z*(all_molecules)-(int(reac_input['Number of Inerts'])+z_num+1)] = float(z_sur)
-	
-								else:
-									if int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])-1 <= 0:
-										u_n.vector()[(all_molecules)-(2)] = float(species_pulse_list)
-									else:
-										u_n.vector()[z*(all_molecules)-(2)] = float(species_pulse_list)
-	
-						else:
-	
-							transTest1 = mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])+1
-							if ',' in str(reac_input['Initial Surface Composition']):
-								for z_num,z_sur in enumerate(reac_input['Initial Surface Composition']):	
-									u_n.vector()[transTest1*(all_molecules)-(int(reac_input['Number of Inerts'])+z_num+1)] = float(z_sur)*0.5
-	
-							transTest2 = int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))
-							if ',' in str(reac_input['Initial Surface Composition']):
-								for z_num,z_sur in enumerate(reac_input['Initial Surface Composition']):	
-									u_n.vector()[transTest2*(all_molecules)-(int(reac_input['Number of Inerts'])+z_num+1)] = float(z_sur)*0.5
-	
-	
-							for z in range(mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])+2,int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))):
-								if ',' in str(reac_input['Initial Surface Composition']):
-									for z_num,z_sur in enumerate(reac_input['Initial Surface Composition']):	
-										if int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])-1 <= 0:
-											u_n.vector()[(all_molecules)-(int(reac_input['Number of Inerts'])+z_num+1)] = float(z_sur)
-										else:
-											u_n.vector()[z*(all_molecules)-(int(reac_input['Number of Inerts'])+z_num+1)] = float(z_sur)
-	
-								else:
-									if int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])-1 <= 0:
-										u_n.vector()[(all_molecules)-(2)] = float(species_pulse_list)
-									else:
-										u_n.vector()[z*(all_molecules)-(2)] = float(species_pulse_list)
+						except RuntimeError:
+							print('Time Step Failure')
+							sys.exit()
 						
-					try:
-						if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true' or reac_input['Sensitivity Analysis'].lower() == 'true':
-							solvertemp.solve()
-	
+					else:
+						if dt == 0.0001:
+							pass
 						else:
-							solvertemp.solve(annotate = False)
+							dt = 0.0001
+							dk.assign(dt)
+		
+						if round(t,6) in species_time:
+							timeDiff = round(t,6)
+		
+						if reac_input['Reactor Type'] == 'tap':
+							
+							if reac_input['Fit Parameters'].lower() == 'true':
+								if t == 0:
+									for k in range(0,int(reac_input['Number of Reactants'])):
+										u_n.vector()[int((all_molecules)*((reac_input['Mesh Size']+1)+additionalCells))+k-(all_molecules)] = -1e-10
+		
+							#if ',' in str(species_pulse_list):
+							
+							if doe_form_pulse == False:
+								# Define: Pulse
 	
-					except RuntimeError:
-						print('Time Step Failure')
-						sys.exit()
+								# Published form
+								for k in range(0,int(reac_input['Number of Reactants'])):
+									
+									if species_time[k] == round(t,6):
+										u_n.vector()[int((all_molecules)*((reac_input['Mesh Size']+1)+(meshCells*2**(int(reac_input['Catalyst Mesh Density']))-meshCells)))+k-(all_molecules)] = float(species_pulse_list[k])*Inert_pulse_conc#list_species_pulse[k]
+										
+								#else:
+								#	u_n.vector()[int((all_molecules)*(reac_input['Mesh Size']-10)-1)-(all_molecules)] = float(species_pulse_list)*Inert_pulse_conc
+							
+								# Define: Pulse
+								for k_step in range(0,int(reac_input['Number of Inerts'])):
+									if species_time[-1-k_step] == round(t,6):
+										u_n.vector()[int((all_molecules)*((reac_input['Mesh Size']+1)+(meshCells*2**(int(reac_input['Catalyst Mesh Density']))-meshCells))-1-k_step)] = float(species_pulse_list[-1-k_step])*Inert_pulse_conc###??? Added the porosity contribution
+								
+	 						#############################################################
+							################### STORE THIN-ZONE DATA ####################
+							#############################################################
+		
+							if reac_input['Thin-Zone Analysis'].lower() == 'true':
+								
+								if round(t,6) != 0:
+									arrayNew = np.vstack((cat_data['rawData'],u_n.vector().get_local()))
+									cat_data['rawData'] = arrayNew
+								else:
+									cat_data['rawData'] = u_n.vector().get_local()
+		
+								#for jk in range(0,all_molecules+1):
+									#new_values = [] 
+									#cat_values = []
+		
+									#if additionalCells == 0:
+									#	for z in range(0, int(reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))-meshCells):
+								
+									#		try:
+									#			value_cat = u_n.vector().get_local()[z*(all_molecules)+jk]
+									#			cat_values.append(value_cat)
+									#		except AttributeError:
+									#			value_cat = u_n.vector().get_local()[z*(all_molecules)]
+									#			sys.exit()
+									#			
+									#			cat_values[0] += value_cat*dx_r/(2**(int(reac_input['Catalyst Mesh Density'])))
+									#else:
+									#	for z in range(0, int(reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))-meshCells):
+									#		try:
+									#			value_cat = u_n.vector().get_local()[z*(all_molecules)+jk]
+									#			cat_values.append(value_cat)
+									#		except AttributeError:
+									#			value_cat = u_n.vector().get_local()[z*(all_molecules)]
+									#			sys.exit()
+									#			cat_values[0] += value_cat*dx_r/(2**(int(reac_input['Catalyst Mesh Density'])))							
+		
+									#cat_data['conVtime_'+str(jk)].append(cat_values)
+	
+						#############################################################
+						############### DEFINE INITIAL COMPOSITION ##################
+						#############################################################
+						
+						# Define: Surface
+						if k_pulse == 0 and round(t,6) == 0:
+							if doe_form_surf == False:
+								print('doe_form_surf false')
+								if additionalCells == 0:
+			
+									for z in range(mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])+1,int((cat_location + 0.5*frac_length)*reac_input['Mesh Size'])+2):
+										if ',' in str(reac_input['Initial Surface Composition']):
+											for z_num,z_sur in enumerate(reac_input['Initial Surface Composition']):	
+												if int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])-1 <= 0:
+													u_n.vector()[(all_molecules)-(int(reac_input['Number of Inerts'])+z_num+1)] = float(z_sur)
+												else:
+													u_n.vector()[z*(all_molecules)-(int(reac_input['Number of Inerts'])+z_num+1)] = float(z_sur)
+			
+										else:
+											if int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])-1 <= 0:
+												u_n.vector()[(all_molecules)-(2)] = float(species_pulse_list)
+											else:
+												u_n.vector()[z*(all_molecules)-(2)] = float(species_pulse_list)
+			
+								else:
+			
+									transTest1 = mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])+1
+									if ',' in str(reac_input['Initial Surface Composition']):
+										for z_num,z_sur in enumerate(reac_input['Initial Surface Composition']):	
+											u_n.vector()[transTest1*(all_molecules)-(int(reac_input['Number of Inerts'])+z_num+1)] = float(z_sur)*0.5
+			
+									transTest2 = int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))
+									if ',' in str(reac_input['Initial Surface Composition']):
+										for z_num,z_sur in enumerate(reac_input['Initial Surface Composition']):	
+											u_n.vector()[transTest2*(all_molecules)-(int(reac_input['Number of Inerts'])+z_num+1)] = float(z_sur)*0.5
+			
+			
+									for z in range(mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])+2,int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))):
+										if ',' in str(reac_input['Initial Surface Composition']):
+											for z_num,z_sur in enumerate(reac_input['Initial Surface Composition']):	
+												if int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])-1 <= 0:
+													u_n.vector()[(all_molecules)-(int(reac_input['Number of Inerts'])+z_num+1)] = float(z_sur)
+												else:
+													u_n.vector()[z*(all_molecules)-(int(reac_input['Number of Inerts'])+z_num+1)] = float(z_sur)
+		
+										else:
+											if int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])-1 <= 0:
+												u_n.vector()[(all_molecules)-(2)] = float(species_pulse_list)
+											else:
+												u_n.vector()[z*(all_molecules)-(2)] = float(species_pulse_list)
+							
+						try:
+							if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true' or reac_input['Sensitivity Analysis'].lower() == 'true':
+								solvertemp.solve()
+		
+							else:
+								solvertemp.solve(annotate = False)
+		
+						except RuntimeError:
+							print('Time Step Failure')
+							sys.exit()
 				
+				elif runge_kutta_approach == True:
+					timeDomain = [0.0, 5.0]
+					#problem = NonlinearVariationalProblem(F,u,bcs,J)
+					obj = ESDIRK(timeDomain, W, F, bcs=bcs)
+
 				#############################################################
 				################ STORE SENSITIVITY DATA #####################
 				#############################################################
@@ -1247,10 +1421,12 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 						
 				
 				sens_time_list.append(t)
-	
 				progressBar(t, reac_input['Pulse Duration'])
+				#time.sleep(0.2)
 				u_n.assign(u)
+				
 				t += dt
+				constantT.assign(round(t,6))
 	
 			print()
 			print(processTime(start_time))
@@ -1322,7 +1498,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				dj_values.append(djv)
 				mv = [v.values()[0] for v in m]
 				x_values.append(mv)
-				print(time.time() - start_time)
+				print("Derivative Time: "+str(time.time() - start_time))
 				with open('./'+reac_input['Output Folder Name']+'_folder/fitting/optIter.txt', 'w') as f:
 					f.write("Contents: "+str(it_times))
 					f.write('\n')
@@ -1497,8 +1673,8 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			#############################################################
 	
 			fitting_time = time.time()
-			
-			if (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true' or fit_temperature == True):
+
+			if (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true' or fit_temperature == True or doe_form_pulse == True):
 	
 				start_time = time.time()
 				print()
@@ -1531,7 +1707,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				up_bounds = []
 	
 				for gt in range(0,len(controls)):
-					low_bounds.append(0)
+					low_bounds.append(1e-144)
 					up_bounds.append(np.inf)
 	
 				#dj = compute_gradient(jfunc_2, controls)
@@ -1550,7 +1726,10 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				elif reac_input['Optimization Method'] == 'basinhopping':
 					u_opt_2 = minimize(rf_2, method = 'basinhopping', bounds = (low_bounds,up_bounds),tol=1e-9, options={"ftol":1e-9,"gtol":1e-9})
 				elif reac_input['Optimization Method'] == 'nonlinear':
-					problem = MinimizationProblem(rf_2,bounds = (low_bounds,up_bounds))
+					print('non-linear optimization')
+					print(low_bounds)
+					print(up_bounds)
+					problem = MinimizationProblem(rf_2) # ,bounds = (low_bounds,up_bounds)
 					ipoptSolver = IPOPTSolver(problem)
 					rf_2 = ipoptSolver.solve()
 				else:
@@ -1889,6 +2068,11 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 
 		reactor_kinetics_input['Advection'] = 'FALSE'
 
+		if type(experiment_design) == list:
+			reactor_kinetics_input['experiment_design']=experiment_design
+		else:
+			reactor_kinetics_input['experiment_design'] = None
+
 		if reactor_kinetics_input['Sensitivity Analysis'].lower() == 'true' or reactor_kinetics_input['Uncertainty Quantification'].lower() == 'true':
 			if sens_type == 'trans' or reactor_kinetics_input['Uncertainty Quantification'].lower() == 'true':
 				for parameters in kinetic_parameters:
@@ -2019,6 +2203,7 @@ def fluxGraph(input_file = './input_file.csv',pulse=None,dispExper=False,analyti
 	reac_input = reactor_kinetics_input
 	reac_input['Pulse Duration'] = timeFunc
 	reac_input['Infinite Inert'] = 'FALSE'
+	reac_input['Display Experimental Data'] = 'False'
 
 	if dispExper != False:
 		reac_input['Display Experimental Data'] = 'TRUE'
@@ -2046,7 +2231,7 @@ def fluxGraph(input_file = './input_file.csv',pulse=None,dispExper=False,analyti
 	monitored_gas = necessary_values['molecules_in_gas_phase']
 	reac_input['Scale Output'] = 'FALSE'
 
-	reac_input['Objective Species'] = '1,1,1,0'
+	reac_input['Objective Species'] = '1,1,1,0,0'
 
 
 	if '/' in str(reac_input['Pulse Size']):
@@ -2093,6 +2278,8 @@ def fluxGraph(input_file = './input_file.csv',pulse=None,dispExper=False,analyti
 	dk = Constant(reac_input['Pulse Duration']/reac_input['Time Steps'])
 	eb = np.array((reac_input['Void Fraction Inert'],reac_input['Void Fraction Catalyst'],reac_input['Void Fraction Inert']))
 	ca = (reac_input['Reactor Radius']**2)*3.14159 
+
+	# Define: Pulse
 	point_volume = dx_r * ca * eb[0]
 	Inert_pulse_conc = reac_input['Reference Pulse Size']/(point_volume)
 		
@@ -2502,6 +2689,8 @@ def input_construction(reactor_name='./reactor_definition.csv',reaction_name='./
 
 	newOutputFile.to_csv(new_name,header=None,index=False)
 
+#def individual_objective_value()
+
 def exampleReaction(reaction_file = './reaction_example.csv'):
 
 	parameters = ['CO + * <-> CO*',1,10]
@@ -2661,6 +2850,9 @@ def bulk_structure(reactor_setup,iterDict,baseName=None):
 
 	df2.to_csv('./'+baseName+'/'+'changedVariables.csv',header=None,index=False)
 
+def design_experiment(timeFunc,inputFile = './input_file.csv',input_form='new',altVariables=['pulses','time']):
+	print(altVariables)
+	general_run(timeFunc,input_file = inputFile,inputForm = input_form,experiment_design=altVariables)
 
 def gen_help(parameter):
 	sys.exit()
