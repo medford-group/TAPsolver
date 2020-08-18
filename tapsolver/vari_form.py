@@ -152,9 +152,9 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,number_of_inerts,a
 			
 			together = neg+pos
 	
-			if k in gForward:#,Ga_in,dG_in
-				new_neg = '(kbt*constantTemp/hb)*exp(-Ga_in["Ga'+str(k)+'"])'
-				#new_neg = '(kbt*constantTemp/hb)*exp(-Ga_in["Ga'+str(k)+'"]/(Rgas*constantTemp))'
+			if k in gForward:#,r_Ga_in,r_dG_in
+				#new_neg = '(kbt*constantTemp/hb)*exp(-r_Ga_in["Ga'+str(k)+'"])'
+				new_neg = '(kbt*constantTemp/hb)*exp(-r_Ga_in["Ga'+str(k)+'"])'
 
 			elif k in arrForward:
 				new_neg = 'r_Ao["Aof'+str(k)+'"]*exp(-r_Ea["Eaf'+str(k)+'"]/(Rgas*constantTemp))'
@@ -163,11 +163,13 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,number_of_inerts,a
 				new_neg = 'r_const["kf'+str(k)+'"]'
 				
 			for j,v in enumerate(neg):
-				new_neg = new_neg+"*(u_d['u_"+str(v+1)+"']**"+str(abs(val_neg[j]))+")"#
-			
+				
+				new_neg = new_neg+"*(u_d['u_"+str(v+1)+"']**"+str(abs(val_neg[j]))+")"
+				#new_neg = new_neg+"*exp(thermo_drc['"+str(v+1)+"'])*(u_d['u_"+str(v+1)+"']**"+str(abs(val_neg[j]))+")"#
+
 			if k in gForward:
-				new_pos = '(kbt*constantTemp/hb)*exp((-Ga_in["Ga'+str(k)+'"]+dG_in["dG'+str(k)+'"]))'
-				#new_pos = '(kbt*constantTemp/hb)*exp((-Ga_in["Ga'+str(k)+'"]+dG_in["dG'+str(k)+'"])/(Rgas*constantTemp))'
+				#new_pos = '(kbt*constantTemp/hb)*exp((-r_Ga_in["Ga'+str(k)+'"]+r_dG_in["dG'+str(k)+'"]))'
+				new_pos = '(kbt*constantTemp/hb)*exp((-(r_Ga_in["Ga'+str(k)+'"]-r_dG_in["dG'+str(k)+'"])))'
 			
 			elif k in arrBackward:
 				new_pos = 'r_Ao["Aob'+str(k)+'"]*exp(-r_Ea["Eab'+str(k)+'"]/(Rgas*constantTemp))'	
@@ -217,9 +219,10 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,number_of_inerts,a
 			
 			together = neg+pos
 
-			if k in gForward:#,Ga_in,dG_in
-				new_neg = '(kbt*constantTemp/hb)*exp(-Ga_in["Ga'+str(k)+'"])'
-				#new_neg = '(kbt*constantTemp/hb)*exp(-Ga_in["Ga'+str(k)+'"]/(Rgas*constantTemp))'
+			if k in gForward:#,r_Ga_in,r_dG_in
+				
+				#new_neg = '(kbt*constantTemp/hb)*exp(-r_Ga_in["Ga'+str(k)+'"])'
+				new_neg = '(kbt*constantTemp/hb)*exp(-r_Ga_in["Ga'+str(k)+'"])'
 
 			elif k in arrForward:
 				new_neg = 'r_Ao["Aof'+str(k)+'"]*exp(-r_Ea["Eaf'+str(k)+'"]/(Rgas*constantTemp))'
@@ -231,8 +234,9 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,number_of_inerts,a
 				new_neg = new_neg+"*(u_nd['u_n"+str(v+1)+"']**"+str(abs(val_neg[j]))+")"
 			
 			if k in gForward:
-				new_pos = '(kbt*constantTemp/hb)*exp((-Ga_in["Ga'+str(k)+'"]+dG_in["dG'+str(k)+'"]))'
-				#new_pos = '(kbt*constantTemp/hb)*exp((-Ga_in["Ga'+str(k)+'"]+dG_in["dG'+str(k)+'"])/(Rgas*constantTemp))'
+				
+				#new_pos = '(kbt*constantTemp/hb)*exp((-r_Ga_in["Ga'+str(k)+'"]+r_dG_in["dG'+str(k)+'"]))'
+				new_pos = '(kbt*constantTemp/hb)*exp((-(r_Ga_in["Ga'+str(k)+'"]-r_dG_in["dG'+str(k)+'"])))'
 		
 			elif k in arrBackward:
 				new_pos = 'r_Ao["Aob'+str(k)+'"]*exp(-r_Ea["Eab'+str(k)+'"]/(Rgas*constantTemp))'
@@ -358,7 +362,7 @@ def make_batch_equation(reactions_n,reactants_number,arrForward,arrBackward,gFor
 		together = neg+pos
 	
 		if k in gForward:
-			new_neg = '(kbt*constantTemp/hb)*exp(-Ga_in["Ga'+str(k)+'"])'
+			new_neg = '(kbt*constantTemp/hb)*exp(-r_Ga_in["Ga'+str(k)+'"])'
 
 		elif k in arrForward:
 			new_neg = 'r_Ao["Aof'+str(k)+'"]*exp(-r_Ea["Eaf'+str(k)+'"]/(Rgas*constantTemp))'
@@ -370,7 +374,7 @@ def make_batch_equation(reactions_n,reactants_number,arrForward,arrBackward,gFor
 			new_neg = new_neg+"*(u_d['u_"+str(v+1)+"']**"+str(abs(val_neg[j]))+")"#
 			
 		if k in gForward:
-			new_pos = '(kbt*constantTemp/hb)*exp((-Ga_in["Ga'+str(k)+'"]+dG_in["dG'+str(k)+'"]))'
+			new_pos = '(kbt*constantTemp/hb)*exp((-(r_Ga_in["Ga'+str(k)+'"]-r_dG_in["dG'+str(k)+'"])))'
 			
 		elif k in arrBackward:
 			new_pos = 'r_Ao["Aob'+str(k)+'"]*exp(-r_Ea["Eab'+str(k)+'"]/(Rgas*constantTemp))'	
@@ -415,7 +419,7 @@ def make_batch_equation(reactions_n,reactants_number,arrForward,arrBackward,gFor
 			together = neg+pos
 
 			if k in gForward:
-				new_neg = '(kbt*constantTemp/hb)*exp(-Ga_in["Ga'+str(k)+'"])'
+				new_neg = '(kbt*constantTemp/hb)*exp(-r_Ga_in["Ga'+str(k)+'"])'
 
 			elif k in arrForward:
 				new_neg = 'r_Ao["Aof'+str(k)+'"]*exp(-r_Ea["Eaf'+str(k)+'"]/(Rgas*constantTemp))'
@@ -427,7 +431,7 @@ def make_batch_equation(reactions_n,reactants_number,arrForward,arrBackward,gFor
 				new_neg = new_neg+"*(u_nd['u_n"+str(v+1)+"']**"+str(abs(val_neg[j]))+")"
 			
 			if k in gForward:
-				new_pos = '(kbt*constantTemp/hb)*exp((-Ga_in["Ga'+str(k)+'"]+dG_in["dG'+str(k)+'"]))'
+				new_pos = '(kbt*constantTemp/hb)*exp((-(r_Ga_in["Ga'+str(k)+'"]-r_dG_in["dG'+str(k)+'"])))'
 		
 			elif k in arrBackward:
 				new_pos = 'r_Ao["Aob'+str(k)+'"]*exp(-r_Ea["Eab'+str(k)+'"]/(Rgas*constantTemp))'
@@ -632,7 +636,6 @@ def rateEqs(rate_array,rev_irr,gForward,arrForward,arrBackward):
 		
 		F = ''
 
-
 		neg = []
 		val_neg = []
 		pos = []
@@ -656,7 +659,7 @@ def rateEqs(rate_array,rev_irr,gForward,arrForward,arrBackward):
 			new_neg = 'r_Ao["Aof'+str(k)+'"]*exp(-r_Ea["Eaf'+str(k)+'"]/(Rgas*constantTemp))'
 				
 		else:
-			new_neg = 'r_const["kf'+str(k)+'"]'
+			new_neg = 'constants_input["kf'+str(k)+'"]'
 
 		#new_neg = 'kVals["kf'+str(k)+'"]'
 		
@@ -665,14 +668,14 @@ def rateEqs(rate_array,rev_irr,gForward,arrForward,arrBackward):
 			new_neg = new_neg+"*np.power(cat_dataRate['convtime_"+str(v)+"'],"+str(abs(val_neg[j]))+")"#
 
 		if k in gForward:
-			new_pos = '(kbt*constantTemp/hb)*exp((-Ga_in["Ga'+str(k)+'"]+dG_in["dG'+str(k)+'"]))'
-			#new_pos = '(kbt*constantTemp/hb)*exp((-Ga_in["Ga'+str(k)+'"]+dG_in["dG'+str(k)+'"])/(Rgas*constantTemp))'
+			new_pos = '(kbt*constantTemp/hb)*exp((-(Ga_in["Ga'+str(k)+'"]-dG_in["dG'+str(k)+'"])))'
+			#new_pos = '(kbt*constantTemp/hb)*exp(-(Ga_in["Ga'+str(k)+'"]-dG_in["dG'+str(k)+'"])/(Rgas*constantTemp))'
 		
 		elif k in arrBackward:
 			new_pos = 'r_Ao["Aob'+str(k)+'"]*exp(-r_Ea["Eab'+str(k)+'"]/(Rgas*constantTemp))'
 				
 		else:
-			new_pos = 'r_const["kb'+str(k)+'"]'
+			new_pos = 'constants_input["kb'+str(k)+'"]'
 
 		
 		#new_pos = 'kVals["kb'+str(k)+'"]'
@@ -750,8 +753,8 @@ def rrmEqs(rate_array,rev_irr,domain,gForward,arrForward,arrBackward):
 			new_neg = new_neg+"*(u["+str(v)+"]**"+str(abs(val_neg[j]))+")"#
 
 		if k in gForward:
-			new_pos = '(kbt*constantTemp/hb)*exp((-Ga_in["Ga'+str(k)+'"]+dG_in["dG'+str(k)+'"]))'
-			#new_pos = '(kbt*constantTemp/hb)*exp((-Ga_in["Ga'+str(k)+'"]+dG_in["dG'+str(k)+'"])/(Rgas*constantTemp))'
+			new_pos = '(kbt*constantTemp/hb)*exp((-(Ga_in["Ga'+str(k)+'"]-dG_in["dG'+str(k)+'"])))'
+			#new_pos = '(kbt*constantTemp/hb)*exp(-(Ga_in["Ga'+str(k)+'"]-dG_in["dG'+str(k)+'"])/(Rgas*constantTemp))'
 		
 		elif k in arrBackward:
 			new_pos = 'r_Ao["Aob'+str(k)+'"]*exp(-r_Ea["Eab'+str(k)+'"]/(Rgas*constantTemp))'
@@ -791,6 +794,7 @@ def rrmEqs(rate_array,rev_irr,domain,gForward,arrForward,arrBackward):
 			rateStrings[v] = F
 
 	for allEquations in rateStrings:
-		rateStrings[allEquations] = 'assemble( ln( inner(' + rateStrings[allEquations] + ', Sw3) )* '+domain+')'
+		rateStrings[allEquations] = 'assemble( ln( inner(' + rateStrings[allEquations] + ', Sw3/Constant(0.0075000000000000015)))* '+domain+')'
+		#rateStrings[allEquations] = 'assemble( inner(' + rateStrings[allEquations] + ', Sw3/Constant(0.0075000000000000015))* '+domain+')'
 
 	return rateStrings
