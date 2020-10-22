@@ -31,7 +31,7 @@ from scipy import stats
 warnings.simplefilter(action='ignore', category=RuntimeWarning)
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitting_gif=None,pulse_num=1,store_flux_func='TRUE',catalyst_data='FALSE',sim_file = './sim_file.csv',sensitivityType=None,noise='FALSE',fitInert=None,inputForm='old',experiment_design=None):
+def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitting_gif=None,xscale=None,yscale=None,pulse_num=1,store_flux_func='TRUE',catalyst_data='FALSE',sim_file = './sim_file.csv',sensitivityType=None,noise='FALSE',fitInert=None,inputForm='old',experiment_design=None):
 	
 	simplifiedTimeStep = False
 	sampling = False
@@ -1819,47 +1819,20 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 			fitting_time = time.time()
 			print("Including temporary work around. Must remove line just below this!")
 			# simplifiedTimeStep == False and 
-			if True == False and (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true' or fit_temperature == True or doe_form_pulse == True):
+			if (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true' or fit_temperature == True or doe_form_pulse == True):
 					
 				start_time = time.time()
 				print()
 				print('Fitting Kinetic Parameters. Will take some time!')
 
-				#print(type(ln(r_const["kf0"]/r_const["kb0"])))
-				#print(type(r_const["kf0"]))
-				#print(jfunc_2)
-				#print(AdjFloat(inner((ln(r_const["kf0"]/r_const["kb0"])+ln(r_const["kf1"]/r_const["kb1"])+ln(r_const["kf2"]/r_const["kb2"])),1)))
-				#rf_2 = ReducedFunctional(jfunc_2+(r_const["kf0"]/r_const["kb0"])+(r_const["kf1"]/r_const["kb1"])+(r_const["kf2"]/r_const["kb2"]), controls,tape=tape2,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
-				#rf_2 = ReducedFunctional(jfunc_2+AdjFloat((ln(r_const["kf0"]/r_const["kb0"])+ln(r_const["kf1"]/r_const["kb1"])+ln(r_const["kf2"]/r_const["kb2"])) - 1), controls,tape=tape2,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
-				#rf_2 = ReducedFunctional(jfunc_2 + assemble(((Constant(8.314*350)*(ln(r_const["kf0"]/r_const["kb0"])+ln(r_const["kf1"]/r_const["kb1"])+ln(r_const["kf2"]/r_const["kb2"]))-w4)**2)*dx()), controls,tape=tape2,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
-				#print('Example')
-				#print(jfunc_2)
-				#dJdm = compute_gradient(jfunc_2, controls)
-				#djv = [v.values()[0] for v in dJdm]
-				#sys.exit()
-				#print(jfunc_2)
-				# ,tape=tape2
-
-				rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
-	
-				taylorTest = False
-	
-				if taylorTest == True:
-					h = Constant(0.0001)  # the direction of the perturbation
-					for jContNum, jCont in enumerate(legend_2): #legend_2
-						print('taylor test for parameter '+jCont)
-						tTest = ReducedFunctional(jfunc_2, [controls[jContNum]],tape=tape2,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
-						conv_rate = taylor_test(tTest, [r_const[jCont]], h)
-						conv_rate = taylor_test(tTest, [r_const[jCont]], h, dJdm = 0)
-					
-					sys.exit()
+				rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2,derivative_cb_post=derivCB)# ,hessian_cb_post=hessCB
 					
 				low_bounds = []
 				up_bounds = []
 	
 				if reac_input['Fit Parameters'].lower() == 'true':
 					for gt in range(0,len(controls)):
-						low_bounds.append(1e-144)
+						low_bounds.append(0)
 						up_bounds.append(np.inf)
 				elif doe_form_pulse == True:
 					for gt in range(0,len(controls)):
@@ -1869,18 +1842,18 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 				#dj = compute_gradient(jfunc_2, controls)
 	
 				if reac_input['Optimization Method'] == 'L-BFGS-B' or reac_input['Optimization Method'] == '':
-					u_opt_2 = minimize(rf_2, bounds = (low_bounds,up_bounds), tol=1e-9, options={"ftol":1e-9,"gtol":1e-9})
+					u_opt_2 = minimize(rf_2, bounds = (low_bounds,up_bounds), tol=1e-14, options={"ftol":1e-14,"gtol":1e-14})
 					#u_opt_2 = minimize(rf_2, bounds = [low_bounds,up_bounds], tol=1e-9, options={"ftol":1e-9,"gtol":1e-9})
 				elif reac_input['Optimization Method'] == 'Newton-CG':
-					u_opt_2 = minimize(rf_2, method = 'Newton-CG',tol=1e-9, options={"xtol":1e-22})
+					u_opt_2 = minimize(rf_2, method = 'Newton-CG',tol=1e-14, options={"xtol":1e-14})
 				elif reac_input['Optimization Method'] == 'BFGS':
-					u_opt_2 = minimize(rf_2, method = 'BFGS',tol=1e-13, options={"gtol":1e-13})# , "constraints":bounds
+					u_opt_2 = minimize(rf_2, method = 'BFGS',tol=1e-14, options={"gtol":1e-14})# , "constraints":bounds
 				elif reac_input['Optimization Method'] == 'SLSQP':
-					u_opt_2 = minimize(rf_2, method = 'SLSQP', bounds = (low_bounds,up_bounds),tol=1e-9, options={"ftol":1e-9})
+					u_opt_2 = minimize(rf_2, method = 'SLSQP', bounds = (low_bounds,up_bounds),tol=1e-14, options={"ftol":1e-14})
 				elif reac_input['Optimization Method'] == 'CG':
-					u_opt_2 = minimize(rf_2,bounds = (low_bounds,up_bounds), method = 'CG',tol=1e-9, options={"gtol":1e-9})
+					u_opt_2 = minimize(rf_2,bounds = (low_bounds,up_bounds), method = 'CG',tol=1e-14, options={"gtol":1e-14})
 				elif reac_input['Optimization Method'] == 'basinhopping':
-					u_opt_2 = minimize(rf_2, method = 'basinhopping', bounds = (low_bounds,up_bounds),tol=1e-9, options={"ftol":1e-9,"gtol":1e-9})
+					u_opt_2 = minimize(rf_2, method = 'basinhopping', bounds = (low_bounds,up_bounds),tol=1e-14, options={"ftol":1e-14,"gtol":1e-14})
 				elif reac_input['Optimization Method'] == 'nonlinear':
 					print('non-linear optimization')
 					print(low_bounds)
@@ -1895,7 +1868,24 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 				print(processTime(start_time))
 	
 				optimization_success = True
+
+			#############################################################
+			################# CALCULATE Taylor Test ##################
+			#############################################################
+
+			reac_input['Taylor Test'] = 'False'
+
+			if reac_input['Taylor Test'].lower() == 'true':
+				taylorTest = False
 	
+				if taylorTest == True:
+					h = Constant(0.0001)  # the direction of the perturbation
+					for jContNum, jCont in enumerate(legend_2): #legend_2
+						print('taylor test for parameter '+jCont)
+						tTest = ReducedFunctional(jfunc_2, [controls[jContNum]],tape=tape2,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
+						conv_rate = taylor_test(tTest, [r_const[jCont]], h)
+						conv_rate = taylor_test(tTest, [r_const[jCont]], h, dJdm = 0)
+
 			#############################################################
 			################# CALCULATE HESSIAN FOR UQ ##################
 			#############################################################
@@ -1904,24 +1894,57 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 				start_time = time.time()
 				print()
 				print('Calculating hessian. Could take some time.')
-				
-				control = Control(c)
-				rf_2 = ReducedFunctional(jfunc_2, control)
-			
-				dJdm = c._ad_dot(rf_2.derivative())
+
+				rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2,derivative_cb_post=derivCB)# ,hessian_cb_post=hessCB
+				testUQ = True
+				if testUQ == True:
+					rf_2.derivative()
+					utest = []
+					B = []
+					for just in range(0,len(controls)):
+						utest.append(Constant(0))
 	
-				testHessian = rf_2.hessian(c)
-				#print(type(testHessian))
-	
-				Hm = c._ad_dot(testHessian)
-				#print(type(Hm))
-				
-				#Hm = c._ad_dot(rf_2.hessian(c))
-				#Hm = c._ad_dot(rf_2.hessian(c))
-				print(processTime(start_time))
-				np.savetxt(hessFolder+'/'+reactor_kinetics_input['Sensitivity Parameter']+'_sens.csv',[dJdm],delimiter=",")#
-				np.savetxt(hessFolder+'/'+reactor_kinetics_input['Sensitivity Parameter']+'.csv',[Hm],delimiter=",")#
-	
+					for jay_z_num in range(0,len(controls)):
+						utest[jay_z_num] = Constant(1)
+						H_i = rf_2.hessian(utest)
+						djv = [v.values()[0] for v in H_i]
+						B.append(djv)
+
+				hessian_array = np.array(B)
+
+				print('Finished generating hessian, storing now.')
+				numpy.savetxt(hessFolder+'/hessian.csv', hessian_array, delimiter=",")
+				try:
+					print('The eigenvalues of the hessian are:')
+					hessEigs = np.linalg.eig(hessian_array)[0]
+					print(hessEigs)
+					eigenInfo = np.any((a < 0))
+					if eigenInfo = True:
+						print('Not all eigenvalues are positive. If fitting parameters, might want to run longer.')
+					numpy.savetxt(hessFolder+'/eigenvalues.csv', hessEigs, delimiter=",")
+				except:
+					print('Failed to determine eigenvalues')
+				try:
+					print('Generating Covariance Matrix by Inverting the Hessian')
+					vx_new = np.linalg.inv(B)
+				except:
+					print('Failed to invert hessian')
+				try:
+					print('The first and second standard deviations of each parameter are:')
+					std_1 = np.diagonal(np.sqrt(y))
+					print(std_1)
+					numpy.savetxt(hessFolder+'/std_1.csv', std_1, delimiter=",")
+					std_2 = np.diagonal(2*np.sqrt(y))
+					print(std_2)
+					numpy.savetxt(hessFolder+'/std_2.csv', std_2, delimiter=",")
+				except:
+					print('Failed to calculate confidence interval')
+
+				#try:
+				#	if eigenInfo = True:
+				#		print('')
+				#except:
+
 			#############################################################
 			############# STORE OUTLET FLUX DATA per PULSE ##############
 			#############################################################
@@ -2153,7 +2176,7 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 					except:
 						k_num = things
 			
-				generateGif(legend_label[:len(legend_label)], reac_input['Experimental Data Folder']+'/flux_data', './'+reac_input['Output Folder Name']+'_folder/fitting', len(constants), constants, reactor_kinetics_input['reactions_test'], times)
+				generateGif(legend_label[:len(legend_label)], reac_input['Experimental Data Folder']+'/flux_data', './'+reac_input['Output Folder Name']+'_folder/fitting', len(constants), constants, reactor_kinetics_input['reactions_test'], times,reactor_kinetics_input['xscale'],reactor_kinetics_input['yscale'])
 			
 				for k_num in range(0,things):
 					shutil.rmtree('./'+reac_input['Output Folder Name']+'_folder/fitting/iter_'+str(k_num)+'_folder') 
@@ -2192,6 +2215,8 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 
 		if fitting_gif != None:
 			reactor_kinetics_input['Fitting Gif'] = 'TRUE'
+			reactor_kinetics_input['xscale'] = xscale
+			reactor_kinetics_input['yscale'] = yscale
 			reactor_kinetics_input['Display Experimental Data'] = 'TRUE'
 		else:
 			reactor_kinetics_input['Fitting Gif'] = 'FALSE'
@@ -2263,6 +2288,8 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 					
 					if fitting_gif != None:
 						reactor_kinetics_input['Fitting Gif'] = 'TRUE'
+						reactor_kinetics_input['xscale'] = xscale
+						reactor_kinetics_input['yscale'] = yscale
 						reactor_kinetics_input['Display Experimental Data'] = 'TRUE'
 
 					if sensitivityType != None:
@@ -2330,8 +2357,8 @@ def run_uncertainty(sim_time,sim_file = './sim_file.csv'):
 	general_run(sim_time,uncertainty_quantificaiton=True,sim_file = sim_file,inputForm='new')
 	sys.exit()
 
-def fitting_gif(sim_time,outputName='./flux.png'):
-	general_run(sim_time,fitting_gif=True,sim_file = './sim_file.csv',inputForm='new')
+def fitting_gif(sim_time,sim_file = './sim_file.csv',x_scale='',y_scale='',outputName='./flux.png'):
+	general_run(sim_time,fitting_gif=True,xscale=x_scale,yscale=y_scale,sim_file = './sim_file.csv',inputForm='new')
 
 def vary_Input(variableToChange, newValue, sim_file='./sim_file.csv'):
 	df1 = pd.read_csv(sim_file,header = None)
@@ -2346,7 +2373,7 @@ def vary_Input(variableToChange, newValue, sim_file='./sim_file.csv'):
 
 	#to_csv(fileName)
 
-def flux_graph(sim_file = './sim_file.csv',pulse=None,disp_exper=False,disp_analytic=False,disp_objective=False,show_graph=True,storeGraph=False,outputName='./flux.png'):
+def flux_graph(sim_file = './sim_file.csv',pulse=None,disp_exper=False,disp_analytic=False,disp_objective=False,show_graph=True,store_graph=False,output_name='./flux.png'):
 	sim_time = 0.4
 
 	reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(sim_file,inputForm = 'new')
@@ -2611,8 +2638,8 @@ def flux_graph(sim_file = './sim_file.csv',pulse=None,disp_exper=False,disp_anal
 
 	ax2.legend(title="Gas Species",loc = 1)
 
-	if storeGraph == True:
-		plt.savefig(outputName)
+	if store_graph == True:
+		plt.savefig(output_name)
 
 	if show_graph == True:
 		plt.show()
@@ -2846,6 +2873,30 @@ def generate_sim_file(reactor_name='./reactor_definition.csv',mechanism_name='./
 
 #def individual_objective_value()
 
+def run_file_gen():
+	parameters = np.array([['#!/bin/bash'],['#PBS -l nodes=1:ppn=8'],['#PBS -l walltime=36:00:00'],['#PBS -q joe'],['#PBS -N n-cg-3'],['#PBS -o stdout'],['#PBS -e stderr'],[''],['cd $PBS_O_WORKDIR'],[''],['module purge'],['module load open64/4.5.1'],['module load mkl/11.2'],['module load mvapich2/2.1'],['module load git'],['module load anaconda3/2019.03'],['conda activate fenicsproject'],[''],['python running_simulation.py']])
+	newFile = pd.DataFrame(np.asarray(parameters))
+	#newFile = newFile.transpose()
+	np.savetxt('./run.sh', newFile.values, fmt='%d')
+
+def resub_gen():
+	parameters = np.array([['import pandas as pd'],['import numpy as np'],['import os'],['import ast'],[''],["df1 = pd.read_csv('./input_file.csv')"],['f = open("./results_folder/fitting/optIter.txt","r")'],['#parameters = f.read()'],['parameters = f.readlines(0)'],['rateConstants = parameters[2]'],[''],["rateConstants = rateConstants.replace('Constants: ','')"],[''],['rateList = ast.literal_eval(rateConstants)'],[''],['startValue = 24'],['forBack = 1'],['for jnum,j in enumerate(rateList[-1]):'],['        df1.iloc[startValue,forBack] = j'],['        if forBack % 2 == 0:'],['                startValue += 1'],['                forBack = 1'],['        else:'],['                forBack = 2'],[''],["df1.to_csv('./input_file.csv',index=False)"]])
+	newFile = pd.DataFrame(np.asarray(parameters))
+	#newFile = newFile.transpose()
+	np.savetxt('./resubmitCalculation.py', newFile.values, fmt='%d')
+
+def sample_gen():
+	parameters = np.array([['#!/bin/bash'],['echo "Running in each subdirectory"'],['for dir in ./*;'],['do'],['cd $dir;'],['echo "Checking calculation in: " "$dir";'],['if ! test -f "./stderr" && ! test -f "./stdout"'],['then'],['echo "Resub Calc."'],['rm "./stderr"'],['if ! test -f "./stderr"'],['then'],['python resubmitCalculation.py'],['qsub run.sh'],['else'],['echo "Failed to resub calculation. Error file deleted, though"'],['fi;'],['elif grep "F     = final function value" "./stdout" && test -f "./stderr"'],['then'],['echo "Calculation complete"'],['else'],['echo "Actively running calculation"'],['fi;'],['cd ../;'],['done']])
+	newFile = pd.DataFrame(np.asarray(parameters))
+	#newFile = newFile.transpose()
+	np.savetxt('./sampleBash.sh', newFile.values, fmt='%d')
+
+def running_gen():
+	parameters = np.array([['CO + * <-> CO*',1,10],['O2 + 2^ <-> 2O^',1,10],['CO* + O^ <-> CO2^ + *',1,2],['CO2^ <-> CO2 + ^',3,0.05]])
+	newFile = pd.DataFrame(np.asarray(parameters))
+	#newFile = newFile.transpose()
+	np.savetxt('./running_simulation.py', newFile.values, fmt='%d')
+
 def reaction_example(reaction_file = './reaction_example.csv'):
 	parameters = np.array([['CO + * <-> CO*',1,10],['O2 + 2^ <-> 2O^',1,10],['CO* + O^ <-> CO2^ + *',1,2],['CO2^ <-> CO2 + ^',3,0.05]])
 	newFile = pd.DataFrame(np.asarray(parameters))
@@ -2909,107 +2960,99 @@ def directoryGenerator(path_name):
 
 def bulk_structure(reactor_setup,iterDict,baseName=None):
 
-	# generate csv submission calculation
+		# generate csv submission calculation
 
-	directoryGenerator('./'+baseName)
-	copyfile(reactor_setup,'./'+baseName+'/'+reactor_setup)
+		directoryGenerator('./'+baseName)
+		copyfile(reactor_setup,'./'+baseName+'/'+reactor_setup)
 
-	if baseName == None:
-		print('No variables are changed. No generation performed.')
-		sys.exit()
+		if baseName == None:
+			print('No variables are changed. No generation performed.')
+			sys.exit()
 
-	#headers = []
-	headers = ['directory']
+		#headers = []
+		headers = ['directory']
 
-	generalVariables = list(iterDict.keys())
+		generalVariables = list(iterDict.keys())
 
-	for j in iterDict.keys():
-		if j == 'mechanisms':
-			headers.append(j)
-		else:
-			for k in iterDict[j].keys():
-				headers.append(k+'_'+j)
+		for j in iterDict.keys():
+			if j == 'mechanisms':
+				headers.append(j)
+			else:
+				for k in iterDict[j].keys():
+					headers.append(k+'_'+j)
 
-	def iterativeGeneration(newNpArray,directoryName,currentList,currentkey,currentSubKey):
+		def iterativeGeneration(newNpArray,directoryName,currentList,currentkey,currentSubKey):
 
-		if list(iterDict.keys())[currentkey] == "mechanisms":
-			
-			for jnum,j in enumerate(list(iterDict[list(iterDict.keys())[currentkey]].keys())):
-				
-				newdirectoryName = str(jnum)#directoryName+str(jnum)
-				newList = [j]
-			
-				copyfile(iterDict["mechanisms"][j],'./'+baseName+'/'+iterDict["mechanisms"][j])
-				# Construct new base sim_file
-				generate_sim_file(reactor_name='./'+reactor_setup,mechanism_name=iterDict["mechanisms"][j],sim_file='./sim_file.csv')				
-				newNpArray = iterativeGeneration(newNpArray,newdirectoryName,newList,currentkey+1,0)
+			if list(iterDict.keys())[currentkey] == "mechanisms":
 
-		else:
-			for jnum,j in enumerate(iterDict[list(iterDict.keys())[currentkey]][list(iterDict[list(iterDict.keys())[currentkey]].keys())[currentSubKey]]):
-				
-				newdirectoryName = directoryName+str(jnum)
-				newList = currentList[:]
-				newList.append(j)
-						
-				tempInput = pd.read_csv('./sim_file.csv',header=None)
-				currentSpecies = list(iterDict[list(iterDict.keys())[currentkey]])[currentSubKey]
-				if list(iterDict.keys())[currentkey] == "surface":
-					currentSurface = list(tempInput.iloc[21,1:])
-					tempInput.iloc[22,1+currentSurface.index(currentSpecies)] = float(j)
-				elif list(iterDict.keys())[currentkey] == "intensity":
-					currentGasses = list(tempInput.iloc[16,1:])
-					tempInput.iloc[17,1+currentGasses.index(currentSpecies)] = float(j)
-				elif list(iterDict.keys())[currentkey] == "time":
-					currentGasses = list(tempInput.iloc[16,1:])
-					tempInput.iloc[18,1+currentGasses.index(currentSpecies)] = float(j)
-				tempInput.to_csv('./sim_file.csv',header=None,index=False)
+				for jnum,j in enumerate(list(iterDict[list(iterDict.keys())[currentkey]].keys())):
 
-				if currentSubKey+1 != len(list(iterDict[list(iterDict.keys())[currentkey]].keys())):
-					newNpArray = iterativeGeneration(newNpArray,newdirectoryName,newList,currentkey,currentSubKey+1)
-				elif currentkey+1 != len(list(iterDict.keys())):
+					newdirectoryName = directoryName+str(jnum)
+					newList = [j]
+
+					copyfile(iterDict["mechanisms"][j],'./'+baseName+'/'+iterDict["mechanisms"][j])
+					# Construct new base input_file
+					input_construction(reactor_name='./'+reactor_setup,reaction_name=iterDict["mechanisms"][j],new_name='./input_file.csv')
 					newNpArray = iterativeGeneration(newNpArray,newdirectoryName,newList,currentkey+1,0)
-				else:
-					# Alter Parameters
-					# Move new files to subdirectory
-					# sim_file, tap_sim, func_sim, vari_form, reac_odes, bash
-					directoryNameList = ['./'+newdirectoryName]
-					newList = directoryNameList+newList
-					newNpArray = np.vstack((newNpArray,newList))
-					directoryGenerator('./testGen/'+newdirectoryName)
-					#tempInput.to_csv('./sim_file.csv',header=None,index=False)
-					copyfile('./tap_sim.py','./testGen/'+newdirectoryName+'/tap_sim.py')
-					copyfile('./batch_sim.py','./testGen/'+newdirectoryName+'/batch_sim.py')
-					copyfile('./run.sh','./testGen/'+newdirectoryName+'/run.sh')
-					copyfile('./func_sim.py','./testGen/'+newdirectoryName+'/func_sim.py')
-					copyfile('./reac_odes.py','./testGen/'+newdirectoryName+'/reac_odes.py')
-					copyfile('./vari_form.py','./testGen/'+newdirectoryName+'/vari_form.py')
-					copyfile('./tapsolver_working.py','./testGen/'+newdirectoryName+'/tapsolver_working.py')
-					copyfile('./running_simulation.py','./testGen/'+newdirectoryName+'/running_simulation.py')
-					copyfile('./sim_file.csv','./testGen/'+newdirectoryName+'/sim_file.csv')
-				
-		return newNpArray
+
+			else:
+				#tempInput = pd.read_csv('./input_file.csv',header=None)
+				for jnum,j in enumerate(iterDict[list(iterDict.keys())[currentkey]][list(iterDict[list(iterDict.keys())[currentkey]].keys())[currentSubKey]]):
+					newdirectoryName = directoryName+str(jnum)				
+					newdirectoryName = directoryName+str(jnum)
+					newList = currentList[:]
+					newList.append(j)
+
+					tempInput = pd.read_csv('./input_file.csv',header=None)
+					currentSpecies = list(iterDict[list(iterDict.keys())[currentkey]])[currentSubKey]
+					print(tempInput)
+					if list(iterDict.keys())[currentkey] == "surface":
+						currentSurface = list(tempInput.iloc[21,1:])
+						tempInput.iloc[22,1+currentSurface.index(currentSpecies)] = float(j)
+						tempInput.to_csv('./input_file.csv',header=None,index=False)
+					elif list(iterDict.keys())[currentkey] == "intensity":
+						currentGasses = list(tempInput.iloc[16,1:])
+						tempInput.iloc[17,1+currentGasses.index(currentSpecies)] = float(j)
+						tempInput.to_csv('./input_file.csv',header=None,index=False)
+					elif list(iterDict.keys())[currentkey] == "time":
+						currentGasses = list(tempInput.iloc[16,1:])
+						tempInput.iloc[18,1+currentGasses.index(currentSpecies)] = float(j)
+						tempInput.to_csv('./input_file.csv',header=None,index=False)
+					if currentSubKey+1 != len(list(iterDict[list(iterDict.keys())[currentkey]].keys())):
+						newNpArray = iterativeGeneration(newNpArray,newdirectoryName,newList,currentkey,currentSubKey+1)
+					elif currentkey+1 != len(list(iterDict.keys())):
+						newNpArray = iterativeGeneration(newNpArray,newdirectoryName,newList,currentkey+1,0)
+					else:
+						directoryNameList = [newdirectoryName]
+						newList = directoryNameList+newList
+						newNpArray = np.vstack((newNpArray,newList))
+						directoryGenerator(newdirectoryName)
+						tempInput.to_csv('./input_file.csv',header=None,index=False)
 						
-	dataStructure = np.asarray(headers)
-	dataValues = np.asarray(headers[2:])
+						copyfile('./running_simulation.py',newdirectoryName+'/running_simulation.py')
+						copyfile('./run.sh',newdirectoryName+'/run.sh')
+						copyfile('./input_file.csv',newdirectoryName+'/input_file.csv')
 
-	dataStructurenew = iterativeGeneration(dataStructure,'./'+baseName+'/',[],0,0)
-	
-	df = pd.DataFrame(dataStructurenew)
+			return newNpArray
+						
+		dataStructure = np.asarray(headers)
+		dataValues = np.asarray(headers[2:])
 
-	df.to_csv('./'+baseName+'/'+'directoryList.csv',header=None,index=False)
+		dataStructurenew = iterativeGeneration(dataStructure,'./'+baseName+'/',[],0,0)
+		df = pd.DataFrame(dataStructurenew)
+		df.to_csv('./'+baseName+'/'+'directoryList.csv',header=None,index=False)
 
-	valueList = []
+		valueList = []
 
-	for j in list(iterDict.keys())[1:]:
-		
-		for k in iterDict[j].keys():
-			valueList.append(iterDict[j][k])
+		for j in list(iterDict.keys())[1:]:
+			for k in iterDict[j].keys():
+				valueList.append(iterDict[j][k])
 
-	dataValues = np.vstack((list(dataValues),valueList))
+		dataValues = np.vstack((list(dataValues),valueList))
 
-	df2 = pd.DataFrame(dataValues)
+		df2 = pd.DataFrame(dataValues)
 
-	df2.to_csv('./'+baseName+'/'+'changedVariables.csv',header=None,index=False)
+		df2.to_csv('./'+baseName+'/'+'changedVariables.csv',header=None,index=False)
 
 def design_experiment(sim_time,sim_file = './sim_file.csv',altVariables=['pulses','time']):
 	print(altVariables)

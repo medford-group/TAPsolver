@@ -701,7 +701,7 @@ def knudsenTest(species_list,sim_steps,folder,time,points,intensity,fraction):
 
 ####Fit every point
 def curveFitting(species_list,sim_steps,folder,timeTot,points,objSpecies):
-	frequency = 5
+	frequency = 3
 	"""Define the objective function for optimizing kinetic parameters"""
 
 	syn_time_step = timeTot/sim_steps
@@ -912,7 +912,7 @@ def pointFitting(species_list,sim_steps,folder,time,points,objSpecies):
 	return curve_fitting
 
 
-def generateGif(molecules,exp_loc,fit_loc,all_steps,constants,reactions,time_data):
+def generateGif(molecules,exp_loc,fit_loc,all_steps,constants,reactions,time_data,xscale,yscale):
 	
 	"""
 	Return a gif showing changes made during the optimization process
@@ -967,13 +967,21 @@ def generateGif(molecules,exp_loc,fit_loc,all_steps,constants,reactions,time_dat
 			sim_data[k_names] = pd.read_csv(fit_loc+'/iter_'+str(step)+'_folder/flux_data/'+k_names+'.csv',header=None)
 		
 		for k_names in molecules:
-			ax.scatter(exp_data[k_names][0], exp_data[k_names][1]/(exp_data[k_names][1].max()),label="Exp. "+k_names,alpha=0.3)
-		
+			if yscale == 'normalized':
+				ax.scatter(exp_data[k_names][0], exp_data[k_names][1]/(exp_data[k_names][1].max()),label="Exp. "+k_names,alpha=0.3)
+			else:
+				ax.scatter(exp_data[k_names][0], exp_data[k_names][1],label="Exp. "+k_names,alpha=0.3)
 		for k_names in molecules:
-			ax.plot(sim_data[k_names][0], sim_data[k_names][1]/(exp_data[k_names][1].max()),label="Syn. "+k_names,ls='--')
-	
+			if yscale == 'normalized':
+				ax.plot(sim_data[k_names][0], sim_data[k_names][1]/(exp_data[k_names][1].max()),label="Syn. "+k_names,ls='--')
+			else:
+				ax.plot(sim_data[k_names][0], sim_data[k_names][1],label="Syn. "+k_names,ls='--')
+
 		ax.set_xlabel('Time (s)', fontsize=16)
-		ax.set_ylabel('Normalized Flow (1/s)', fontsize=16)
+		if yscale == 'normalized':
+			ax.set_ylabel('Normalized Flow (1/s)', fontsize=16)
+		else:
+			ax.set_ylabel('Flow (nmol/s)', fontsize=16)
 		#textstr = 'Rate Constants: '
 		
 		#for k_len in range(0,len(constants[0])):
@@ -1006,9 +1014,11 @@ def generateGif(molecules,exp_loc,fit_loc,all_steps,constants,reactions,time_dat
 		#	#plt.plot(peak_loc[0], peak_loc[1], 'ro')
 
 		ax.legend(title='Gas Species',loc='center left')
-		ax.set_xscale('log')
-		ax.set_xlim(0.002,1)
-		ax.set_ylim(0,1.5)
+		if xscale == 'log':
+			ax.set_xscale('log')
+			ax.set_xlim(0.002,1)
+		if yscale == 'normalized':
+			ax.set_ylim(0,1.5)
 
 		#subpos = [0.4,0.13,0.5,0.4]
 		#subax1 = add_subplot_axes(ax,subpos)
