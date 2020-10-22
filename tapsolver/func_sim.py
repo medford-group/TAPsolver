@@ -13,14 +13,14 @@ import math
 import os
 import fenics_adjoint
 
-def readInput(input_file,inputForm = 'old'):
+def readInput(sim_file,inputForm = 'old'):
 	
 	"""
 	Convert the input file into dictionaries for TAPsolver to use
 	"""
 	if inputForm == 'old':
 	
-		user_data = pd.read_csv(input_file,header=None)
+		user_data = pd.read_csv(sim_file,header=None)
 		
 		rows_1, cols_1 = np.where(user_data == 'Reactor_Information')
 		rows_2, cols_2 = np.where(user_data == 'Feed_&_Surface_Composition')
@@ -66,7 +66,7 @@ def readInput(input_file,inputForm = 'old'):
 
 	else:
 		
-		user_data = pd.read_csv(input_file,header=None)
+		user_data = pd.read_csv(sim_file,header=None)
 		
 		rows_1, cols_1 = np.where(user_data == 'Reactor_Information')
 		rows_2, cols_2 = np.where(user_data == 'Feed_&_Surface_Composition')
@@ -270,9 +270,9 @@ def readInput(input_file,inputForm = 'old'):
 
 	return reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,fittingParametersList,arrForward,arrBackward
 
-def readBatchInput(input_file):
+def readBatchInput(sim_file):
 
-	user_data = pd.read_csv(input_file,header=None)
+	user_data = pd.read_csv(sim_file,header=None)
 		
 	rows_1, cols_1 = np.where(user_data == 'Reactor_Information')
 	rows_2, cols_2 = np.where(user_data == 'Feed_&_Surface_Composition')
