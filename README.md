@@ -1,7 +1,7 @@
 
 * [Installation](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/installation)
 * [Documentation](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/input_file)
-* [Examples](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/examples/coAdsorption)
+* [Examples](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/examples)
 * [Questions & Development](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/questionsDiscussion) 
 
 # TAPsolver
