@@ -9,19 +9,13 @@
 
 [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install) is the simplest way to install [FEniCS](https://fenicsproject.org/) (on [Ubuntu](https://tutorials.ubuntu.com/tutorial/tutorial-ubuntu-on-windows#0) systems, especially) and is highly recommended. It is possible to install FEniCS in other ways, but Conda was found to be the quickest.
 
-To install the necessary programs for running tapsolver, enter the following lines in the terminal:
+To install the necessary programs for running tapsolver, enter the following lines in the terminal (make sure conda-forge is in your list of channels by running the following commaned: "conda config --append channels conda-forge"):
 
-	conda create -n fenics-2019 -c conda-forge fenics
+        conda create -n fenics-2019 -c conda-forge fenics
 
-	conda install -c conda-forge dolfin-adjoint
+        pip install git+https://github.com/medford-group/TAPsolver.git
 
-	conda install -c conda-forge imageio
-
-	conda install -c anaconda pandas
-
-	conda install xlrd
-
-If you are having trouble installing FEniCS, contact Adam Yonge (ayonge3@gatech.edu) or the [FEniCS developers](https://fenicsproject.org/community/).
+If you're having trouble installing FEniCS, contact Adam Yonge (ayonge3@gatech.edu) or the [FEniCS developers](https://fenicsproject.org/community/).
 
 # Windows Installation
 
@@ -31,17 +25,13 @@ To install the program, install the ubuntu operating system on windows and then 
 
 # Installation with hippylib and muq2
 
+These additional packages have only been tested on the Ubuntu and Mac installations. 
+
         conda create -n fenics-2019.1 -c uvilla -c conda-forge fenics==2019.1.0 matplotlib scipy jupyter
 
         pip install -e git+https://github.com/hippylib/hippylib@master#egg=hippylib
 
-        conda install -c conda-forge dolfin-adjoint
-
-        conda install -c conda-forge imageio
-
-        conda install -c anaconda pandas
-
-        (make sure conda-forge is in your list of channels by running the following commaned: "conda config --append channels conda-forge")
+	pip install git+https://github.com/medford-group/TAPsolver.git        
 
         conda install -c rmg muq2
 
@@ -49,3 +39,6 @@ To install the program, install the ubuntu operating system on windows and then 
 
         conda install xlrd
 
+# Installation of IPOPT
+
+IPOPT is a powerful program for PDE constrained optimization recommended by developers at Dolfin-Adjoint. Installation IPOPT for Dolfin-Adjoint requires the [Harwell Subroutine Library](http://www.hsl.rl.ac.uk/ipopt/), where request for a license is necessary (it is free for academic use). Although TAPsolver can work without the approach, it is a recommended feature.
