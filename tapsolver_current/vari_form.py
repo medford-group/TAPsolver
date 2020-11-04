@@ -4,7 +4,7 @@ import pandas as pd
 import random
 import sys
 import time
-from .reac_odes import deriv_and_const,variational_list_parsing
+from reac_odes import deriv_and_const,variational_list_parsing
 
 def make_f_equation(reactions_n,reactants_number,reactor_type,active_sites,number_of_inerts,advection,arrForward,arrBackward,gForward,temp_change=False):
 

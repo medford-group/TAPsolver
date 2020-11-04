@@ -1,9 +1,9 @@
 from tap_sim import *
 import sys
 
-vary_Input('Display Graph','TRUE',input_file='./input_file.csv')
-vary_Input('Output Folder Name','test',input_file='./input_file.csv')
-vary_Input('Time Steps',300,input_file='./input_file.csv')
+#vary_Input('Display Graph','TRUE',input_file='./input_file.csv')
+#vary_Input('Output Folder Name','test',input_file='./input_file.csv')
+#vary_Input('Time Steps',300,input_file='./input_file.csv')
 
 
 run_tapsolver(0.3,input_file='./input_file.csv')
