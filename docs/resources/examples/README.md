@@ -1,8 +1,7 @@
 
 * [Overview](https://github.com/medford-group/TAPsolver/tree/master)
 * [Installation](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/installation)
-* [Interface options](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/interfaceOptions)
-* [Documentation](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/input_file)
+* [Documentation](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/Documentation)
 * [Questions & Development](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/questionsDiscussion)
 
 # Tutorial + Examples

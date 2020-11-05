@@ -1,8 +1,7 @@
 
 * [Overview](https://github.com/medford-group/TAPsolver/tree/master)
 * [Installation](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/installation)
-* [Interface options](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/interfaceOptions)
-* [Examples](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/examples/coAdsorption)
+* [Examples](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/examples)
 * [Questions & Development](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/questionsDiscussion)
 
 ## File structure
