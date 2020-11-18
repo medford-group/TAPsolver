@@ -1817,7 +1817,7 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 			#############################################################
 	
 			fitting_time = time.time()
-			print("Including temporary work around. Must remove line just below this!")
+			#print("Including temporary work around. Must remove line just below this!")
 			# simplifiedTimeStep == False and 
 			if (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true' or fit_temperature == True or doe_form_pulse == True):
 					
@@ -1842,7 +1842,7 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 				#dj = compute_gradient(jfunc_2, controls)
 	
 				if reac_input['Optimization Method'] == 'L-BFGS-B' or reac_input['Optimization Method'] == '':
-					u_opt_2 = minimize(rf_2, bounds = (low_bounds,up_bounds), tol=1e-14, options={"ftol":1e-14,"gtol":1e-14})
+					u_opt_2 = minimize(rf_2, bounds = (low_bounds,up_bounds), tol=1e-14, options={"ftol":1e-22,"gtol":1e-22})
 					#u_opt_2 = minimize(rf_2, bounds = [low_bounds,up_bounds], tol=1e-9, options={"ftol":1e-9,"gtol":1e-9})
 				elif reac_input['Optimization Method'] == 'Newton-CG':
 					u_opt_2 = minimize(rf_2, method = 'Newton-CG',tol=1e-14, options={"xtol":1e-14})
@@ -1919,7 +1919,7 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 					hessEigs = np.linalg.eig(hessian_array)[0]
 					print(hessEigs)
 					eigenInfo = np.any((a < 0))
-					if eigenInfo = True:
+					if eigenInfo == True:
 						print('Not all eigenvalues are positive. If fitting parameters, might want to run longer.')
 					numpy.savetxt(hessFolder+'/eigenvalues.csv', hessEigs, delimiter=",")
 				except:
@@ -2813,7 +2813,7 @@ def generate_sim_file(reactor_name='./reactor_definition.csv',mechanism_name='./
 
 	for j_num,j in enumerate(gasses):
 		d.iloc[0,j_num+1] = j
-		d.iloc[1,j_num+1] = 1
+		d.iloc[1,j_num+1] = 0
 		d.iloc[3,j_num+1] = molecularProperties(gasses[j_num],'mass')
 
 	for j in range(len(gasses)+1,N_cols):
@@ -2877,25 +2877,31 @@ def run_file_gen():
 	parameters = np.array([['#!/bin/bash'],['#PBS -l nodes=1:ppn=8'],['#PBS -l walltime=36:00:00'],['#PBS -q joe'],['#PBS -N n-cg-3'],['#PBS -o stdout'],['#PBS -e stderr'],[''],['cd $PBS_O_WORKDIR'],[''],['module purge'],['module load open64/4.5.1'],['module load mkl/11.2'],['module load mvapich2/2.1'],['module load git'],['module load anaconda3/2019.03'],['conda activate fenicsproject'],[''],['python running_simulation.py']])
 	newFile = pd.DataFrame(np.asarray(parameters))
 	#newFile = newFile.transpose()
-	np.savetxt('./run.sh', newFile.values, fmt='%d')
+	print(newFile)
+	newFile.to_csv('./run.sh',header=None,index=False)
+	#np.savetxt('./run.sh', newFile.values)
 
 def resub_gen():
-	parameters = np.array([['import pandas as pd'],['import numpy as np'],['import os'],['import ast'],[''],["df1 = pd.read_csv('./input_file.csv')"],['f = open("./results_folder/fitting/optIter.txt","r")'],['#parameters = f.read()'],['parameters = f.readlines(0)'],['rateConstants = parameters[2]'],[''],["rateConstants = rateConstants.replace('Constants: ','')"],[''],['rateList = ast.literal_eval(rateConstants)'],[''],['startValue = 24'],['forBack = 1'],['for jnum,j in enumerate(rateList[-1]):'],['        df1.iloc[startValue,forBack] = j'],['        if forBack % 2 == 0:'],['                startValue += 1'],['                forBack = 1'],['        else:'],['                forBack = 2'],[''],["df1.to_csv('./input_file.csv',index=False)"]])
+	parameters = np.array([['import pandas as pd'],['import numpy as np'],['import os'],['import ast'],[''],['df1 = pd.read_csv("./input_file.csv")'],['f = open("./results_folder/fitting/optIter.txt","r")'],['#parameters = f.read()'],['parameters = f.readlines(0)'],['rateConstants = parameters[2]'],[''],['rateConstants = rateConstants.replace("Constants: ","")'],[''],['rateList = ast.literal_eval(rateConstants)'],[''],['startValue = 24'],['forBack = 1'],['for jnum,j in enumerate(rateList[-1]):'],['        df1.iloc[startValue,forBack] = j'],['        if forBack % 2 == 0:'],['                startValue += 1'],['                forBack = 1'],['        else:'],['                forBack = 2'],[''],['df1.to_csv("./input_file.csv",index=False)']])
 	newFile = pd.DataFrame(np.asarray(parameters))
 	#newFile = newFile.transpose()
-	np.savetxt('./resubmitCalculation.py', newFile.values, fmt='%d')
+	print(newFile)
+	newFile.to_csv('./resubmitCalculation.py',header=None,index=False)
+	#np.savetxt('./resubmitCalculation.py', newFile.values, fmt='%d')
 
 def sample_gen():
 	parameters = np.array([['#!/bin/bash'],['echo "Running in each subdirectory"'],['for dir in ./*;'],['do'],['cd $dir;'],['echo "Checking calculation in: " "$dir";'],['if ! test -f "./stderr" && ! test -f "./stdout"'],['then'],['echo "Resub Calc."'],['rm "./stderr"'],['if ! test -f "./stderr"'],['then'],['python resubmitCalculation.py'],['qsub run.sh'],['else'],['echo "Failed to resub calculation. Error file deleted, though"'],['fi;'],['elif grep "F     = final function value" "./stdout" && test -f "./stderr"'],['then'],['echo "Calculation complete"'],['else'],['echo "Actively running calculation"'],['fi;'],['cd ../;'],['done']])
 	newFile = pd.DataFrame(np.asarray(parameters))
 	#newFile = newFile.transpose()
-	np.savetxt('./sampleBash.sh', newFile.values, fmt='%d')
+	newFile.to_csv('./sampleBash.sh',header=None,index=False)
+	#np.savetxt('./sampleBash.sh', newFile.values, fmt='%d')
 
 def running_gen():
 	parameters = np.array([['CO + * <-> CO*',1,10],['O2 + 2^ <-> 2O^',1,10],['CO* + O^ <-> CO2^ + *',1,2],['CO2^ <-> CO2 + ^',3,0.05]])
 	newFile = pd.DataFrame(np.asarray(parameters))
 	#newFile = newFile.transpose()
-	np.savetxt('./running_simulation.py', newFile.values, fmt='%d')
+	newFile.to_csv('./running_simulation.py',header=None,index=False)
+	#np.savetxt('./running_simulation.py', newFile.values, fmt='%d')
 
 def reaction_example(reaction_file = './reaction_example.csv'):
 	parameters = np.array([['CO + * <-> CO*',1,10],['O2 + 2^ <-> 2O^',1,10],['CO* + O^ <-> CO2^ + *',1,2],['CO2^ <-> CO2 + ^',3,0.05]])
@@ -2906,14 +2912,14 @@ def reaction_example(reaction_file = './reaction_example.csv'):
 def generate_reactor(reactor_name='./reactor_definition.csv',transport_type=['Knudsen','Advection']):
 	
 	parameters = ['Reactor Radius','Reactor Temperature','Mesh Size','Catalyst Mesh Density','Output Folder Name','Experimental Data Folder']
-	initial_values = [0.2,700,400,2,'results','None']
+	initial_values = [0.2,385,400,2,'results','None']
 	#parameters = ['Reactor_Information','Reactor Length','Mesh Size','Catalyst Fraction','Catalyst Mesh Density','Reactor Radius','Catalyst Location','Void Fraction Inert','Void Fraction Catalyst','Reactor Temperature','Reference Diffusion Inert','Reference Diffusion Catalyst','Reference Temperature','Reference Mass','Output Folder Name','Experimental Data Folder','Advection','','Feed_&_Surface_Composition']
 	#initial_values = ['',3.832,400,0.02,5,0.2,0.5,0.4,0.4,700,13.5,13.5,700,40,'results','./probeTruncated/Mn',0,'','']
 
 
 	if 'Knudsen' in transport_type:
 		knudsenList = ['Reference Diffusion Inert','Reference Diffusion Catalyst','Reference Temperature','Reference Mass']
-		knudsenValues = [13.5,13.5,700,40]
+		knudsenValues = [13.5,13.5,385,40]
 		for jnum,j in enumerate(knudsenList):
 			parameters.append(j)
 			initial_values.append(knudsenValues[jnum])
