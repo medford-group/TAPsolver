@@ -28,6 +28,8 @@ A primary goal of TAPsolver is to make new methods of TAP analysis easily accesa
   <img src="https://github.com/medford-group/TAPsolver/blob/master/docs/figures/cleanOptimizationExample.gif">
 </p>
 
+### Collaborators and Funding
+
 TAPsolver was developed through a colloboration between the Georgia Institute of Technology and Idaho National Lab. The publication associated with TAPsolver can be found [here](https://arxiv.org/abs/2008.13584). 
 
 Financial support for the development of TAPsolver was provided by the U.S. Department of Energy (USDOE), Office of Energy Efficiency and Renewable Energy (EERE), Advanced Manufacturing Office Next Generation R\&D Projects under contract no. DE-AC07-05ID14517.

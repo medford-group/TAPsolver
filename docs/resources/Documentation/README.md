@@ -4,9 +4,9 @@
 * [Examples](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/examples)
 * [Questions & Development](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/questionsDiscussion)
 
-#User Input File Structure
+# User Input File Structure
 
-A [csv file](https://github.com/medford-group/TAPsolver/blob/master/tapsolver/v1/input_file.csv) is used as the input to the simulator. Four main componenents of TAPSolver input are described and include "Reactor Information", "Feed and Surface Composition", "Data Storage Options", and "Reaction Information". The terms in each of these components are discussed below.
+A [csv file](https://github.com/medford-group/TAPsolver/blob/master/tapsolver/v1/input_file.csv) is used as the input to the simulator. Four main componenents of TAPsolver input are described and include "Reactor Information", "Feed and Surface Composition", "Data Storage Options", and "Reaction Information". The terms in each of these components are discussed below.
 
 ## Reactor Information
 
