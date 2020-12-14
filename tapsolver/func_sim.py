@@ -725,7 +725,6 @@ def curveFitting(species_list,sim_steps,folder,timeTot,points,objSpecies):
 					user_data[species_list[klabel]] = pd.read_csv(folder+'/species_data/'+species_list[klabel]+'.csv',header=None)
 	else:
 		species_list = species_list[:len(species_list)]#'./experimental_data/'
-
 		for k in range(0,len(species_list)):
 			if objSpecies[k] == '1':
 				try:
@@ -1201,6 +1200,8 @@ def molecularProperties(gasSpecies,propValue,temperature=398):
 	molecularValues['NH3'] = {'mass':17.03,'shomate':{'dH':-45.89806,'A':19.99563,'B':49.77119,'C':-15.37599,'D':1.921168,'E':0.189174,'F':-53.30667,'G':203.8591,'H':-45.89806,'Trange':[298,1400]}}
 	molecularValues['HNO3'] = {'mass':63,'shomate':{'dH':-134.3060,'A':19.63229,'B':153.9599,'C':-115.8378,'D':32.87955,'E':-0.249114,'F':-146.8818,'G':247.7049,'H':-134.3060,'Trange':[298,1200]}}
 	molecularValues['O3'] = {'mass':48,'shomate':{'dH':142.6740,'A':21.66157,'B':79.86001,'C':-66.02603,'D':19.58363,'E':-0.079251,'F':132.9407,'G':243.6406,'H':142.6740,'Trange':[298,1200]}}
+	molecularValues['N2H4'] = {'mass':32}
+
 
 	# Other diatomic / common species
 	molecularValues['Cl2'] = {'mass':71,'shomate':{'dH':0.0,'A':33.05060,'B':12.22940,'C':-12.06510,'D':4.385330,'E':-0.159494,'F':-10.83480,'G':259.0290,'H':0.0,'Trange':[298,1000]}}

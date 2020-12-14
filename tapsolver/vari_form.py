@@ -163,7 +163,6 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,number_of_inerts,a
 				new_neg = 'r_const["kf'+str(k)+'"]'
 				
 			for j,v in enumerate(neg):
-				
 				new_neg = new_neg+"*(u_d['u_"+str(v+1)+"']**"+str(abs(val_neg[j]))+")"
 				#new_neg = new_neg+"*exp(thermo_drc['"+str(v+1)+"'])*(u_d['u_"+str(v+1)+"']**"+str(abs(val_neg[j]))+")"#
 
@@ -220,7 +219,6 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,number_of_inerts,a
 			together = neg+pos
 
 			if k in gForward:#,r_Ga_in,r_dG_in
-				
 				#new_neg = '(kbt*constantTemp/hb)*exp(-r_Ga_in["Ga'+str(k)+'"])'
 				new_neg = '(kbt*constantTemp/hb)*exp(-r_Ga_in["Ga'+str(k)+'"])'
 
@@ -234,7 +232,6 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,number_of_inerts,a
 				new_neg = new_neg+"*(u_nd['u_n"+str(v+1)+"']**"+str(abs(val_neg[j]))+")"
 			
 			if k in gForward:
-				
 				#new_pos = '(kbt*constantTemp/hb)*exp((-r_Ga_in["Ga'+str(k)+'"]+r_dG_in["dG'+str(k)+'"]))'
 				new_pos = '(kbt*constantTemp/hb)*exp((-(r_Ga_in["Ga'+str(k)+'"]-r_dG_in["dG'+str(k)+'"])))'
 		

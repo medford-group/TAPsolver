@@ -553,7 +553,7 @@ def R_RRM_func(input_reactants,current_path,data_folder):
 	#for j in r_const:
 	#	r_const[j] = Constant(r_const[j])
 
-	#user_data = pd.read_csv('./input_file.csv',header=None)
+	#user_data = pd.read_csv('./sim_file.csv',header=None)
 	
 	#reactor_info = user_data.iloc[2:18,:] 
 	#feed_surf_info = user_data.iloc[21:27,:]
@@ -561,7 +561,7 @@ def R_RRM_func(input_reactants,current_path,data_folder):
 	#reaction_info = user_data.iloc[38:,:]
 	
 
-	user_data = pd.read_csv('./input_file.csv',header=None)
+	user_data = pd.read_csv('./sim_file.csv',header=None)
 
 	rows_1, cols_1 = np.where(user_data == 'Reactor_Information')
 	rows_2, cols_2 = np.where(user_data == 'Feed_&_Surface_Composition')
