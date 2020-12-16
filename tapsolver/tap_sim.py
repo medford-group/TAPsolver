@@ -1625,7 +1625,7 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 				x_values.append(mv)
 				print("Derivative Time: "+str(time.time() - start_time))
 				with open('./'+reac_input['Output Folder Name']+'_folder/fitting/optIter.txt', 'w') as f:
-					f.write("Contents: "+str(it_times))
+					f.write("Objective Value: "+str(j_values))
 					f.write('\n')
 					f.write("Change: "+str(dj_values))
 					f.write('\n')
@@ -1645,7 +1645,7 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 				x_values.append(mv)
 				print(time.time() - start_time)
 				with open('./'+reac_input['Output Folder Name']+'_folder/fitting/optIterHess.txt', 'w') as f:
-					f.write("Contents: "+str(it_times))
+					f.write("Objective Value: "+str(j_values))
 					f.write('\n')
 					f.write("Change: "+str(dj_values))
 					f.write('\n')
