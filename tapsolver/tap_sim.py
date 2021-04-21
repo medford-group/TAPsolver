@@ -2,9 +2,9 @@
 
 from fenics import *
 from fenics_adjoint import *
-from func_sim import *
-from vari_form import *
-from reac_odes import *
+from .func_sim import *
+from .vari_form import *
+from .reac_odes import *
 import mpmath
 import matplotlib.pyplot as plt
 import matplotlib
