@@ -1,8 +1,10 @@
+# Copyright 2021, Battelle Energy Alliance, LLC All Rights Reserved
+
 from fenics import *
 from fenics_adjoint import *
-from .func_sim import *
-from .vari_form import *
-from .reac_odes import *
+from func_sim import *
+from vari_form import *
+from reac_odes import *
 import mpmath
 import matplotlib.pyplot as plt
 import matplotlib
@@ -479,9 +481,18 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 		u_temp = Function(V)
 		
 		if reac_input['Advection'].lower() == 'true':
+			
 			W = VectorFunctionSpace(mesh, 'P', 1)
 			advTerm = Function(W)
-			advTerm.vector()[:] = reac_input['Advection Value']
+			advMulti = Constant(reac_input['Advection Value'])
+			advValue = Constant(1)
+			advTerm.vector()[:] = advValue
+			if reac_input['Fit Inert'].lower() == 'true':
+				controls = []
+				controls.append(Control(advMulti))
+			else:
+				pass
+			advTerm.vector()[totalNumCells-0] = 0
 	
 		graph_data,v_d,u_d,u_nd,sens_data,surf_data,cat_data = initializeVariableDictionaries(necessary_values,all_molecules,V,u,u_n)
 	
@@ -674,6 +685,15 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 					print('objSpecies')
 					output_fitting = curveFitting(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],objSpecies)
 					
+					if reac_input['Experimental Error'] == 'None':
+						pass
+					elif type(reac_input['Experimental Error']) == (float or int):
+						output_fitting_std = stdEstablishment(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],objSpecies,reac_input['Experimental Error'])
+						print('test 1')
+					else:
+						print('test 2')
+						output_fitting_std = stdEstablishment(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],objSpecies,0.0)
+				
 				else:
 					print('Objective Points defined incorrectly')
 					sys.exit()
@@ -688,6 +708,16 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 				elif reac_input['Objective Points'] == 'all':
 					
 					output_fitting = curveFitting(legend_label[(len(legend_label) - int(reac_input['Number of Inerts']) ) :],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],objSpecies[(len(legend_label) - int(reac_input['Number of Inerts']) ) :])
+					
+					if reac_input['Experimental Error'] == 'None':
+						pass
+					elif type(reac_input['Experimental Error']) == (float or int):
+						output_fitting_std = stdEstablishment(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],reac_input['Experimental Error'])
+						print('test 1')
+					else:
+						print('test 2')
+						print(reac_input['Experimental Error'])
+						output_fitting_std = stdEstablishment(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],0.0)
 				else:
 					print('Objective Points defined incorrectly')
 					sys.exit()
@@ -979,10 +1009,13 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 			# Design of experiment form
 	
 			while t <= reac_input['Pulse Duration']:
-				graph_data['timing'].append(t)
+				if round(t/0.001,4).is_interger() == True:
+					graph_data['timing'].append(t)
+				
 				for k in range(0,monitored_gas):
-					new_val = (to_flux[k]*( u_n.vector().get_local()[(all_molecules)+k]))
-					graph_data['conVtime_'+str(k)].append((new_val))
+					if round(t/0.001,4).is_interger() == True:
+						new_val = (to_flux[k]*( u_n.vector().get_local()[(all_molecules)+k]))
+						graph_data['conVtime_'+str(k)].append((new_val))
 	
 				for kjc in range(0,int(reac_input['Number of Inerts'])):
 					new_val = ((to_flux[monitored_gas+kjc]*u_n.vector().get_local()[2*(all_molecules+1)-2-(int(reac_input['Number of Inerts'])-kjc)]))
@@ -1063,17 +1096,31 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 							if objSpecies[k_fitting] == '1':
 									
 								if round(t,6) in output_fitting[legend_label[k_fitting]]['times']:
-									
-									c_exp = output_fitting[legend_label[k_fitting]]['values'][output_fitting[legend_label[k_fitting]]['times'].index(round(t,6))]
-									slope = (-c_exp)/(1/mesh_size)
-									intercept = c_exp - ((1-(1/mesh_size))*slope)
-									w_new = Expression('A*x[0]+B',A=Constant(slope),B=Constant(intercept),degree=0)
-									w_new2 = interpolate(w_new,V_du)
-									w3 = project(w_new2,V_du)
+
+									if reac_input['Experimental Error'] != 'None':
+										c_exp = output_fitting[legend_label[k_fitting]]['values'][output_fitting[legend_label[k_fitting]]['times'].index(round(t,6))]/output_fitting_std[legend_label[k_fitting]]['values'][output_fitting_std[legend_label[k_fitting]]['times'].index(round(t,6))]
+										c_exp_2 = output_fitting_std[legend_label[k_fitting]]['values'][output_fitting_std[legend_label[k_fitting]]['times'].index(round(t,6))]
+										slope = (-c_exp)/(1/mesh_size)
+										intercept = c_exp - ((1-(1/mesh_size))*slope)
+										w_new = Expression('A*x[0]+B',A=Constant(slope),B=Constant(intercept),degree=0)
+										w_new2 = interpolate(w_new,V_du)
+										w3 = project(w_new2,V_du)								
+									else:
+										c_exp = output_fitting[legend_label[k_fitting]]['values'][output_fitting[legend_label[k_fitting]]['times'].index(round(t,6))]
+										slope = (-c_exp)/(1/mesh_size)
+										intercept = c_exp - ((1-(1/mesh_size))*slope)
+										w_new = Expression('A*x[0]+B',A=Constant(slope),B=Constant(intercept),degree=0)
+										w_new2 = interpolate(w_new,V_du)
+										w3 = project(w_new2,V_du)		
 	
 									try:
 										if legend_label[k_fitting] != 'Inert':
-											jfunc_2 += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))							
+											if reac_input['Experimental Error'] == 'None':
+												jfunc_2 += assemble(inner(u_n[k_fitting]*to_flux[k_fitting]/c_exp_2 - w3,u_n[k_fitting]*to_flux[k_fitting]/c_exp_2 - w3)*dP(1))
+												output_fitting_std = stdEstablishment(species_list,sim_steps,folder,timeTot,points,objSpecies,stdValue)
+											else:
+												jfunc_2 += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))							
+											
 										else:
 											pass
 	
@@ -1994,6 +2041,7 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 							pass
 						else:
 							dfNew = pd.read_csv(reac_input['Experimental Data Folder']+'/flux_data/'+legend_label[k]+'.csv',header=None)
+
 							ax2.scatter(dfNew[0][:],dfNew[1][:],color=colors[k],label='exp '+legend_label[k], alpha=0.2) #, ls = '--'
 					else:
 						pass
@@ -2962,8 +3010,8 @@ def reaction_example(reaction_name = './reaction_example.csv', reaction_type=Non
 
 def define_reactor(reactor_name='./reactor_definition.csv',transport_type=['Knudsen','Advection'],overwrite=False):
 	if os.path.isfile(reactor_name) == False or overwrite == True:
-		parameters = ['Reactor Radius','Reactor Temperature','Mesh Size','Catalyst Mesh Density','Output Folder Name','Experimental Data Folder']
-		initial_values = [0.2,385,400,2,'results','None']
+		parameters = ['Reactor Radius','Reactor Temperature','Mesh Size','Catalyst Mesh Density','Output Folder Name','Experimental Data Folder','Experimental Error']
+		initial_values = [0.2,385,400,2,'results','None','None']
 		#parameters = ['Reactor_Information','Reactor Length','Mesh Size','Catalyst Fraction','Catalyst Mesh Density','Reactor Radius','Catalyst Location','Void Fraction Inert','Void Fraction Catalyst','Reactor Temperature','Reference Diffusion Inert','Reference Diffusion Catalyst','Reference Temperature','Reference Mass','Output Folder Name','Experimental Data Folder','Advection','','Feed_&_Surface_Composition']
 		#initial_values = ['',3.832,400,0.02,5,0.2,0.5,0.4,0.4,700,13.5,13.5,700,40,'results','./probeTruncated/Mn',0,'','']
 
