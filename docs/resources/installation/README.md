@@ -8,11 +8,17 @@
 
 Using [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install) is the simplest way to install [FEniCS](https://fenicsproject.org/) (on [Ubuntu](https://tutorials.ubuntu.com/tutorial/tutorial-ubuntu-on-windows#0) systems, especially) and is highly recommended. To install the necessary programs for running tapsolver, enter the following lines in the terminal (make sure conda-forge is in your list of channels by running the following commaned: "conda config --append channels conda-forge"):
 
-	conda create -n fenics-2019 -c conda-forge/label/cf202003 fenics
+	conda create -n tapsolver-2021 -c conda-forge/label/cf202003 fenics
 
-	conda activate fenics-2019
+	conda activate tapsolver-2021
 
 	pip install git+https://github.com/medford-group/TAPsolver.git
+
+	pip install git+https://github.com/dolfin-adjoint/pyadjoint.git@faster-ufl
+
+	pip install git+git://github.com/DDPSE/PyDDSBB/
+
+	pip install CheKiPEUQ[COMPLETE]
 
 # Windows Installation
 
