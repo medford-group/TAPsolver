@@ -1009,11 +1009,13 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 			# Design of experiment form
 	
 			while t <= reac_input['Pulse Duration']:
-				if round(t/0.001,4).is_interger() == True:
+				#if round(t/0.001,4).is_interger() == True:
+				if round(t/0.001,4) == int:
 					graph_data['timing'].append(t)
 				
 				for k in range(0,monitored_gas):
-					if round(t/0.001,4).is_interger() == True:
+					#if round(t/0.001,4).is_interger() == True:
+					if round(t/0.001,4) == int:
 						new_val = (to_flux[k]*( u_n.vector().get_local()[(all_molecules)+k]))
 						graph_data['conVtime_'+str(k)].append((new_val))
 	
