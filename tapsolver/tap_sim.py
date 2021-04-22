@@ -1099,29 +1099,29 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 									
 								if round(t,6) in output_fitting[legend_label[k_fitting]]['times']:
 
-									if reac_input['Experimental Error'] != 'None':
-										c_exp = output_fitting[legend_label[k_fitting]]['values'][output_fitting[legend_label[k_fitting]]['times'].index(round(t,6))]/output_fitting_std[legend_label[k_fitting]]['values'][output_fitting_std[legend_label[k_fitting]]['times'].index(round(t,6))]
-										c_exp_2 = output_fitting_std[legend_label[k_fitting]]['values'][output_fitting_std[legend_label[k_fitting]]['times'].index(round(t,6))]
-										slope = (-c_exp)/(1/mesh_size)
-										intercept = c_exp - ((1-(1/mesh_size))*slope)
-										w_new = Expression('A*x[0]+B',A=Constant(slope),B=Constant(intercept),degree=0)
-										w_new2 = interpolate(w_new,V_du)
-										w3 = project(w_new2,V_du)								
-									else:
-										c_exp = output_fitting[legend_label[k_fitting]]['values'][output_fitting[legend_label[k_fitting]]['times'].index(round(t,6))]
-										slope = (-c_exp)/(1/mesh_size)
-										intercept = c_exp - ((1-(1/mesh_size))*slope)
-										w_new = Expression('A*x[0]+B',A=Constant(slope),B=Constant(intercept),degree=0)
-										w_new2 = interpolate(w_new,V_du)
-										w3 = project(w_new2,V_du)		
+									#if reac_input['Experimental Error'] != 'None':
+									#	c_exp = output_fitting[legend_label[k_fitting]]['values'][output_fitting[legend_label[k_fitting]]['times'].index(round(t,6))]/output_fitting_std[legend_label[k_fitting]]['values'][output_fitting_std[legend_label[k_fitting]]['times'].index(round(t,6))]
+									#	c_exp_2 = output_fitting_std[legend_label[k_fitting]]['values'][output_fitting_std[legend_label[k_fitting]]['times'].index(round(t,6))]
+									#	slope = (-c_exp)/(1/mesh_size)
+									#	intercept = c_exp - ((1-(1/mesh_size))*slope)
+									#	w_new = Expression('A*x[0]+B',A=Constant(slope),B=Constant(intercept),degree=0)
+									#	w_new2 = interpolate(w_new,V_du)
+									#	w3 = project(w_new2,V_du)								
+									#else:
+									c_exp = output_fitting[legend_label[k_fitting]]['values'][output_fitting[legend_label[k_fitting]]['times'].index(round(t,6))]
+									slope = (-c_exp)/(1/mesh_size)
+									intercept = c_exp - ((1-(1/mesh_size))*slope)
+									w_new = Expression('A*x[0]+B',A=Constant(slope),B=Constant(intercept),degree=0)
+									w_new2 = interpolate(w_new,V_du)
+									w3 = project(w_new2,V_du)		
 	
 									try:
 										if legend_label[k_fitting] != 'Inert':
-											if reac_input['Experimental Error'] == 'None':
-												jfunc_2 += assemble(inner(u_n[k_fitting]*to_flux[k_fitting]/c_exp_2 - w3,u_n[k_fitting]*to_flux[k_fitting]/c_exp_2 - w3)*dP(1))
-												output_fitting_std = stdEstablishment(species_list,sim_steps,folder,timeTot,points,objSpecies,stdValue)
-											else:
-												jfunc_2 += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))							
+											#if reac_input['Experimental Error'] == 'None':
+											#	jfunc_2 += assemble(inner(u_n[k_fitting]*to_flux[k_fitting]/c_exp_2 - w3,u_n[k_fitting]*to_flux[k_fitting]/c_exp_2 - w3)*dP(1))
+											#	output_fitting_std = stdEstablishment(species_list,sim_steps,folder,timeTot,points,objSpecies,stdValue)
+											#else:
+											jfunc_2 += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))							
 											
 										else:
 											pass
