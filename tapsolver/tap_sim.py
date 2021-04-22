@@ -685,14 +685,14 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 					print('objSpecies')
 					output_fitting = curveFitting(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],objSpecies)
 					
-					if reac_input['Experimental Error'] == 'None':
-						pass
-					elif type(reac_input['Experimental Error']) == (float or int):
-						output_fitting_std = stdEstablishment(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],objSpecies,reac_input['Experimental Error'])
-						print('test 1')
-					else:
-						print('test 2')
-						output_fitting_std = stdEstablishment(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],objSpecies,0.0)
+					#if reac_input['Experimental Error'] == 'None':
+					#	pass
+					#elif type(reac_input['Experimental Error']) == (float or int):
+					#	output_fitting_std = stdEstablishment(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],objSpecies,reac_input['Experimental Error'])
+					#	print('test 1')
+					#else:
+					#	print('test 2')
+					#	output_fitting_std = stdEstablishment(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],objSpecies,0.0)
 				
 				else:
 					print('Objective Points defined incorrectly')
@@ -709,15 +709,15 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 					
 					output_fitting = curveFitting(legend_label[(len(legend_label) - int(reac_input['Number of Inerts']) ) :],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],objSpecies[(len(legend_label) - int(reac_input['Number of Inerts']) ) :])
 					
-					if reac_input['Experimental Error'] == 'None':
-						pass
-					elif type(reac_input['Experimental Error']) == (float or int):
-						output_fitting_std = stdEstablishment(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],reac_input['Experimental Error'])
-						print('test 1')
-					else:
-						print('test 2')
-						print(reac_input['Experimental Error'])
-						output_fitting_std = stdEstablishment(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],0.0)
+					#if reac_input['Experimental Error'] == 'None':
+					#	pass
+					#elif type(reac_input['Experimental Error']) == (float or int):
+					#	output_fitting_std = stdEstablishment(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],reac_input['Experimental Error'])
+					#	print('test 1')
+					#else:
+					#	print('test 2')
+					#	print(reac_input['Experimental Error'])
+					#	output_fitting_std = stdEstablishment(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],0.0)
 				else:
 					print('Objective Points defined incorrectly')
 					sys.exit()
