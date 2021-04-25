@@ -26,12 +26,10 @@ def readInput(sim_file,inputForm = 'old'):
 		
 		rows_1, cols_1 = np.where(user_data == 'Reactor_Information')
 		rows_2, cols_2 = np.where(user_data == 'Feed_&_Surface_Composition')
-	#	rows_3, cols_3 = np.where(user_data == 'Data_Storage_Options')
 		rows_4, cols_4 = np.where(user_data == 'Reaction_Information')
 	
 		reactor_info = user_data.iloc[(1+rows_1[0]):(rows_2[0]-1),:] 
 		feed_surf_info = user_data.iloc[1+rows_2[0]:rows_4[0]-1,:]
-	#	data_storage = user_data.iloc[1+rows_3[0]:rows_4[0]-1,:]
 		reaction_info = user_data.iloc[1+rows_4[0]:,:]
 	
 		reactor_kinetics_input = {}
@@ -42,11 +40,6 @@ def readInput(sim_file,inputForm = 'old'):
 			except ValueError:
 				reactor_kinetics_input[reactor_info.iloc[k,0]] = reactor_info.iloc[k,1]
 	
-	#	for k in range(0,len(data_storage.index)):
-	#		try:
-	#			reactor_kinetics_input[data_storage.iloc[k,0]] = float(data_storage.iloc[k,1]) 
-	#		except ValueError:
-	#			reactor_kinetics_input[data_storage.iloc[k,0]] = data_storage.iloc[k,1]
 	
 		for k in range(0,len(feed_surf_info.index)):
 			try:
@@ -54,11 +47,6 @@ def readInput(sim_file,inputForm = 'old'):
 			except ValueError:
 				reactor_kinetics_input[feed_surf_info.iloc[k,0]] = feed_surf_info.iloc[k,1]
 	
-	
-		### Change this set of code!
-		#reactor_kinetics_input['len_inert_1'] = reactor_kinetics_input['Reactor Length']/2 -  0.5*(reactor_kinetics_input['Catalyst Fraction'])*reactor_kinetics_input['Reactor Length']
-		#reactor_kinetics_input['len_cat'] = (reactor_kinetics_input['Catalyst Fraction'])*reactor_kinetics_input['Reactor Length'] 
-		#reactor_kinetics_input['len_inert_2'] =  reactor_kinetics_input['Reactor Length']/2 -  0.5*(reactor_kinetics_input['Catalyst Fraction'])*reactor_kinetics_input['Reactor Length']
 	
 		reactor_kinetics_input['len_inert_1'] = reactor_kinetics_input['Reactor Length']*(reactor_kinetics_input['Catalyst Location'] - 0.5*(reactor_kinetics_input['Catalyst Fraction']))#reactor_kinetics_input['Reactor Length']/2 -  0.5*(reactor_kinetics_input['Catalyst Fraction'])*reactor_kinetics_input['Reactor Length']
 		reactor_kinetics_input['len_cat'] = (reactor_kinetics_input['Catalyst Fraction'])*reactor_kinetics_input['Reactor Length'] 
@@ -72,7 +60,6 @@ def readInput(sim_file,inputForm = 'old'):
 		
 		rows_1, cols_1 = np.where(user_data == 'Reactor_Information')
 		rows_2, cols_2 = np.where(user_data == 'Feed_&_Surface_Composition')
-	#	rows_3, cols_3 = np.where(user_data == 'Data_Storage_Options')
 		rows_4, cols_4 = np.where(user_data == 'Reaction_Information')
 
 		thermoConstraints = False
@@ -82,7 +69,6 @@ def readInput(sim_file,inputForm = 'old'):
 
 		reactor_info = user_data.iloc[(1+rows_1[0]):(rows_2[0]-1),:] 
 		feed_surf_info = user_data.iloc[1+rows_2[0]:rows_4[0]-1,:]
-	#	data_storage = user_data.iloc[1+rows_3[0]:rows_4[0]-1,:]
 
 		if thermoConstraints == False:
 			reaction_info = user_data.iloc[1+rows_4[0]:,:]
@@ -121,8 +107,6 @@ def readInput(sim_file,inputForm = 'old'):
 				reactor_kinetics_input['Mass List'] = reactor_kinetics_input['Mass List']+str(feed_surf_info.iloc[3,1+jnum])
 				
 			else:
-				#if (float(feed_surf_info.iloc[1,1+jnum]) != 0.0) and (j.find('Inert') == False):
-				#	reactor_kinetics_input['Number of Reactants'] += 1
 				reactor_kinetics_input['Pulse Size'] = reactor_kinetics_input['Pulse Size']+str(feed_surf_info.iloc[1,1+jnum])+','
 				reactor_kinetics_input['Pulse Time'] = reactor_kinetics_input['Pulse Time']+str(feed_surf_info.iloc[2,1+jnum])+','
 				reactor_kinetics_input['Mass List'] = reactor_kinetics_input['Mass List']+str(feed_surf_info.iloc[3,1+jnum])+','
@@ -323,8 +307,6 @@ def readBatchInput(sim_file):
 			reactor_kinetics_input['Pulse Time'] = reactor_kinetics_input['Pulse Time']+str(feed_surf_info.iloc[2,1+jnum])
 				
 		else:
-			#if (float(feed_surf_info.iloc[1,1+jnum]) != 0.0) and (j.find('Inert') == False):
-			#	reactor_kinetics_input['Number of Reactants'] += 1
 			reactor_kinetics_input['Pulse Size'] = reactor_kinetics_input['Pulse Size']+str(feed_surf_info.iloc[1,1+jnum])+','
 			reactor_kinetics_input['Pulse Time'] = reactor_kinetics_input['Pulse Time']+str(feed_surf_info.iloc[2,1+jnum])+','
 		reactor_kinetics_input['Number of Reactants'] += 1
@@ -344,8 +326,6 @@ def readBatchInput(sim_file):
 			reactor_kinetics_input[reactor_info.iloc[k,0]] = reactor_info.iloc[k,1]
 			
 	reactor_kinetics_input['reactions_test'] = reaction_info.iloc[:,0].tolist()
-
-
 	
 	kinetic_parameters = {}
 	Ao = {}
@@ -404,7 +384,7 @@ def readBatchInput(sim_file):
 			
 			else:
 				new_value = float(reaction_info.iloc[j,1][:-1])
-				kinetic_parameters['kf'+str(j)] = new_value#float(reaction_info.iloc[j,1])
+				kinetic_parameters['kf'+str(j)] = new_value
 
 		if str(reaction_info.iloc[j,2]) != 'nan':
 			if str(reaction_info.iloc[j,2]).find("$") > 0:
@@ -465,10 +445,6 @@ def readBatchInput(sim_file):
 
 
 def solverIteration(time_step,method,solver,dk,dec_tim,inc_tim):
-	
-	"""
-	Old time step iteration method. Could be useful in future implementations when runge-kutta stepping is optional.
-	"""
 
 	try:
 		if method == 'simple_adaptive':
@@ -488,17 +464,6 @@ def solverIteration(time_step,method,solver,dk,dec_tim,inc_tim):
 		print('Time Step Failure')
 		sys.exit()
 
-	#except RuntimeError:
-	#	time_step = time_step*0.5
-	#	print(time_step)
-	#	dk.assign(time_step)
-	#	if time_step < 1e-6:
-	#		print("Time step too low")
-	#		print(time.time() - start_time)
-	#		sys.exit()
-	#	time_step=solver_iteration(time_step,method,solver,dk,1.5,1.1)
-	#	return time_step
-
 def fluxGeneration(reactor,gasses,reactants,pulse_size,Diff,voidage,dx,radius,dx2_r,outScale):
 	
 	"""Scale the output values of flux with the constant found here (messy now due to different trials)"""
@@ -508,20 +473,10 @@ def fluxGeneration(reactor,gasses,reactants,pulse_size,Diff,voidage,dx,radius,dx
 	if reactor == 'tap':
 
 		for k in range(0,gasses):
-			#to_flux.append( (Diff[k][0]/(dx*Diff[4][0])) ) 
 			if outScale.lower() == 'true':
-
-				#!#!#!#!#!#!#!#to_flux.append( (Diff[k][0]*voidage[0] /(dx)) * (radius**2)*3.14159 / pulse_size ) #0.53*
 				to_flux.append( 2*(Diff[k][0] /(dx)) * (radius**2)*3.14159 / pulse_size ) #0.53*   ## 
 			else:
-				#!#!#!#!#!#!#!#to_flux.append((Diff[k][0]*voidage[0] /(dx)) * (radius**2)*3.14159)
 				to_flux.append(2*(Diff[k][0] /(dx)) * (radius**2)*3.14159 )
-			#to_flux.append(2 *(dx*(radius**2)*3.14159) * (Diff[k][0] /(dx*voidage[0])))#(1/((1)*pulse_size)) *###??? changed from 1 to the new form
-			#to_flux.append(2*Diff[k][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r))#(1/((1)*pulse_size)) *
-			#to_flux.append(2*(1/((1+reactants)*pulse_size)) *Diff[k][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r))
-		#to_flux.append( (Diff[gasses][0]*voidage[0] /(dx)) * (radius**2)*3.14159/(pulse_size) )
-		#to_flux.append((2*Diff[gasses][0] * (dx*(radius**2)*3.14159)/(dx*voidage[0])))#*(1/((1)*pulse_size)) *
-		#to_flux.append((2*(1/((1+reactants)*pulse_size)) *Diff[gasses][0] * dx*(radius**2)*3.14159/(voidage[0]*dx2_r)))
 	elif reactor == 't_pfr' or 't_pfr_diff':
 		print('to flux generation')
 		for k in range(0,gasses):
@@ -535,7 +490,6 @@ def defineBCs(reactor,elem_list,nec_values,V_sec,reacs_num,all_mol,reac_ratio,L_
 
 	"""Define the appropriate boundary conditions for all monitored species"""
 
-	# Zero Flux boundary condition at entrance of reactor (dcdx = 0 @ L = 0)
 	if reactor == 'tap':
 		bcs = []
 
@@ -556,12 +510,6 @@ def defineBCs(reactor,elem_list,nec_values,V_sec,reacs_num,all_mol,reac_ratio,L_
 		newValues = reac_ratio.split(',')
 		for k in range(0,len(newValues)):
 			bcs.append(DirichletBC(V_sec.sub(k),Constant(int(newValues[k])),L_bound))
-		
-		#for kin in range(int(reacs_num),len(newValues)-int(number_of_inerts)):
-		#	bcs.append(DirichletBC(V_sec.sub(kin),Constant(0),L_bound))
-		
-		#for kfin in range(len(newValues),int(number_of_inerts)):
-		#	bcs.append(DirichletBC(V_sec.sub(all_mol),Constant(0),L_bound))
 	
 	return bcs
 
@@ -820,20 +768,13 @@ def stdEstablishment(species_list,sim_steps,folder,timeTot,points,objSpecies,std
 					#try:
 					fitStartValue = False
 					user_data[species_list[klabel]] = pd.read_csv(folder+'/flux_data/'+species_list[klabel]+'_std.csv',header=None)
-					#except:
-					#	fitStartValue = True
-					#	user_data[species_list[klabel]] = pd.read_csv(folder+'/flux_data/'+species_list[klabel]+'_std.csv',header=None)
 	else:
 		species_list = species_list[:len(species_list)]#'./experimental_data/'
 		for k in range(0,len(species_list)):
 			if stdValue == 0.0:
 				if objSpecies[k] == '1':
-					#try:
 					fitStartValue = False
 					user_data[species_list[k]] = pd.read_csv(folder+'/flux_data/'+species_list[k]+'_std.csv',header=None)
-					#except:
-					#	fitStartValue = True
-					#	user_data[species_list[k]] = pd.read_csv(folder+'/flux_data/'+species_list[k]+'_std.csv',header=None)
 
 	if species_list[0].find('Inert') == 0:
 				
@@ -900,7 +841,6 @@ def stdEstablishment(species_list,sim_steps,folder,timeTot,points,objSpecies,std
 					else:
 						values.append(find_experimental_point(k,exp_time_step))#k*(syn_time_step)
 					
-					#print(find_experimental_point(k*(syn_time_step),exp_time_step))
 			else:
 				for k in range(fitStartTime,int(sim_steps),frequency):
 					time_step.append(k)
@@ -942,12 +882,10 @@ def pointFitting(species_list,sim_steps,folder,time,points,objSpecies):
 			def find_experimental_point(n,exp_step):
 				""" Find an appropriate intensity point for the fitting process """
 				approx_exp_n = n*(syn_time_step)/exp_step
-				#print(n*(syn_time_step))
 				
 				if approx_exp_n != n:
 					high = math.ceil(approx_exp_n)
 					low = int(approx_exp_n)
-					#print(interp(user_data[k_new][1][high],user_data[k_new][1][low],user_data[k_new][0][high],user_data[k_new][0][low],n*(syn_time_step)))
 					return interp(user_data[k_new][1][high],user_data[k_new][1][low],user_data[k_new][0][high],user_data[k_new][0][low],n*(syn_time_step))
 
 				else:
@@ -1102,36 +1040,11 @@ def generateGif(molecules,exp_loc,fit_loc,all_steps,constants,reactions,time_dat
 			ax.set_ylabel('Normalized Flow (1/s)', fontsize=16)
 		else:
 			ax.set_ylabel('Flow (nmol/s)', fontsize=16)
-		#textstr = 'Rate Constants: '
-		
-		#for k_len in range(0,len(constants[0])):
-		#	textstr = '\n'.join((textstr,'k'+str(1+k_len)+': '+'{:0.3e}'.format(constants[step][k_len])))
 
 		props = dict(facecolor='white')
-		#ax.text(0.8, 0.95, textstr, transform=ax.transAxes, fontsize=14,verticalalignment='top',bbox=props,ha='center')
-		#textstr = 'Elementary Reactions:'
-		
-		#for k_reacs in range(0,len(reactions)):
-		#	textstr = '\n'.join((textstr,reactions[k_reacs]))
 
-		#ax.text(0.5, 0.95, textstr, transform=ax.transAxes, fontsize=14,verticalalignment='top',bbox=props,ha='center')
 		ax.text(0.02, 0.95,'Iteration: '+str(step),transform=ax.transAxes, fontsize=14,verticalalignment='top',bbox=props)
 		peak_peak = 0
-
-		#for k_names in molecules[:-1]:
-		#	peak_loc = exp_data[k_names].iloc[exp_data[k_names][1].idxmax()]
-		#	plt.plot(peak_loc[0], peak_loc[1], 'ro')
-		#	if peak_loc[1] > peak_peak:
-		#		peak_peak = peak_loc[1]
-
-		#	peak2 = exp_data[k_names].loc[exp_data[k_names][0] == exp_data[0]].index
-		#	test3 = int(round((peak2[0]+1)/2,0))
-		#	mid_loc = exp_data[k_names].iloc[test3,:]
-		#	plt.plot(mid_loc[0], mid_loc[1], 'ro')
-
-		#	#peak_loc = exp_data_2.iloc[exp_data_2[1].idxmax()]
-		#	#peak2 = exp_data_2.loc[exp_data_2[0] == peak_loc[0]].index
-		#	#plt.plot(peak_loc[0], peak_loc[1], 'ro')
 
 		ax.legend(title='Gas Species',loc='center left')
 		if xscale == 'log':
@@ -1139,15 +1052,6 @@ def generateGif(molecules,exp_loc,fit_loc,all_steps,constants,reactions,time_dat
 			ax.set_xlim(0.002,1)
 		if yscale == 'normalized':
 			ax.set_ylim(0,1.5)
-
-		#subpos = [0.4,0.13,0.5,0.4]
-		#subax1 = add_subplot_axes(ax,subpos)
-		#subax1.plot(x_data[:step],y_data[:step])
-		#subax1.set_title('Time per Iteration')
-		#subax1.set_ylabel('Time (minutes)')
-		#subax1.set_xlabel('Iteration #')
-		#subax1.set_xlim(0,all_steps)
-		#subax1.set_ylim(0,max(y_data)*1.1)
 		
 		fig.canvas.draw()
 		image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
@@ -1169,10 +1073,8 @@ def generateFolder(path_name):
 	try:  
 		os.mkdir(path_name)
 	except OSError:  
-		###print ("Creation of the directory %s failed" % path_name)
 		pass
 	else:  
-		###print ("Successfully created the directory %s " % path_name)
 		pass
 	
 def storeSens(yes_no,output_file,gasses,legend_ref):	
