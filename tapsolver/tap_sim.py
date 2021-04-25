@@ -29,13 +29,14 @@ from ufl import sqrt,exp,ln
 from shutil import copyfile
 #from hippylib import *
 import warnings
+
 #from ipyopt import *
 #from ipopt import *
 #from pyadjoint import ipopt
 
 #from gryphon import *
 
-def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitting_gif=None,xscale=None,yscale=None,pulse_num=1,store_flux_func='TRUE',catalyst_data='FALSE',sim_file = './sim_file.csv',sensitivityType=None,noise='FALSE',fitInert=None,inputForm='old',experiment_design=None):
+def general_run(time_func,uncertainty_quantificaiton=None,optimization=None,fitting_gif=None,xscale=None,yscale=None,pulseNumber=1,store_flux_func='TRUE',catalyst_data='FALSE',input_file = './input_file.csv',sensitivityType=None,noise='FALSE',fitInert=None,inputForm='old',experiment_design=None):
 	
 	sampling = False
 
@@ -71,7 +72,7 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 		kVals = constants_input.copy()
 		reac_input = reactor_kinetics_input
 	
-		reac_input['Pulse Duration'] = sim_time 
+		reac_input['Pulse Duration'] = time_func 
 		reac_input['Thin-Zone Analysis'] = catalyst_data 
 		reac_input['Time Steps'] = reac_input['Pulse Duration']*1000
 	
@@ -199,8 +200,8 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 				legend_2.append(j)
 		
 		# Store input file in output folder	
-		user_data = pd.read_csv(sim_file,header=None)
-		user_data.to_csv(path+sim_file,header=None,index=False)
+		user_data = pd.read_csv(input_file,header=None)
+		user_data.to_csv(path+input_file,header=None,index=False)
 		original_input_structure = user_data.copy()
 		
 		#############################################################
@@ -1871,6 +1872,32 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 				print()
 				print('Fitting Kinetic Parameters. Will take some time!')
 
+
+
+
+				######################## objective optimization (boukouvala)
+				
+				##rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
+				##rf_2np = adReduNp.ReducedFunctionalNumPy(rf_2)
+				##print(rf_2np.__call__(np.array([0.5,17.892023742960912])))
+				
+				##def calc_loss(p):
+				##	print('Iteration')
+				##	print(p)
+				##	estimate = rf_2np.__call__(p)
+				##	print(estimate)
+				##	return estimate
+				##	#return rf_2np.__call__(np.array([0.5,17.892023742960912]))
+				#test_problem = PyDDSBB.DDSBBModel.Problem() ## Initialize the problem
+				##test_problem.add_objective(calc_loss, sense = 'minimize') ## Add objective function
+				##test_problem.add_variable(0,50) ## add variabel bounds (must be float point)
+				##test_problem.add_variable(0,50)
+				##test = PyDDSBB.DDSBB(23,split_method = 'equal_bisection', variable_selection = 'longest_side', multifidelity = False, stop_option = {'absolute_tolerance': 100, 'relative_tolerance': 100, 'minimum_bound': 0.01, 'sampling_limit': 1000, 'time_limit': 400})
+				##test.optimize(test_problem)
+				##test.print_result()
+				##sys.exit()
+				#######################
+
 				rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2,derivative_cb_post=derivCB)# ,hessian_cb_post=hessCB
 					
 				low_bounds = []
@@ -2190,7 +2217,7 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 				things = len(times)
 				print('things')
 				for k_num in range(0,things):
-					alter = pd.read_csv(sim_file,header=None)
+					alter = pd.read_csv(input_file,header=None)
 	
 					variables_to_change = ['Display Graph','Fit Parameters','Sensitivity Analysis','Store Outlet Flux','Output Folder Name','Reaction_Information']
 				
@@ -2223,7 +2250,7 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 								alter.iloc[k,1] = 'FALSE'
 							#alter.iloc[51,1] = 'FALSE'
 					
-					alter.to_csv(sim_file,header=None,index=False)	
+					alter.to_csv(input_file,header=None,index=False)	
 				
 					try:
 						print()
@@ -2238,8 +2265,8 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 				for k_num in range(0,things):
 					shutil.rmtree('./'+reac_input['Output Folder Name']+'_folder/fitting/iter_'+str(k_num)+'_folder') 
 	
-			user_data = pd.read_csv('./'+reac_input['Output Folder Name']+'_folder/'+sim_file,header=None)
-			user_data.to_csv(sim_file,header=None,index=False)
+			user_data = pd.read_csv('./'+reac_input['Output Folder Name']+'_folder/'+input_file,header=None)
+			user_data.to_csv(input_file,header=None,index=False)
 	
 	
 		if sampling == True:
@@ -2251,14 +2278,14 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 			return graph_data, legend_label, necessary_values['reactants']
 	
 	#############################################################
-	############## SIM_FILE DICTIONARY READING #################
+	############## input_file DICTIONARY READING #################
 	#############################################################
 	
 	def call_sim():
 		
-		reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(sim_file,inputForm = inputForm)
+		reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(input_file,inputForm = inputForm)
 		
-		reactor_kinetics_input['Number of Pulses'] = pulse_num
+		reactor_kinetics_input['Number of Pulses'] = pulseNumber
 		reactor_kinetics_input['Fit Parameters'] = 'FALSE'
 		reactor_kinetics_input['Display Experimental Data'] = 'FALSE'
 		reactor_kinetics_input['Display Objective Points'] = 'FALSE'
@@ -2314,10 +2341,10 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 		if reactor_kinetics_input['Sensitivity Analysis'].lower() == 'true' or reactor_kinetics_input['Uncertainty Quantification'].lower() == 'true':
 			if sens_type == 'trans' or reactor_kinetics_input['Uncertainty Quantification'].lower() == 'true':
 				for parameters in kinetic_parameters:
-					reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(sim_file,inputForm=inputForm)
+					reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(input_file,inputForm=inputForm)
 					
 					reactor_kinetics_input['Sensitivity Parameter'] = parameters
-					reactor_kinetics_input['Number of Pulses'] = pulse_num
+					reactor_kinetics_input['Number of Pulses'] = pulseNumber
 					reactor_kinetics_input['Reactor Type'] = 'tap'
 					reactor_kinetics_input['Knudsen Test'] = 'FALSE'
 					reactor_kinetics_input['Fit Inert'] = 'FALSE'
@@ -2381,7 +2408,7 @@ def general_run(sim_time,uncertainty_quantificaiton=None,optimization=None,fitti
 		
 	call_sim()
 
-def run_tapsolver(sim_time,add_noise=False,pulse_num = 1,catalyst_data=False,sim_file = './sim_file.csv'):
+def run_tapsolver(timeFunc,add_noise=False,pulseNumber = 1,catalyst_data=False,input_file = './input_file.csv'):
 	
 	if catalyst_data == True:
 		catalyst_data = 'TRUE'
@@ -2395,55 +2422,55 @@ def run_tapsolver(sim_time,add_noise=False,pulse_num = 1,catalyst_data=False,sim
 	else:
 		add_noise = 'FALSE'
 
-	general_run(sim_time,store_flux_func='TRUE',catalyst_data=catalyst_data,pulse_num = pulse_num,sim_file = sim_file,noise=add_noise,inputForm = 'new')
+	general_run(time_func,store_flux_func='TRUE',catalyst_data=catalyst_data,pulseNumber = pulseNumber,input_file = input_file,noise=add_noise,inputForm = 'new')
 
-def run_sensitivity(sim_time,sens_type=None,sim_file = './sim_file.csv'):
+def run_sensitivity(time_func,sens_type=None,input_file = './input_file.csv'):
 	if sens_type == None:
 		sens_type = 'total'
-	general_run(sim_time,store_flux_func='FALSE',catalyst_data='FALSE',sim_file = sim_file,sensitivityType=sens_type,inputForm = 'new')
+	general_run(time_func,store_flux_func='FALSE',catalyst_data='FALSE',input_file = input_file,sensitivityType=sens_type,inputForm = 'new')
 
-def fit_tap(sim_time,optim = 'L-BFGS-B',sim_file = './sim_file.csv',inertFitting=None):
+def fit_tap(time_func,optim = 'L-BFGS-B',input_file = './input_file.csv',inertFitting=None):
 	if inertFitting == None:
-		general_run(sim_time,optimization=optim,sim_file = sim_file,inputForm = 'new')
+		general_run(time_func,optimization=optim,input_file = input_file,inputForm = 'new')
 	else:
-		general_run(sim_time,optimization=optim,sim_file = sim_file,fitInert=True,inputForm = 'new')
+		general_run(time_func,optimization=optim,input_file = input_file,fitInert=True,inputForm = 'new')
 
 	sys.exit()
 
-def run_uncertainty(sim_time,sim_file = './sim_file.csv'):
-	general_run(sim_time,uncertainty_quantificaiton=True,sim_file = sim_file,inputForm='new')
+def run_uncertainty(time_func,input_file = './input_file.csv'):
+	general_run(time_func,uncertainty_quantificaiton=True,input_file = input_file,inputForm='new')
 	sys.exit()
 
-def fitting_gif(sim_time,sim_file = './sim_file.csv',x_scale='',y_scale='',outputName='./flux.png'):
-	general_run(sim_time,fitting_gif=True,xscale=x_scale,yscale=y_scale,sim_file = './sim_file.csv',inputForm='new')
+def fitting_gif(time_func,input_file = './input_file.csv',x_scale='',y_scale='',outputName='./flux.png'):
+	general_run(time_func,fitting_gif=True,xscale=x_scale,yscale=y_scale,input_file = './input_file.csv',inputForm='new')
 
-def vary_Input(variableToChange, newValue, sim_file='./sim_file.csv'):
-	df1 = pd.read_csv(sim_file,header = None)
+def vary_Input(variableToChange, newValue, input_file='./input_file.csv'):
+	df1 = pd.read_csv(input_file,header = None)
 	#print(df1[0])
 	#print(variableToChange)
 	#print(df1[0].str.index(variableToChange))
 	cellRow = df1[df1[0]==variableToChange].index.values[0]
 	df1.iloc[cellRow,1] = newValue
 	
-	df1.to_csv('./sim_file.csv',header=None,index=False)
+	df1.to_csv('./input_file.csv',header=None,index=False)
 	#print(df1[df1[0].str.match(variableToChange)])
 
 	#to_csv(fileName)
 
-def flux_graph(sim_file = './sim_file.csv',pulse=None,disp_exper=False,disp_analytic=False,disp_objective=False,show_graph=True,store_graph=False,output_name='./flux.png'):
+def flux_graph(input_file = './input_file.csv',pulse=None,dispExper=False,disp_analytic=False,disp_objective=False,show_graph=True,store_graph=False,output_name='./flux.png'):
 
-	sim_time = 0.4
+	time_func = 0.4
 
-	reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(sim_file,inputForm = 'new')
+	reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(input_file,inputForm = 'new')
 
 	reac_input = reactor_kinetics_input
-	reac_input['Pulse Duration'] = sim_time
+	reac_input['Pulse Duration'] = time_func
 	reac_input['Infinite Inert'] = 'FALSE'
 	reac_input['Display Experimental Data'] = 'False'
 	reac_input['Display Objective Points'] = 'FALSE'
 	reac_input['Objective Points'] = 'all'
 
-	if disp_exper != False:
+	if dispExper != False:
 		reac_input['Display Experimental Data'] = 'TRUE'
 		reac_input['Display Objective Points'] = 'FALSE'
 		reac_input['Objective Points'] = 'all'
@@ -2507,7 +2534,7 @@ def flux_graph(sim_file = './sim_file.csv',pulse=None,disp_exper=False,disp_anal
 		objSpecies = [str(int(reac_input['Objective Species']))]
 
 	if reac_input['Experimental Data Folder'].lower() != 'none':
-	#if disp_exper != False:
+	#if dispExper != False:
 		output_fitting = curveFitting(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],objSpecies)
 
 
@@ -2701,8 +2728,8 @@ def flux_graph(sim_file = './sim_file.csv',pulse=None,disp_exper=False,disp_anal
 	if show_graph == True:
 		plt.show()
 
-def pulse_gif(sim_file = './sim_file.csv',output_name = './output.gif'):
-	reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(sim_file,inputForm='new')
+def pulse_gif(input_file = './input_file.csv',output_name = './output.gif'):
+	reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(input_file,inputForm='new')
 	reac_input = reactor_kinetics_input
 	reac_input['Advection'] = 'FALSE'
 	reac_input['Reactor Type'] = 'tap'
@@ -2722,23 +2749,23 @@ def pulse_gif(sim_file = './sim_file.csv',output_name = './output.gif'):
 				if max(dfTemp[i].to_list()) > maxValue:
 					maxValue = max(dfTemp[i].to_list())
 
-	def plotPulse(pulse_num):
+	def plotPulse(pulseNumber):
 		
 		fig2,ax2,legend_label,header,colors = establishOutletGraph(reac_input['Reactor Type'],necessary_values['molecules_in_gas_phase'],necessary_values['reactants'],int(reac_input['Number of Inerts']),'FALSE')
 
 		for knum,k in enumerate(necessary_values['reactants']):
 			if knum < necessary_values['molecules_in_gas_phase']:
 				dfTemp = pd.read_csv(reac_input['Output Folder Name']+'_folder/flux_data/'+k+'.csv',header=None)
-				ax2.plot(dfTemp[0],dfTemp[pulse_num],color=colors[knum], ls = '--',label=legend_label[knum], alpha=0.7)
+				ax2.plot(dfTemp[0],dfTemp[pulseNumber],color=colors[knum], ls = '--',label=legend_label[knum], alpha=0.7)
 
 		for k in range(1,int(reac_input['Number of Inerts'])+1):
 			dfTemp = pd.read_csv(reac_input['Output Folder Name']+'_folder/flux_data/Inert-'+str(k)+'.csv',header=None)
-			ax2.plot(dfTemp[0],dfTemp[pulse_num],color=colors[necessary_values['molecules_in_gas_phase']+k-1], ls = '--', label=legend_label[k], alpha=0.7)
+			ax2.plot(dfTemp[0],dfTemp[pulseNumber],color=colors[necessary_values['molecules_in_gas_phase']+k-1], ls = '--', label=legend_label[k], alpha=0.7)
 
 		ax2.legend(title="Gas Species",loc = 1)
 
 		props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-		ax2.text(0.5*max(dfTemp[0].to_list()), maxValue*1.05, 'Pulse: '+str(pulse_num), fontsize=12,verticalalignment='top', bbox=props)
+		ax2.text(0.5*max(dfTemp[0].to_list()), maxValue*1.05, 'Pulse: '+str(pulseNumber), fontsize=12,verticalalignment='top', bbox=props)
 		ax2.set_ylim(0,1.1*maxValue)
 		ax2.set_xlim(0,max(dfTemp[0].to_list()))
 		fig2.canvas.draw()
@@ -2754,9 +2781,9 @@ def pulse_gif(sim_file = './sim_file.csv',output_name = './output.gif'):
 
 	plt.close('all')
 
-def concnDistGif(sim_file = './sim_file.csv',dataType='surf',output_name='./cat.gif',pulse=1,inputForm='old'):
+def concnDistGif(input_file = './input_file.csv',dataType='surf',output_name='./cat.gif',pulse=1,inputForm='old'):
 	
-	reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(sim_file,inputForm = inputForm)
+	reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(input_file,inputForm = inputForm)
 	reac_input = reactor_kinetics_input
 	fit_temperature = False
 	necessary_values, rate_array, rev_irr = make_f_equation(reac_input['reactions_test'],reac_input['Number of Reactants'],'tap',reac_input['Number of Inerts'],reac_input['Advection'],arrForward,arrBackward,gForward,fit_temperature)
@@ -2799,9 +2826,9 @@ def concnDistGif(sim_file = './sim_file.csv',dataType='surf',output_name='./cat.
 	
 	imageio.mimsave(output_name, [plotCat(i,dataType) for i in list(range(0,dfColumns[0].count()))], fps=4)
 
-def concDistPlot(sim_file = './sim_file.csv',dataType='surf',output_name='./cat.gif',pulse=1):
+def concDistPlot(input_file = './input_file.csv',dataType='surf',output_name='./cat.gif',pulse=1):
 	
-	reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(sim_file,inputForm = 'new')
+	reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(input_file,inputForm = 'new')
 	reac_input = reactor_kinetics_input
 	fit_temperature = False
 	reac_input['Advection'] = 'FALSE'
@@ -2844,9 +2871,9 @@ def concDistPlot(sim_file = './sim_file.csv',dataType='surf',output_name='./cat.
 
 	plt.show()
 
-def generate_sim_file(reactor_name='./reactor_definition.csv',reaction_name='./reaction_definition.csv',sim_file='./sim_file.csv',overwrite=False):
+def generate_input_file(reactor_name='./reactor_definition.csv',reaction_name='./reaction_definition.csv',input_file='./input_file.csv',overwrite=False):
 
-	if os.path.isfile(sim_file) == False or overwrite == True:
+	if os.path.isfile(input_file) == False or overwrite == True:
 
 		start = pd.read_csv(reactor_name,header=None)
 		startRows = len(start)
@@ -2939,10 +2966,10 @@ def generate_sim_file(reactor_name='./reactor_definition.csv',reaction_name='./r
 			for k in range(0,len(reaction_info.columns)):
 				newOutputFile.iloc[len(start)+2+len(d)+j+2,k] = reaction_info.iloc[j,k]
 
-		newOutputFile.to_csv(sim_file,header=None,index=False)
+		newOutputFile.to_csv(input_file,header=None,index=False)
 
 	else:
-		print('The following sim_file already exists: '+sim_file)
+		print('The following input_file already exists: '+input_file)
 		print('If you would like to overwrite the file,')
 		print('define overwrite in the function as True.')
 		print('If not please select a new file name.')
@@ -3204,10 +3231,10 @@ def bulk_structure(reactor_setup,iterDict,baseName=None):
 
 		df2.to_csv('./'+baseName+'/'+'changedVariables.csv',header=None,index=False)
 
-def design_experiment(sim_time,sim_file = './sim_file.csv',altVariables=['pulses','time']):
+def design_experiment(time_func,input_file = './input_file.csv',altVariables=['pulses','time']):
 	print(altVariables)
 
-	general_run(sim_time,sim_file = sim_file,inputForm = 'new',experiment_design=altVariables)
+	general_run(time_func,input_file = input_file,inputForm = 'new',experiment_design=altVariables)
 
 def gen_help(parameter):
 	sys.exit()
@@ -3218,8 +3245,8 @@ def folder_construcntion():
 def bulk_analysis():
 	sys.exit()
 
-def graph_drc(sim_file,inputForm, gas_species=[]):
-	reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(sim_file,inputForm = inputForm)
+def graph_drc(input_file,inputForm, gas_species=[]):
+	reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(input_file,inputForm = inputForm)
 	reac_input = reactor_kinetics_input.copy()
 	reac_input['Advection'] = "FALSE"
 	reac_input['Reactor Type'] = 'tap'
@@ -3256,8 +3283,8 @@ def graph_drc(sim_file,inputForm, gas_species=[]):
 	#ax2.set_xlim(10,50)
 	plt.show()
 	
-def graph_drc(sim_file,inputForm, gas_species=[]):
-	reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(sim_file,inputForm = inputForm)
+def graph_drc(input_file,inputForm, gas_species=[]):
+	reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(input_file,inputForm = inputForm)
 	reac_input = reactor_kinetics_input.copy()
 	reac_input['Advection'] = "FALSE"
 	reac_input['Reactor Type'] = 'tap'
@@ -3296,8 +3323,8 @@ def graph_drc(sim_file,inputForm, gas_species=[]):
 	#ax2.set_xlim(10,50)
 	plt.show()
 	
-def graph_drc_finite(sim_file,inputForm, gas_species=[]):
-	reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(sim_file,inputForm = inputForm)
+def graph_drc_finite(input_file,inputForm, gas_species=[]):
+	reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(input_file,inputForm = inputForm)
 	reac_input = reactor_kinetics_input.copy()
 	reac_input['Advection'] = "FALSE"
 	reac_input['Reactor Type'] = 'tap'
