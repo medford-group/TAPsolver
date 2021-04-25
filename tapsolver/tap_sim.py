@@ -1832,7 +1832,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		#############################################################
 		############## GENERATE OPTIMIZATION GIF ####################
 		#############################################################
-	
+		print('fitting gif')
 		if reac_input['Fitting Gif'].lower() == 'true':
 			if os.path.exists('./'+reac_input['Output Folder Name']+'_folder/fitting/optIter.txt') == True:
 				with open('./'+reac_input['Output Folder Name']+'_folder/fitting/optIter.txt', 'r') as f:
@@ -1888,7 +1888,6 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 						print()
 						print('Iteration: '+str(k_num+1))
 						call_sim()
-						sys.exit()
 					except:
 						k_num = things
 			
@@ -2073,7 +2072,7 @@ def run_uncertainty(timeFunc,input_file = './input_file.csv'):
 	general_run(timeFunc,uncertainty_quantificaiton=True,input_file = input_file,inputForm='new')
 	sys.exit()
 
-def fitting_gif(timeFunc,input_file = './input_file.csv',x_scale='',y_scale='',outputName='./flux.png'):
+def fitting_gif(timeFunc,input_file = './input_file.csv',x_scale='',y_scale='',outputName='./flux.gif'):
 	general_run(timeFunc,fitting_gif=True,xscale=x_scale,yscale=y_scale,input_file = './input_file.csv',inputForm='new')
 
 def vary_Input(variableToChange, newValue, input_file='./input_file.csv'):
