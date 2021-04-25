@@ -547,7 +547,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		
 		constantT = Constant(0)
 		if doe_form_pulse == True:
-			controls = []
+			#controls = []
 			b0Test2 = Expression('x[0] < 0.002500001 ? 1 : 0', degree=0)
 			
 			#pulseIntensities = [Inert_pulse_conc/2,Inert_pulse_conc,Inert_pulse_conc*0,Inert_pulse_conc/2,Inert_pulse_conc/2]
@@ -558,7 +558,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			intensConst = {}
 			for jk in range(0,len(reactant_feed)):
 				intensConst['inten_'+str(jk)] = Constant(reactant_feed[jk]*Inert_pulse_conc)
-				controls.append(Control(intensConst['inten_'+str(jk)]))
+			#	controls.append(Control(intensConst['inten_'+str(jk)]))
 			
 			reactant_time = list(map(float, reac_input['Pulse Time'].split(',')))
 			
