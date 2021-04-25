@@ -1620,6 +1620,9 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 					utest.append(Constant(0))
 
 				for jay_z_num in range(0,len(controls)):
+					utest = []
+					for just in range(0,len(controls)):
+						utest.append(Constant(0))
 					print('start this calculation')
 					utest[jay_z_num] = Constant(1)
 					H_i = rf_2.hessian(utest)
