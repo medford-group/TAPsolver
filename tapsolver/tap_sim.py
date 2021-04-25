@@ -156,7 +156,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			doe_form_pulse = True
 			doe_form_surf = True
 		else:
-			doe_form_pulse = False
+			doe_form_pulse = True
 			doe_form_surf = False
 	
 		if reac_input['Fit Parameters'].lower() == 'true' or (sens_type == 'total' and reac_input['Sensitivity Analysis'].lower() == 'true') or reactor_kinetics_input['Uncertainty Quantification'].lower() == 'true':
