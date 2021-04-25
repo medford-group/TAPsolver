@@ -36,7 +36,7 @@ import warnings
 
 #from gryphon import *
 
-def general_run(time_func,uncertainty_quantificaiton=None,optimization=None,fitting_gif=None,xscale=None,yscale=None,pulseNumber=1,store_flux_func='TRUE',catalyst_data='FALSE',input_file = './input_file.csv',sensitivityType=None,noise='FALSE',fitInert=None,inputForm='old',experiment_design=None):
+def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitting_gif=None,xscale=None,yscale=None,pulseNumber=1,store_flux_func='TRUE',catalyst_data='FALSE',input_file = './input_file.csv',sensitivityType=None,noise='FALSE',fitInert=None,inputForm='old',experiment_design=None):
 	
 	sampling = False
 
@@ -72,7 +72,7 @@ def general_run(time_func,uncertainty_quantificaiton=None,optimization=None,fitt
 		kVals = constants_input.copy()
 		reac_input = reactor_kinetics_input
 	
-		reac_input['Pulse Duration'] = time_func 
+		reac_input['Pulse Duration'] = timeFunc 
 		reac_input['Thin-Zone Analysis'] = catalyst_data 
 		reac_input['Time Steps'] = reac_input['Pulse Duration']*1000
 	
@@ -2422,27 +2422,27 @@ def run_tapsolver(timeFunc,add_noise=False,pulseNumber = 1,catalyst_data=False,i
 	else:
 		add_noise = 'FALSE'
 
-	general_run(time_func,store_flux_func='TRUE',catalyst_data=catalyst_data,pulseNumber = pulseNumber,input_file = input_file,noise=add_noise,inputForm = 'new')
+	general_run(timeFunc,store_flux_func='TRUE',catalyst_data=catalyst_data,pulseNumber = pulseNumber,input_file = input_file,noise=add_noise,inputForm = 'new')
 
-def run_sensitivity(time_func,sens_type=None,input_file = './input_file.csv'):
+def run_sensitivity(timeFunc,sens_type=None,input_file = './input_file.csv'):
 	if sens_type == None:
 		sens_type = 'total'
-	general_run(time_func,store_flux_func='FALSE',catalyst_data='FALSE',input_file = input_file,sensitivityType=sens_type,inputForm = 'new')
+	general_run(timeFunc,store_flux_func='FALSE',catalyst_data='FALSE',input_file = input_file,sensitivityType=sens_type,inputForm = 'new')
 
-def fit_tap(time_func,optim = 'L-BFGS-B',input_file = './input_file.csv',inertFitting=None):
+def fit_tap(timeFunc,optim = 'L-BFGS-B',input_file = './input_file.csv',inertFitting=None):
 	if inertFitting == None:
-		general_run(time_func,optimization=optim,input_file = input_file,inputForm = 'new')
+		general_run(timeFunc,optimization=optim,input_file = input_file,inputForm = 'new')
 	else:
-		general_run(time_func,optimization=optim,input_file = input_file,fitInert=True,inputForm = 'new')
+		general_run(timeFunc,optimization=optim,input_file = input_file,fitInert=True,inputForm = 'new')
 
 	sys.exit()
 
-def run_uncertainty(time_func,input_file = './input_file.csv'):
-	general_run(time_func,uncertainty_quantificaiton=True,input_file = input_file,inputForm='new')
+def run_uncertainty(timeFunc,input_file = './input_file.csv'):
+	general_run(timeFunc,uncertainty_quantificaiton=True,input_file = input_file,inputForm='new')
 	sys.exit()
 
-def fitting_gif(time_func,input_file = './input_file.csv',x_scale='',y_scale='',outputName='./flux.png'):
-	general_run(time_func,fitting_gif=True,xscale=x_scale,yscale=y_scale,input_file = './input_file.csv',inputForm='new')
+def fitting_gif(timeFunc,input_file = './input_file.csv',x_scale='',y_scale='',outputName='./flux.png'):
+	general_run(timeFunc,fitting_gif=True,xscale=x_scale,yscale=y_scale,input_file = './input_file.csv',inputForm='new')
 
 def vary_Input(variableToChange, newValue, input_file='./input_file.csv'):
 	df1 = pd.read_csv(input_file,header = None)
@@ -2459,12 +2459,12 @@ def vary_Input(variableToChange, newValue, input_file='./input_file.csv'):
 
 def flux_graph(input_file = './input_file.csv',pulse=None,dispExper=False,disp_analytic=False,disp_objective=False,show_graph=True,store_graph=False,output_name='./flux.png'):
 
-	time_func = 0.4
+	timeFunc = 0.4
 
 	reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(input_file,inputForm = 'new')
 
 	reac_input = reactor_kinetics_input
-	reac_input['Pulse Duration'] = time_func
+	reac_input['Pulse Duration'] = timeFunc
 	reac_input['Infinite Inert'] = 'FALSE'
 	reac_input['Display Experimental Data'] = 'False'
 	reac_input['Display Objective Points'] = 'FALSE'
@@ -3231,10 +3231,10 @@ def bulk_structure(reactor_setup,iterDict,baseName=None):
 
 		df2.to_csv('./'+baseName+'/'+'changedVariables.csv',header=None,index=False)
 
-def design_experiment(time_func,input_file = './input_file.csv',altVariables=['pulses','time']):
+def design_experiment(timeFunc,input_file = './input_file.csv',altVariables=['pulses','time']):
 	print(altVariables)
 
-	general_run(time_func,input_file = input_file,inputForm = 'new',experiment_design=altVariables)
+	general_run(timeFunc,input_file = input_file,inputForm = 'new',experiment_design=altVariables)
 
 def gen_help(parameter):
 	sys.exit()
