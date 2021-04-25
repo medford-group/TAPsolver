@@ -548,7 +548,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		constantT = Constant(0)
 		if doe_form_pulse == True:
 			#controls = []
-			b0Test2 = Expression('x[0] < 0.002500001 ? 1 : 0', degree=0)
+			b0Test2 = Expression('x[0] < 0.002500001 ? 0.5 : 0', degree=0)
 			
 			#pulseIntensities = [Inert_pulse_conc/2,Inert_pulse_conc,Inert_pulse_conc*0,Inert_pulse_conc/2,Inert_pulse_conc/2]
 			#pulseTimes = [0.01,0.001,0.001,0.001,0.001]
