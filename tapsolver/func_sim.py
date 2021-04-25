@@ -724,7 +724,7 @@ def curveFitting(species_list,sim_steps,folder,timeTot,points,objSpecies):
 					user_data[species_list[klabel]] = pd.read_csv(folder+'/flux_data/'+species_list[klabel]+'.csv',header=None)
 				except:
 					fitStartValue = True
-					user_data[species_list[klabel]] = pd.read_csv(folder+'/species_data/'+species_list[klabel]+'.csv',header=None)
+					user_data[species_list[klabel]] = pd.read_csv(folder+'/flux_data/'+species_list[klabel]+'.csv',header=None)
 	else:
 		species_list = species_list[:len(species_list)]#'./experimental_data/'
 		for k in range(0,len(species_list)):
@@ -734,7 +734,7 @@ def curveFitting(species_list,sim_steps,folder,timeTot,points,objSpecies):
 					user_data[species_list[k]] = pd.read_csv(folder+'/flux_data/'+species_list[k]+'.csv',header=None)
 				except:
 					fitStartValue = True
-					user_data[species_list[k]] = pd.read_csv(folder+'/species_data/'+species_list[k]+'.csv',header=None)
+					user_data[species_list[k]] = pd.read_csv(folder+'/flux_data/'+species_list[k]+'.csv',header=None)
 	curve_fitting = {}
 	exp_data = user_data
 	
@@ -822,7 +822,7 @@ def stdEstablishment(species_list,sim_steps,folder,timeTot,points,objSpecies,std
 					user_data[species_list[klabel]] = pd.read_csv(folder+'/flux_data/'+species_list[klabel]+'_std.csv',header=None)
 					#except:
 					#	fitStartValue = True
-					#	user_data[species_list[klabel]] = pd.read_csv(folder+'/species_data/'+species_list[klabel]+'_std.csv',header=None)
+					#	user_data[species_list[klabel]] = pd.read_csv(folder+'/flux_data/'+species_list[klabel]+'_std.csv',header=None)
 	else:
 		species_list = species_list[:len(species_list)]#'./experimental_data/'
 		for k in range(0,len(species_list)):
@@ -833,7 +833,7 @@ def stdEstablishment(species_list,sim_steps,folder,timeTot,points,objSpecies,std
 					user_data[species_list[k]] = pd.read_csv(folder+'/flux_data/'+species_list[k]+'_std.csv',header=None)
 					#except:
 					#	fitStartValue = True
-					#	user_data[species_list[k]] = pd.read_csv(folder+'/species_data/'+species_list[k]+'_std.csv',header=None)
+					#	user_data[species_list[k]] = pd.read_csv(folder+'/flux_data/'+species_list[k]+'_std.csv',header=None)
 
 	if species_list[0].find('Inert') == 0:
 				
@@ -845,7 +845,7 @@ def stdEstablishment(species_list,sim_steps,folder,timeTot,points,objSpecies,std
 					user_data_2[species_list[klabel]] = pd.read_csv(folder+'/flux_data/'+species_list[klabel]+'.csv',header=None)
 				except:
 					fitStartValue = True
-					user_data_2[species_list[klabel]] = pd.read_csv(folder+'/species_data/'+species_list[klabel]+'.csv',header=None)
+					user_data_2[species_list[klabel]] = pd.read_csv(folder+'/flux_data/'+species_list[klabel]+'.csv',header=None)
 	else:
 		species_list = species_list[:len(species_list)]#'./experimental_data/'
 		for k in range(0,len(species_list)):
@@ -855,7 +855,7 @@ def stdEstablishment(species_list,sim_steps,folder,timeTot,points,objSpecies,std
 					user_data_2[species_list[k]] = pd.read_csv(folder+'/flux_data/'+species_list[k]+'.csv',header=None)
 				except:
 					fitStartValue = True
-					user_data_2[species_list[k]] = pd.read_csv(folder+'/species_data/'+species_list[k]+'.csv',header=None)
+					user_data_2[species_list[k]] = pd.read_csv(folder+'/flux_data/'+species_list[k]+'.csv',header=None)
 	
 	curve_fitting = {}
 	exp_data = user_data
