@@ -1514,7 +1514,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			fitting_time = time.time()
 			#print("Including temporary work around. Must remove line just below this!")
 			# simplifiedTimeStep == False and 
-			if (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true' or fit_temperature == True or doe_form_pulse == True):
+			if (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true' or fit_temperature == True):
 					
 				start_time = time.time()
 				print()
