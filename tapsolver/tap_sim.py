@@ -902,8 +902,9 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 						graph_data['conVtime_'+str(k)].append((new_val))
 	
 				for kjc in range(0,int(reac_input['Number of Inerts'])):
-					new_val = ((to_flux[monitored_gas+kjc]*u_n.vector().get_local()[2*(all_molecules+1)-2-(int(reac_input['Number of Inerts'])-kjc)]))
-					graph_data['conVtime_'+str(all_molecules-(int(reac_input['Number of Inerts'])-kjc))].append((new_val))
+					if round(t/0.001,4).is_integer() == True:
+						new_val = ((to_flux[monitored_gas+kjc]*u_n.vector().get_local()[2*(all_molecules+1)-2-(int(reac_input['Number of Inerts'])-kjc)]))
+						graph_data['conVtime_'+str(all_molecules-(int(reac_input['Number of Inerts'])-kjc))].append((new_val))
 				
 				mesh_size = reac_input['Mesh Size']
 		
