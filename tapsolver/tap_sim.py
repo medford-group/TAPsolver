@@ -1835,8 +1835,9 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		#############################################################
 		############## GENERATE OPTIMIZATION GIF ####################
 		#############################################################
-		print(reac_input['Fitting Gif'].lower())
 		if reac_input['Fitting Gif'].lower() == 'true':
+			print(os.path.exists('./'+reac_input['Output Folder Name']+'_folder/fitting/optIter.txt'))
+
 			if os.path.exists('./'+reac_input['Output Folder Name']+'_folder/fitting/optIter.txt') == True:
 				with open('./'+reac_input['Output Folder Name']+'_folder/fitting/optIter.txt', 'r') as f:
 					lines = f.readlines()
