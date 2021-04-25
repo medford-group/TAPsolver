@@ -2457,7 +2457,7 @@ def vary_Input(variableToChange, newValue, input_file='./input_file.csv'):
 
 	#to_csv(fileName)
 
-def flux_graph(input_file = './input_file.csv',pulse=None,dispExper=False,disp_analytic=False,disp_objective=False,show_graph=True,store_graph=False,output_name='./flux.png'):
+def flux_graph(input_file = './input_file.csv',pulse=None,dispExper=False,dispAnalytic=False,dispObjective=False,show_graph=True,store_graph=False,output_name='./flux.png'):
 
 	timeFunc = 0.4
 
@@ -2475,11 +2475,11 @@ def flux_graph(input_file = './input_file.csv',pulse=None,dispExper=False,disp_a
 		reac_input['Display Objective Points'] = 'FALSE'
 		reac_input['Objective Points'] = 'all'
 
-	if disp_objective != False:
+	if dispObjective != False:
 		reac_input['Display Objective Points'] = 'TRUE'
 		reac_input['Objective Points'] = 'all'
 #
-	if disp_analytic != False:
+	if dispAnalytic != False:
 		reac_input['Infinite Inert'] = 'TRUE'
 
 	reac_input['Advection'] = 'FALSE'
