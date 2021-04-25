@@ -2177,6 +2177,8 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			
 			for j_species in range(0,monitored_gas+int(reac_input['Number of Inerts'])):
 				tempDict = np.transpose(dictionary_of_numpy_data[legend_label[j_species]])
+				print('data storage location')
+				print('./'+reac_input['Output Folder Name']+'_folder/flux_data/'+legend_label[j_species]+'.csv')
 				np.savetxt('./'+reac_input['Output Folder Name']+'_folder/flux_data/'+legend_label[j_species]+'.csv', tempDict, delimiter=",")
 	
 		ax2.legend(title="Gas Species")
