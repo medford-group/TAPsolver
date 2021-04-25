@@ -1844,8 +1844,8 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 					lines = f.readlines()
 				f.close
 				lines = [x.strip() for x in lines]
-				times = lines[0]
-				times = times.replace('Contents: ','')
+				times = lines[0] 
+				times = times.replace('Objective Value: ','')
 				times = eval(times)
 				constants = lines[2]
 				constants = constants.replace('Constants: ','')
