@@ -1015,9 +1015,9 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 					graph_data['timing'].append(t)
 				
 				for k in range(0,monitored_gas):
-					print(k)
 					#if round(t/0.001,4).is_interger() == True:
 					if round(t/0.001,4) == int:
+						print(k)
 						new_val = (to_flux[k]*( u_n.vector().get_local()[(all_molecules)+k]))
 						print(graph_data['conVtime_'+str(k)])
 						graph_data['conVtime_'+str(k)].append((new_val))
