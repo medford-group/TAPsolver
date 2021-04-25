@@ -911,37 +911,37 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				######## STEP FOR CONSTRUCTING OBJECTIVE FUNCTION ###########
 				#############################################################
 
-				if doe_form_pulse == True and simplifiedTimeStep == False:
-					
-					if 'f' in relevant_kinetic_parameter:
-						direction = 'f'
-						consideredReaction = int(relevant_kinetic_parameter.split('f')[1])
-						rate_arrayTemp, reactionsTemp, reactantsTemp, rev_irrTemp = variational_list_parsing(reac_input['reactions_test'])
-						singleRateExpression = 'r_const["'+relevant_kinetic_parameter+'"]'
-						
-						for jkmnum,jkm in enumerate(rate_arrayTemp[consideredReaction]):
-							if jkm < 0:
-								singleRateExpression += "*(u_d['u_"+str(jkmnum+1)+"']**"+str(abs(jkm))+")"	
-								
-						singleRateExpression = eval("inner("+singleRateExpression+","+singleRateExpression+")*dx(1)")
-						#"*(u_d['u_"+str(v+1)+"']**"+str(abs(val_pos[j]))+")"#
-
-					else:
-						direction = 'b'
-						consideredReaction = int(relevant_kinetic_parameter.split('b')[1])
-						rate_arrayTemp, reactionsTemp, reactantsTemp, rev_irrTemp = variational_list_parsing(reac_input['reactions_test'])
-						singleRateExpression = 'r_const["kb'+str(k)+'"]'
-						
-						for jkmnum,jkm in enumerate(rate_arrayTemp[consideredReaction]):
-							if jkm > 0:
-								singleRateExpression += "*(u_d['u_"+str(jkmnum+1)+"']**"+str(abs(jkm))+")"	
-								
-						singleRateExpression = eval("inner("+singleRateExpression+","+singleRateExpression+")*dx(1)")
-
-					try:
-						jfunc_2 += assemble(singleRateExpression)
-					except:
-						jfunc_2 = assemble(singleRateExpression)
+				#if doe_form_pulse == True and simplifiedTimeStep == False:
+				#	
+				#	if 'f' in relevant_kinetic_parameter:
+				#		direction = 'f'
+				#		consideredReaction = int(relevant_kinetic_parameter.split('f')[1])
+				#		rate_arrayTemp, reactionsTemp, reactantsTemp, rev_irrTemp = variational_list_parsing(reac_input['reactions_test'])
+				#		singleRateExpression = 'r_const["'+relevant_kinetic_parameter+'"]'
+				#		
+				#		for jkmnum,jkm in enumerate(rate_arrayTemp[consideredReaction]):
+				#			if jkm < 0:
+				#				singleRateExpression += "*(u_d['u_"+str(jkmnum+1)+"']**"+str(abs(jkm))+")"	
+				#				
+				#		singleRateExpression = eval("inner("+singleRateExpression+","+singleRateExpression+")*dx(1)")
+				#		#"*(u_d['u_"+str(v+1)+"']**"+str(abs(val_pos[j]))+")"#
+				#
+				#	else:
+				#		direction = 'b'
+				#		consideredReaction = int(relevant_kinetic_parameter.split('b')[1])
+				#		rate_arrayTemp, reactionsTemp, reactantsTemp, rev_irrTemp = variational_list_parsing(reac_input['reactions_test'])
+				#		singleRateExpression = 'r_const["kb'+str(k)+'"]'
+				#		
+				#		for jkmnum,jkm in enumerate(rate_arrayTemp[consideredReaction]):
+				#			if jkm > 0:
+				#				singleRateExpression += "*(u_d['u_"+str(jkmnum+1)+"']**"+str(abs(jkm))+")"	
+				#				
+				#		singleRateExpression = eval("inner("+singleRateExpression+","+singleRateExpression+")*dx(1)")
+				#
+				#	try:
+				#		jfunc_2 += assemble(singleRateExpression)
+				#	except:
+				#		jfunc_2 = assemble(singleRateExpression)
 
 				if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or sampling == True or (sens_type == 'total' and reac_input['Sensitivity Analysis'].lower() == 'true') or fit_temperature == True:
 
