@@ -24,6 +24,8 @@ import pip
 import pkg_resources
 import ufl
 import re
+
+from pyadjoint import reduced_functional_numpy as adReduNp
 from ufl import sqrt,exp,ln
 from shutil import copyfile
 import warnings
@@ -1523,6 +1525,31 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 
 				######################## objective optimization (boukouvala)
 				if reac_input['Optimization Method'] == 'branch&bound':
+					import PyDDSBB
+					print('global show')
+					rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
+					rf_2np = adReduNp.ReducedFunctionalNumPy(rf_2)
+					
+					def calc_loss(p):
+						print('Iteration')
+						print(p)
+						estimate = rf_2np.__call__(p)
+						return estimate
+						#return rf_2np.__call__(np.array([0.5,17.892023742960912]))
+					
+					test_problem = PyDDSBB.DDSBBModel.Problem() ## Initialize the problem
+					test_problem.add_objective(calc_loss, sense = 'minimize') ## Add objective function
+					for bb in range(0,len(controls)):
+						test_problem.add_variable(0,20)
+					
+					test = PyDDSBB.DDSBB(100,split_method = 'equal_bisection', variable_selection = 'longest_side', multifidelity = False, stop_option = {'absolute_tolerance': 100, 'relative_tolerance': 100, 'minimum_bound': 0.01, 'sampling_limit': 1000, 'time_limit': 400})
+					test.optimize(test_problem)
+					test.print_result()
+					sys.exit()
+				#######################
+
+								######################## objective optimization (boukouvala)
+				if reac_input['Optimization Method'] == 'genetic':
 					print('global show')
 					rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
 					rf_2np = adReduNp.ReducedFunctionalNumPy(rf_2)
