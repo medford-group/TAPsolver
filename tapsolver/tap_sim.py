@@ -1562,7 +1562,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 						#return rf_2np.__call__(np.array([0.5,17.892023742960912]))
 					
 					varbound = np.array([[0,10]]*len(controls))
-					model=ga(function=calc_loss,dimension=len(controls),variable_type='real',variable_boundaries=varbound)
+					model=ga(function=calc_loss,dimension=len(controls),variable_type='real',function_timeout=800,variable_boundaries=varbound)
 					model.run()
 					sys.exit()
 				#######################
