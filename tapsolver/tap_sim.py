@@ -1550,6 +1550,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 
 								######################## objective optimization (boukouvala)
 				if reac_input['Optimization Method'] == 'genetic':
+					from geneticalgorithm import geneticalgorithm as ga
 					print('global show')
 					rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
 					rf_2np = adReduNp.ReducedFunctionalNumPy(rf_2)
@@ -1563,13 +1564,9 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 						return estimate
 						#return rf_2np.__call__(np.array([0.5,17.892023742960912]))
 					
-					test_problem = PyDDSBB.DDSBBModel.Problem() ## Initialize the problem
-					test_problem.add_objective(calc_loss, sense = 'minimize') ## Add objective function
-					test_problem.add_variable(0,50) ## add variabel bounds (must be float point)
-					test_problem.add_variable(0,50)
-					test = PyDDSBB.DDSBB(23,split_method = 'equal_bisection', variable_selection = 'longest_side', multifidelity = False, stop_option = {'absolute_tolerance': 100, 'relative_tolerance': 100, 'minimum_bound': 0.01, 'sampling_limit': 1000, 'time_limit': 400})
-					test.optimize(test_problem)
-					test.print_result()
+					varbound = np.array([[0,10]]*len(controls))
+					model=ga(function=calc_loss,dimension=len(controls),variable_type='real',variable_boundaries=varbound)
+					model.run()
 					sys.exit()
 				#######################
 

@@ -19,6 +19,8 @@ Using [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install)
 	pip install --upgrade git+git://github.com/DDPSE/PyDDSBB/
 
 	pip install CheKiPEUQ[COMPLETE]
+	
+	pip install geneticalgorithm
 
 # Windows Installation
 
