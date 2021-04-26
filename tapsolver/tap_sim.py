@@ -1526,7 +1526,6 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				######################## objective optimization (boukouvala)
 				if reac_input['Optimization Method'] == 'branch&bound':
 					import PyDDSBB
-					print('global show')
 					rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
 					rf_2np = adReduNp.ReducedFunctionalNumPy(rf_2)
 					
@@ -1551,10 +1550,8 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 								######################## objective optimization (boukouvala)
 				if reac_input['Optimization Method'] == 'genetic':
 					from geneticalgorithm import geneticalgorithm as ga
-					print('global show')
 					rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
 					rf_2np = adReduNp.ReducedFunctionalNumPy(rf_2)
-					print(rf_2np.__call__(np.array([0.5,17.892023742960912])))
 					
 					def calc_loss(p):
 						print('Iteration')
