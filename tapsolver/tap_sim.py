@@ -1522,7 +1522,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				print('Fitting Kinetic Parameters. Will take some time!')
 
 				######################## objective optimization (boukouvala)
-				if reac_input['Global Optimization'].lower() == 'branch&bound':
+				if reac_input['Optimization Method'] == 'branch&bound':
 					print('global show')
 					rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
 					rf_2np = adReduNp.ReducedFunctionalNumPy(rf_2)
