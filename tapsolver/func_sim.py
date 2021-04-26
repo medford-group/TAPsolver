@@ -1253,7 +1253,7 @@ def molecularProperties(gasSpecies,propValue,temperature=398):
 
 
 def genInput1():
-	f= open("input_file.py","w+")
+	f= open("input_file.csv","w+")
 	f.write("Reactor_Information,Zone1,Zone2,Zone3,,,,,, \n")
 	f.write("Zone Length,2,0.25,2,,,,,, \n")
 	f.write("Zone Void,0.4,0.4,0.4,,,,,, \n")
@@ -1283,7 +1283,7 @@ def genInput1():
 	f.close()
 
 def genInput2():
-	f= open("input_file_2.py","w+")
+	f= open("input_file_2.csv","w+")
 	f.write("Reactor_Information,Zone1,Zone2,Zone3,,,,,, \n")
 	f.write("Zone Length,2,0.25,2,,,,,, \n")
 	f.write("Zone Void,0.4,0.4,0.4,,,,,, \n")
@@ -1313,7 +1313,7 @@ def genInput2():
 	f.close()
 
 def genInput3():
-	f= open("input_file_3.py","w+")
+	f= open("input_file_3.csv","w+")
 	f.write("Reactor_Information,Zone1,Zone2,Zone3,,,,,, \n")
 	f.write("Zone Length,2,0.25,2,,,,,, \n")
 	f.write("Zone Void,0.4,0.4,0.4,,,,,, \n")
