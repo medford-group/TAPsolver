@@ -1291,7 +1291,7 @@ f.write("O2 + * <-> O2*,2,1,,,,,,, \n")
 
 
 
-sdef genInput0():
+def genInput0():
 	f= open("input_file.csv","w+")
 	f.write("Reactor_Information,Zone1,Zone2,Zone3,,,,,, \n")
 	f.write("Zone Length,2,0.25,2,,,,,, \n")
