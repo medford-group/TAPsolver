@@ -67,7 +67,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			print('Error: sensitivity analysis must be "trans" or "total"')
 			sys.exit()
 
-		reac_input['Optimization Method'] = 'L-BFGS-B' #
+		#reac_input['Optimization Method'] = 'L-BFGS-B' #
 		reac_input['Objective Points'] = 'all'
 		reac_input['Store Outlet Flux'] = 'TRUE'
 		reac_input['Store Graph'] = 'FALSE'
@@ -1522,26 +1522,28 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				print('Fitting Kinetic Parameters. Will take some time!')
 
 				######################## objective optimization (boukouvala)
-				
-				##rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
-				##rf_2np = adReduNp.ReducedFunctionalNumPy(rf_2)
-				##print(rf_2np.__call__(np.array([0.5,17.892023742960912])))
-				
-				##def calc_loss(p):
-				##	print('Iteration')
-				##	print(p)
-				##	estimate = rf_2np.__call__(p)
-				##	print(estimate)
-				##	return estimate
-				##	#return rf_2np.__call__(np.array([0.5,17.892023742960912]))
-				#test_problem = PyDDSBB.DDSBBModel.Problem() ## Initialize the problem
-				##test_problem.add_objective(calc_loss, sense = 'minimize') ## Add objective function
-				##test_problem.add_variable(0,50) ## add variabel bounds (must be float point)
-				##test_problem.add_variable(0,50)
-				##test = PyDDSBB.DDSBB(23,split_method = 'equal_bisection', variable_selection = 'longest_side', multifidelity = False, stop_option = {'absolute_tolerance': 100, 'relative_tolerance': 100, 'minimum_bound': 0.01, 'sampling_limit': 1000, 'time_limit': 400})
-				##test.optimize(test_problem)
-				##test.print_result()
-				##sys.exit()
+				if reac_input['Global Optimization'].lower() == 'branch&bound':
+					print('global show')
+					rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
+					rf_2np = adReduNp.ReducedFunctionalNumPy(rf_2)
+					print(rf_2np.__call__(np.array([0.5,17.892023742960912])))
+					
+					def calc_loss(p):
+						print('Iteration')
+						print(p)
+						estimate = rf_2np.__call__(p)
+						print(estimate)
+						return estimate
+						#return rf_2np.__call__(np.array([0.5,17.892023742960912]))
+					
+					test_problem = PyDDSBB.DDSBBModel.Problem() ## Initialize the problem
+					test_problem.add_objective(calc_loss, sense = 'minimize') ## Add objective function
+					test_problem.add_variable(0,50) ## add variabel bounds (must be float point)
+					test_problem.add_variable(0,50)
+					test = PyDDSBB.DDSBB(23,split_method = 'equal_bisection', variable_selection = 'longest_side', multifidelity = False, stop_option = {'absolute_tolerance': 100, 'relative_tolerance': 100, 'minimum_bound': 0.01, 'sampling_limit': 1000, 'time_limit': 400})
+					test.optimize(test_problem)
+					test.print_result()
+					sys.exit()
 				#######################
 
 				rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2,derivative_cb_post=derivCB)# ,hessian_cb_post=hessCB
