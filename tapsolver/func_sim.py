@@ -1043,10 +1043,10 @@ def generateGif(molecules,exp_loc,fit_loc,all_steps,constants,reactions,time_dat
 
 		props = dict(facecolor='white')
 
-		ax.text(0.02, 0.95,'Iteration: '+str(step),transform=ax.transAxes, fontsize=14,verticalalignment='top',bbox=props)
+		ax.text(0.42, 0.95,'Iteration: '+str(step),transform=ax.transAxes, fontsize=14,verticalalignment='top',bbox=props)
 		peak_peak = 0
 
-		ax.legend(title='Gas Species',loc='center left')
+		ax.legend(title='Gas Species',loc='top right')
 		if xscale == 'log':
 			ax.set_xscale('log')
 			ax.set_xlim(0.002,1)
