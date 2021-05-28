@@ -621,7 +621,8 @@ def readBatchInput(sim_file):
 
 	reactor_kinetics_input['thermo equations'] = thermo_equations
 	reactor_kinetics_input['thermo values'] = thermo_values
-
+	print(reactor_kinetics_input['linked parameters'])
+	sys.exit()
 	return reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,fittingParametersList,arrForward,arrBackward
 
 
