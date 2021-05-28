@@ -290,6 +290,8 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		# Construct the rate expression based on the microkinetic model
 		necessary_values, rate_array, rev_irr = make_f_equation(reac_input['reactions_test'],reac_input['Number of Reactants'],'tap',reac_input['Number of Inerts'],reac_input['Advection'],arrForward,arrBackward,gForward,reac_input['linked names'],linkForward,linkBackard,fit_temperature)
 		
+		print('TEST')
+
 		if thermoConstraints == True:
 			
 			thermoReactants = {}
@@ -2135,7 +2137,7 @@ def fit_tap(timeFunc,optim = 'L-BFGS-B',input_file = './input_file.csv',inertFit
 		general_run(timeFunc,optimization=optim,input_file = input_file,fitInert=True,inputForm = 'new')
 
 def run_uncertainty(timeFunc,input_file = './input_file.csv'):
-	general_run(timeFunc,uncertainty_quantificaiton=True,input_file = input_file,inputForm='new')
+	general_run(timeFunc,uncertainty_quantificaton=True,input_file = input_file,inputForm='new')
 	
 def fitting_gif(timeFunc,input_file = './input_file.csv',x_scale='',y_scale='',outputName='./flux.gif'):
 	general_run(timeFunc,fitting_gif=True,xscale=x_scale,yscale=y_scale,input_file = input_file,inputForm='new')
