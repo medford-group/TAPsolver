@@ -1013,7 +1013,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 	
 									try:
 										if legend_label[k_fitting] != 'Inert':
-											jfunc_2 += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))																		
+											jfunc_2 += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))/((0.1)**2)																	
 										else:
 											pass
 	
