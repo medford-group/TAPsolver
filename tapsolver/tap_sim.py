@@ -2015,6 +2015,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			reactor_kinetics_input['Objective Points'] = 'all'
 
 		if uncertainty_quantificaiton != None:
+			print('est')
 			reactor_kinetics_input['Uncertainty Quantification'] = 'TRUE'
 			reactor_kinetics_input['Fit Parameters'] = 'FALSE'
 			
