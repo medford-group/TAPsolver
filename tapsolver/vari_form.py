@@ -174,7 +174,11 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,number_of_inerts,a
 				
 			elif k in arrBackward:
 				new_pos = 'r_Ao["Aob'+str(k)+'"]*exp(-r_Ea["Eab'+str(k)+'"]/(Rgas*constantTemp))'
-				
+			
+			elif k in linkBackward:
+				new_pos = 'r_links[kineticLinks["kb'+str(k)+'"]]'
+				print(new_pos)
+
 			else:
 				new_pos = 'r_const["kb'+str(k)+'"]'
 				
