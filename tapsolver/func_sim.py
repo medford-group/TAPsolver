@@ -174,13 +174,16 @@ def readInput(sim_file,inputForm = 'old'):
 	Ea = {}
 	Ga = {}
 	dG = {}
+	link = {}
 
 	fittingParametersList = []
 
 	gForward = []
 	arrForward = []
 	arrBackward = []
-	
+	linkForward = []
+	linkBackward = []
+
 	for j in range(0,len(reaction_info.index)):
 		print(reaction_info.iloc[j,1])
 		if reaction_info.iloc[j,1].find("#") > 0:
@@ -248,7 +251,6 @@ def readInput(sim_file,inputForm = 'old'):
 					Ea['Eaf'+str(j)] = float(Eanew[:-1])
 			arrForward.append(j)
 		else:
-			
 			if reaction_info.iloc[j,1].find("!") < 0:
 				if reaction_info.iloc[j,1].find("{") == 0:
 					link['kf'+str(j)] = reaction_info.iloc[j,1][1:-1]
