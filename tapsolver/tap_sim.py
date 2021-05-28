@@ -1986,7 +1986,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 	def call_sim():
 		
 		reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(input_file,inputForm = inputForm)
-		
+		print(reactor_kinetics_input['linked parameters'])
 		reactor_kinetics_input['Number of Pulses'] = pulseNumber
 		reactor_kinetics_input['Fit Parameters'] = 'FALSE'
 		reactor_kinetics_input['Display Experimental Data'] = 'FALSE'
