@@ -62,6 +62,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		reac_input['Pulse Duration'] = timeFunc 
 		reac_input['Thin-Zone Analysis'] = catalyst_data 
 		reac_input['Time Steps'] = reac_input['Pulse Duration']*1000
+		kineticLinks = reac_input['linked names']
 	
 		sens_type = sensitivityType
 
