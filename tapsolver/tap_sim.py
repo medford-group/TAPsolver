@@ -200,7 +200,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		#else:
 		#	doe_form_pulse = True
 		#	doe_form_surf = False
-	
+		print('TEST')	
 		if reac_input['Fit Parameters'].lower() == 'true' or (sens_type == 'total' and reac_input['Sensitivity Analysis'].lower() == 'true') or reactor_kinetics_input['Uncertainty Quantification'].lower() == 'true':
 			controls = []
 			legend_2 = []
@@ -289,8 +289,6 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 
 		# Construct the rate expression based on the microkinetic model
 		necessary_values, rate_array, rev_irr = make_f_equation(reac_input['reactions_test'],reac_input['Number of Reactants'],'tap',reac_input['Number of Inerts'],reac_input['Advection'],arrForward,arrBackward,gForward,reac_input['linked names'],linkForward,linkBackard,fit_temperature)
-		
-		print('TEST')
 
 		if thermoConstraints == True:
 			
@@ -2825,7 +2823,7 @@ def propagating_example(reactor_setup,iterDict,baseName=None):
 		copyfile('./vari_form.py',newdirectoryName+'/vari_form.py')
 		copyfile('./input_file.csv',newdirectoryName+'/input_file.csv')
 
-	sys.exit()
+	
 	newList = directoryNameList+newList
 	newNpArray = np.vstack((newNpArray,newList))
 	tempInput.to_csv('./input_file.csv',header=None,index=False)
