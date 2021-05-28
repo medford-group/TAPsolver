@@ -182,83 +182,226 @@ def readInput(sim_file,inputForm = 'old'):
 	arrBackward = []
 	
 	for j in range(0,len(reaction_info.index)):
+		print(reaction_info.iloc[j,1])
 		if reaction_info.iloc[j,1].find("#") > 0:
 			Anew, Eanew = reaction_info.iloc[j,1].split("#")
 			if Anew.find("!") < 0:
-				Ga['Ga'+str(j)] = float(Anew)
-				kinetic_parameters['Ga'+str(j)] = float(Anew)
-				fittingParametersList.append('Ga'+str(j))
-			
+				#!?
+				if Anew.find("{") == 0:
+					link['Ga'+str(j)] = float(Anew)
+					fittingParametersList.append('Ga'+str(j))
+				else:
+					Ga['Ga'+str(j)] = float(Anew)
+					kinetic_parameters['Ga'+str(j)] = float(Anew)
+					fittingParametersList.append('Ga'+str(j))
+				
 			else:
-				Ga['Ga'+str(j)] = float(Anew[:-1])
-
+				#!?
+				if Anew.find("{") == 0:
+					fittingParametersList.append(Anew)
+				else:
+					Ga['Ga'+str(j)] = float(Anew[:-1])
 			if Eanew.find("!") < 0:
-				dG['dG'+str(j)] = float(Eanew)
-				fittingParametersList.append('dG'+str(j))
+				#!?
+				if Eanew.find("{") == 0:
+					fittingParametersList.append(Eanew)
+				else:
+					dG['dG'+str(j)] = float(Eanew)
+					fittingParametersList.append('dG'+str(j))
 			
 			else:
-				dG['dG'+str(j)] = float(Eanew[:-1])
-
+				#!?
+				if Eanew.find("{") == 0:
+					fittingParametersList.append(Eanew)
+				else:
+					dG['dG'+str(j)] = float(Eanew[:-1])
 			gForward.append(j)
-
 		elif reaction_info.iloc[j,1].find("$") > 0:
 			Anew, Eanew = reaction_info.iloc[j,1].split("$")
 			if Anew.find("!") < 0:
-				Ao['Aof'+str(j)] = float(Anew)
-				fittingParametersList.append('Aof'+str(j))
+				#!?
+				if Anew.find("{") == 0:
+					fittingParametersList.append(Anew)
+				else:	
+					Ao['Aof'+str(j)] = float(Anew)
+					fittingParametersList.append('Aof'+str(j))
 			
 			else:
-				Ao['Aof'+str(j)] = float(Anew[:-1])
-
+				#!?
+				if Anew.find("{") == 0:
+					fittingParametersList.append(Anew)
+				else:
+					Ao['Aof'+str(j)] = float(Anew[:-1])
 			if Eanew.find("!") < 0:
-				Ea['Eaf'+str(j)] = float(Eanew)
-				fittingParametersList.append('Eaf'+str(j))
+				#!?
+				if Eanew.find("{") == 0:
+					fittingParametersList.append(Eanew)
+				else:
+					Ea['Eaf'+str(j)] = float(Eanew)
+					fittingParametersList.append('Eaf'+str(j))
 			
 			else:
-				Ea['Eaf'+str(j)] = float(Eanew[:-1])
-
+				#!?
+				if Eanew.find("{") == 0:
+					fittingParametersList.append(Eanew)
+				else:
+					Ea['Eaf'+str(j)] = float(Eanew[:-1])
 			arrForward.append(j)
-
 		else:
+			
 			if reaction_info.iloc[j,1].find("!") < 0:
-				kinetic_parameters['kf'+str(j)] = float(reaction_info.iloc[j,1])
-				fittingParametersList.append('kf'+str(j))
+				if reaction_info.iloc[j,1].find("{") == 0:
+					link['kf'+str(j)] = reaction_info.iloc[j,1][1:-1]
+					if reaction_info.iloc[j,1] not in fittingParametersList:
+						fittingParametersList.append(reaction_info.iloc[j,1])
+					linkForward.append(j)
+				else:
+					kinetic_parameters['kf'+str(j)] = float(reaction_info.iloc[j,1])
+					fittingParametersList.append('kf'+str(j))
 			
 			else:
-				new_value = float(reaction_info.iloc[j,1][:-1])
-				kinetic_parameters['kf'+str(j)] = new_value#float(reaction_info.iloc[j,1])
-
+				if reaction_info.iloc[j,1].find("{") == 0:
+					link['kf'+str(j)] = reaction_info.iloc[j,1][1:-1]
+					if reaction_info.iloc[j,1] not in fittingParametersList:
+						fittingParametersList.append(reaction_info.iloc[j,1])
+					linkForward.append(j)
+				else:
+					new_value = float(reaction_info.iloc[j,1])
+					kinetic_parameters['kf'+str(j)] = new_value#float(reaction_info.iloc[j,1])
 		if str(reaction_info.iloc[j,2]) != 'nan':
 			if str(reaction_info.iloc[j,2]).find("$") > 0:
 				Anew, Eanew = str(reaction_info.iloc[j,2]).split("$")
 				if Anew.find("!") < 0:
-					Ao['Aob'+str(j)] = float(Anew)
-					fittingParametersList.append('Aob'+str(j))
+					#!?
+					if Anew.find("{") == 0:
+						fittingParametersList.append(Anew)
+					else:
+						Ao['Aob'+str(j)] = float(Anew)
+						fittingParametersList.append('Aob'+str(j))
 					
 				else:
-					Ao['Aob'+str(j)] = float(Anew[:-1])						
-
+					#!?
+					if Anew.find("{") == 0:
+						fittingParametersList.append(Anew)
+					else:
+						Ao['Aob'+str(j)] = float(Anew[:-1])						
 				if Eanew.find("!") < 0:
-					Ea['Eab'+str(j)] = float(Eanew)
-					fittingParametersList.append('Eab'+str(j))
+					#!?
+					if Eanew.find("{") == 0:
+						fittingParametersList.append(Eanew)
+					else:
+						Ea['Eab'+str(j)] = float(Eanew)
+						fittingParametersList.append('Eab'+str(j))
 					
 				else:
-					Ea['Eab'+str(j)] = float(Eanew[:-1])
-
+					#!?
+					if Eanew.find("{") == 0:
+						fittingParametersList.append(Eanew)
+					else:
+						Ea['Eab'+str(j)] = float(Eanew[:-1])
 				arrBackward.append(j)
-
 			else:
-
 				if str(reaction_info.iloc[j,2]).find("!") < 0:
-					kinetic_parameters['kb'+str(j)] = float(reaction_info.iloc[j,2])
-					fittingParametersList.append('kb'+str(j))
-
+				
+					if reaction_info.iloc[j,2].find("{") == 0:
+						link['kb'+str(j)] = reaction_info.iloc[j,2][1:-1]
+						if reaction_info.iloc[j,2] not in fittingParametersList:
+							fittingParametersList.append(reaction_info.iloc[j,2])
+						linkBackward.append(j)
+					else:
+						kinetic_parameters['kb'+str(j)] = float(reaction_info.iloc[j,2])
+						fittingParametersList.append('kb'+str(j))
 				else:
-					new_value = float(reaction_info.iloc[j,2][:-1])
-					kinetic_parameters['kb'+str(j)] = new_value
+					print(reaction_info.iloc[j,2])
+					if reaction_info.iloc[j,2].find("{") == 0:
+						link['kb'+str(j)] = reaction_info.iloc[j,2][1:-2]
+						if reaction_info.iloc[j,2] not in fittingParametersList:
+							fittingParametersList.append(reaction_info.iloc[j,2])
+						linkBackward.append(j)
+					else:
+						new_value = float(reaction_info.iloc[j,2][:-1])
+						kinetic_parameters['kb'+str(j)] = new_value
 		else:
 			pass
 
+#	for j in range(0,len(reaction_info.index)):
+#		if reaction_info.iloc[j,1].find("#") > 0:
+#			Anew, Eanew = reaction_info.iloc[j,1].split("#")
+#			if Anew.find("!") < 0:
+#				Ga['Ga'+str(j)] = float(Anew)
+#				kinetic_parameters['Ga'+str(j)] = float(Anew)
+#				fittingParametersList.append('Ga'+str(j))
+#			
+#			else:
+#				Ga['Ga'+str(j)] = float(Anew[:-1])
+#
+#			if Eanew.find("!") < 0:
+#				dG['dG'+str(j)] = float(Eanew)
+#				fittingParametersList.append('dG'+str(j))
+#			
+#			else:
+#				dG['dG'+str(j)] = float(Eanew[:-1])
+#
+#			gForward.append(j)
+#
+#		elif reaction_info.iloc[j,1].find("$") > 0:
+#			Anew, Eanew = reaction_info.iloc[j,1].split("$")
+#			if Anew.find("!") < 0:
+#				Ao['Aof'+str(j)] = float(Anew)
+#				fittingParametersList.append('Aof'+str(j))
+#			
+#			else:
+#				Ao['Aof'+str(j)] = float(Anew[:-1])
+#
+#			if Eanew.find("!") < 0:
+#				Ea['Eaf'+str(j)] = float(Eanew)
+#				fittingParametersList.append('Eaf'+str(j))
+#			
+#			else:
+#				Ea['Eaf'+str(j)] = float(Eanew[:-1])
+#
+#			arrForward.append(j)
+#
+#		else:
+#			if reaction_info.iloc[j,1].find("!") < 0:
+#				kinetic_parameters['kf'+str(j)] = float(reaction_info.iloc[j,1])
+#				fittingParametersList.append('kf'+str(j))
+#			
+#			else:
+#				new_value = float(reaction_info.iloc[j,1][:-1])
+#				kinetic_parameters['kf'+str(j)] = new_value#float(reaction_info.iloc[j,1])
+#
+#		if str(reaction_info.iloc[j,2]) != 'nan':
+#			if str(reaction_info.iloc[j,2]).find("$") > 0:
+#				Anew, Eanew = str(reaction_info.iloc[j,2]).split("$")
+#				if Anew.find("!") < 0:
+#					Ao['Aob'+str(j)] = float(Anew)
+#					fittingParametersList.append('Aob'+str(j))
+#					
+#				else:
+#					Ao['Aob'+str(j)] = float(Anew[:-1])						
+#
+#				if Eanew.find("!") < 0:
+#					Ea['Eab'+str(j)] = float(Eanew)
+#					fittingParametersList.append('Eab'+str(j))
+#					
+#				else:
+#					Ea['Eab'+str(j)] = float(Eanew[:-1])
+#
+#				arrBackward.append(j)
+#
+#			else:
+#
+#				if str(reaction_info.iloc[j,2]).find("!") < 0:
+#					kinetic_parameters['kb'+str(j)] = float(reaction_info.iloc[j,2])
+#					fittingParametersList.append('kb'+str(j))
+#
+#				else:
+#					new_value = float(reaction_info.iloc[j,2][:-1])
+#					kinetic_parameters['kb'+str(j)] = new_value
+#		else:
+#			pass
+#
 	kin_in = kinetic_parameters.copy()
 	Ao_in = Ao.copy()
 	Ea_in = Ea.copy()
