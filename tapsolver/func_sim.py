@@ -62,19 +62,47 @@ def readInput(sim_file,inputForm = 'old'):
 		rows_2, cols_2 = np.where(user_data == 'Feed_&_Surface_Composition')
 		rows_4, cols_4 = np.where(user_data == 'Reaction_Information')
 
+		linkedKinetics = False
+		if user_data[0].str.contains('Linked Kinetics').any():
+			linkedKinetics = True
+			rows_5, cols_5 = np.where(user_data == 'Linked Kinetics')
 		thermoConstraints = False
-		if user_data[0].str.contains('Thermodynamic Constraints').any():
+		if user_data[0].str.contains('Thermodynamic Constraints').any() and linkedKinetics == True:
+			thermoConstraints = True
+			rows_6, cols_6 = np.where(user_data == 'Thermodynamic Constraints')    		
+		elif user_data[0].str.contains('Thermodynamic Constraints').any():
 			thermoConstraints = True
 			rows_5, cols_5 = np.where(user_data == 'Thermodynamic Constraints')    		
-
-		reactor_info = user_data.iloc[(1+rows_1[0]):(rows_2[0]-1),:] 
+		reactor_info = user_data.iloc[(1+rows_1[0]):(rows_2[0]-1),:]
 		feed_surf_info = user_data.iloc[1+rows_2[0]:rows_4[0]-1,:]
-
-		if thermoConstraints == False:
+	#	data_storage = user_data.iloc[1+rows_3[0]:rows_4[0]-1,:]
+		if thermoConstraints == False and linkedKinetics == False:
 			reaction_info = user_data.iloc[1+rows_4[0]:,:]
-		else:
+		elif linkedKinetics == True and thermoConstraints == False:
+			reaction_info = user_data.iloc[(1+rows_4[0]):(rows_5[0]-1),:]
+			linked_kinetics = user_data.iloc[1+rows_5[0]:,:]
+		elif linkedKinetics == False and thermoConstraints == True:		
 			reaction_info = user_data.iloc[(1+rows_4[0]):(rows_5[0]-1),:]
 			thermo_constraints = user_data.iloc[1+rows_5[0]:,:]
+		elif linkedKinetics == True and thermoConstraints == True:
+			reaction_info = user_data.iloc[(1+rows_4[0]):(rows_5[0]-1),:]
+			linked_kinetics = user_data.iloc[(1+rows_5[0]):(rows_6[0]-1),:]
+			thermo_constraints = user_data.iloc[1+rows_6[0]:,:]		
+
+
+		#thermoConstraints = False
+		#if user_data[0].str.contains('Thermodynamic Constraints').any():
+		#	thermoConstraints = True
+		#	rows_5, cols_5 = np.where(user_data == 'Thermodynamic Constraints')    		
+		#
+		#reactor_info = user_data.iloc[(1+rows_1[0]):(rows_2[0]-1),:] 
+		#feed_surf_info = user_data.iloc[1+rows_2[0]:rows_4[0]-1,:]
+		#
+		#if thermoConstraints == False:
+		#	reaction_info = user_data.iloc[1+rows_4[0]:,:]
+		#else:
+		#	reaction_info = user_data.iloc[(1+rows_4[0]):(rows_5[0]-1),:]
+		#	thermo_constraints = user_data.iloc[1+rows_5[0]:,:]
 
 		reactor_kinetics_input = {}
 		
@@ -422,6 +450,15 @@ def readBatchInput(sim_file):
 	Ea_in = Ea.copy()
 	Ga_in = Ga.copy()
 	dG_in = dG.copy()
+
+	linkedParameters = {}
+	if linkedKinetics == True:
+		for j in range(0,len(linked_kinetics.index)):
+			linkedParameters[linked_kinetics.iloc[j,0]] = float(linked_kinetics.iloc[j,1])
+	reactor_kinetics_input['linked parameters'] = linkedParameters
+	reactor_kinetics_input['linked names'] = link
+	reactor_kinetics_input['link forward'] = linkForward
+	reactor_kinetics_input['link backward'] = linkBackward
 
 	thermo_equations = []
 	thermo_values = []
