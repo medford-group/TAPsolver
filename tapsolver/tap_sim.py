@@ -131,16 +131,28 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 	
 		runge_kutta_approach = False
 
-		r_const = constants_input
-		r_Ao = Ao_in
-		r_Ea = Ea_in
-		r_fit = fitting_input
+		# Declare and define the constants of interest
+		r_Ga_in = Ga_in.copy()
+		r_dG_in = dG_in.copy()
+		r_const = constants_input.copy()
+		r_Ao = Ao_in.copy()
+		r_Ea = Ea_in.copy()
+		r_links = reactor_kinetics_input['linked parameters'].copy()
+		print(r_links)
+		linkForward = reactor_kinetics_input['link forward'].copy()
+		linkBackard = reactor_kinetics_input['link backward'].copy()
+		r_fit = fitting_input.copy()
+		kbt = 1.38064852e-23#*(6.022e-12)
+		hb = 6.62607004e-34
+		Rgas = 1#8.314
+		#print(reac_input['Reactor Temperature'])
+		for jnum,j in enumerate(Ga_in):
+			#print(((kbt*reac_input['Reactor Temperature']/hb)*exp(-Ga_in["Ga"+str(jnum)])))
+			#print(((kbt*reac_input['Reactor Temperature']/hb)*exp(-(Ga_in["Ga"+str(jnum)] - dG_in["dG"+str(jnum)]))))
+			r_Ga_in[j] = Constant(r_Ga_in[j])
 	
-		for j in Ga_in:
-			Ga_in[j] = Constant(Ga_in[j])
-	
-		for j in dG_in:
-			dG_in[j] = Constant(dG_in[j])
+		for j in r_dG_in:
+			r_dG_in[j] = Constant(r_dG_in[j])
 	
 		for j in r_const:
 			r_const[j] = Constant(r_const[j])
@@ -148,18 +160,45 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		for j in r_Ao:
 			r_Ao[j] = Constant(r_Ao[j])
 	
-	
 		for j in r_Ea:
 			r_Ea[j] = Constant(r_Ea[j])
+		for j in r_links:
+			r_links[j] = Constant(r_links[j])
+		#if reac_input['experiment_design'] != None:
+		relevant_kinetic_parameter = 'kf0'
+		doe_form_pulse = True
+		doe_form_surf = False
 
-		reac_input['experiment_design'] = None
-		if reac_input['experiment_design'] != None:
 
-			doe_form_pulse = True
-			doe_form_surf = True
-		else:
-			doe_form_pulse = True
-			doe_form_surf = False
+		#r_const = constants_input
+		#r_Ao = Ao_in
+		#r_Ea = Ea_in
+		#r_fit = fitting_input
+		#
+		#for j in Ga_in:
+		#	Ga_in[j] = Constant(Ga_in[j])
+		#
+		#for j in dG_in:
+		#	dG_in[j] = Constant(dG_in[j])
+		#
+		#for j in r_const:
+		#	r_const[j] = Constant(r_const[j])
+		#
+		#for j in r_Ao:
+		#	r_Ao[j] = Constant(r_Ao[j])
+		#
+		#
+		#for j in r_Ea:
+		#	r_Ea[j] = Constant(r_Ea[j])
+		#
+		#reac_input['experiment_design'] = None
+		#if reac_input['experiment_design'] != None:
+		#
+		#	doe_form_pulse = True
+		#	doe_form_surf = True
+		#else:
+		#	doe_form_pulse = True
+		#	doe_form_surf = False
 	
 		if reac_input['Fit Parameters'].lower() == 'true' or (sens_type == 'total' and reac_input['Sensitivity Analysis'].lower() == 'true') or reactor_kinetics_input['Uncertainty Quantification'].lower() == 'true':
 			controls = []
@@ -176,6 +215,9 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 	
 				elif j.find('Ea') > -1:
 					controls.append(Control(r_Ea[j]))
+
+				elif j.find('{') > -1:
+					controls.append(Control(r_links[j[1:-1]]))
 	
 				else:
 					controls.append(Control(r_const[j]))

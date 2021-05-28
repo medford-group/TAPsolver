@@ -8,7 +8,7 @@ import sys
 import time
 from .reac_odes import deriv_and_const,variational_list_parsing
 
-def make_f_equation(reactions_n,reactants_number,reactor_type,number_of_inerts,advection,arrForward,arrBackward,gForward,temp_change=False):
+def make_f_equation(reactions_n,reactants_number,reactor_type,number_of_inerts,advection,arrForward,arrBackward,gForward,kineticLinks,linkForward,linkBackward,temp_change=False):
 
 	tempVariation = temp_change
 
@@ -97,6 +97,9 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,number_of_inerts,a
 			elif k in arrForward:
 				new_neg = 'r_Ao["Aof'+str(k)+'"]*exp(-r_Ea["Eaf'+str(k)+'"]/(Rgas*constantTemp))'
 				
+			elif k in linkForward:
+				new_neg = 'r_links[kineticLinks["kf'+str(k)+'"]]'
+
 			else:
 				new_neg = 'r_const["kf'+str(k)+'"]'
 				
@@ -108,6 +111,10 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,number_of_inerts,a
 			
 			elif k in arrBackward:
 				new_pos = 'r_Ao["Aob'+str(k)+'"]*exp(-r_Ea["Eab'+str(k)+'"]/(Rgas*constantTemp))'	
+
+			elif k in linkBackward:
+				new_pos = 'r_links[kineticLinks["kb'+str(k)+'"]]'
+
 			else:
 				new_pos = 'r_const["kb'+str(k)+'"]'
 				
@@ -149,6 +156,9 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,number_of_inerts,a
 
 			elif k in arrForward:
 				new_neg = 'r_Ao["Aof'+str(k)+'"]*exp(-r_Ea["Eaf'+str(k)+'"]/(Rgas*constantTemp))'
+
+			elif k in linkForward:
+				new_neg = 'r_links[kineticLinks["kf'+str(k)+'"]]'
 				
 			else:
 				new_neg = 'r_const["kf'+str(k)+'"]'
@@ -159,6 +169,9 @@ def make_f_equation(reactions_n,reactants_number,reactor_type,number_of_inerts,a
 			if k in gForward:
 				new_pos = '(kbt*constantTemp/hb)*exp((-(r_Ga_in["Ga'+str(k)+'"]-r_dG_in["dG'+str(k)+'"])))'
 		
+			elif k in arrBackward:
+				new_pos = 'r_Ao["Aob'+str(k)+'"]*exp(-r_Ea["Eab'+str(k)+'"]/(Rgas*constantTemp))'
+				
 			elif k in arrBackward:
 				new_pos = 'r_Ao["Aob'+str(k)+'"]*exp(-r_Ea["Eab'+str(k)+'"]/(Rgas*constantTemp))'
 				
