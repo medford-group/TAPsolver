@@ -2137,7 +2137,7 @@ def fit_tap(timeFunc,optim = 'L-BFGS-B',input_file = './input_file.csv',inertFit
 		general_run(timeFunc,optimization=optim,input_file = input_file,fitInert=True,inputForm = 'new')
 
 def run_uncertainty(timeFunc,input_file = './input_file.csv'):
-	general_run(timeFunc,uncertainty_quantificaton=True,input_file = input_file,inputForm='new')
+	general_run(timeFunc,uncertainty_quantificaiton=True,input_file = input_file,inputForm='new')
 	
 def fitting_gif(timeFunc,input_file = './input_file.csv',x_scale='',y_scale='',outputName='./flux.gif'):
 	general_run(timeFunc,fitting_gif=True,xscale=x_scale,yscale=y_scale,input_file = input_file,inputForm='new')
