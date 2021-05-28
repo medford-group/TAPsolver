@@ -287,7 +287,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 					Din.append(Constant(D[k,k_2]))
 
 		# Construct the rate expression based on the microkinetic model
-		necessary_values, rate_array, rev_irr = make_f_equation(reac_input['reactions_test'],reac_input['Number of Reactants'],'tap',reac_input['Number of Inerts'],reac_input['Advection'],arrForward,arrBackward,gForward,fit_temperature)
+		necessary_values, rate_array, rev_irr = make_f_equation(reac_input['reactions_test'],reac_input['Number of Reactants'],'tap',reac_input['Number of Inerts'],reac_input['Advection'],arrForward,arrBackward,gForward,reac_input['linked names'],linkForward,linkBackard,fit_temperature)
 		
 		if thermoConstraints == True:
 			
