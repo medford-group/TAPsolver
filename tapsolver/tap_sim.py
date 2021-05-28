@@ -200,7 +200,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		#else:
 		#	doe_form_pulse = True
 		#	doe_form_surf = False
-		print('TEST')	
+			
 		if reac_input['Fit Parameters'].lower() == 'true' or (sens_type == 'total' and reac_input['Sensitivity Analysis'].lower() == 'true') or reactor_kinetics_input['Uncertainty Quantification'].lower() == 'true':
 			controls = []
 			legend_2 = []
@@ -2135,8 +2135,10 @@ def fit_tap(timeFunc,optim = 'L-BFGS-B',input_file = './input_file.csv',inertFit
 		general_run(timeFunc,optimization=optim,input_file = input_file,fitInert=True,inputForm = 'new')
 
 def run_uncertainty(timeFunc,input_file = './input_file.csv'):
+	print('TEST')
 	general_run(timeFunc,uncertainty_quantificaiton=True,input_file = input_file,inputForm='new')
-	
+	print('TEST')
+
 def fitting_gif(timeFunc,input_file = './input_file.csv',x_scale='',y_scale='',outputName='./flux.gif'):
 	general_run(timeFunc,fitting_gif=True,xscale=x_scale,yscale=y_scale,input_file = input_file,inputForm='new')
 
