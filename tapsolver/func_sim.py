@@ -410,6 +410,15 @@ def readInput(sim_file,inputForm = 'old'):
 	Ga_in = Ga.copy()
 	dG_in = dG.copy()
 
+	linkedParameters = {}
+	if linkedKinetics == True:
+		for j in range(0,len(linked_kinetics.index)):
+			linkedParameters[linked_kinetics.iloc[j,0]] = float(linked_kinetics.iloc[j,1])
+	reactor_kinetics_input['linked parameters'] = linkedParameters
+	reactor_kinetics_input['linked names'] = link
+	reactor_kinetics_input['link forward'] = linkForward
+	reactor_kinetics_input['link backward'] = linkBackward
+
 	thermo_equations = []
 	thermo_values = []
 	if thermoConstraints == True:
@@ -621,8 +630,6 @@ def readBatchInput(sim_file):
 
 	reactor_kinetics_input['thermo equations'] = thermo_equations
 	reactor_kinetics_input['thermo values'] = thermo_values
-	print(reactor_kinetics_input['linked parameters'])
-	sys.exit()
 	return reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,fittingParametersList,arrForward,arrBackward
 
 
