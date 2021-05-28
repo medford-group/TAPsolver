@@ -44,9 +44,9 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 	#############################################################
 	################ TAPsolver FEniCS Function ##################
 	#############################################################
-	print('Test')
-	def tap_simulation_function(reactor_kinetics_input,constants_input,Ao_in,Ea_in,Ga_in,dG_in,fitting_input,arrForward,arrBackward,gForward):
 	
+	def tap_simulation_function(reactor_kinetics_input,constants_input,Ao_in,Ea_in,Ga_in,dG_in,fitting_input,arrForward,arrBackward,gForward):
+		print('Test')
 		# Define or clear working Tape of FEniCS / Dolfin-Adjoint
 		tape2 = Tape()
 		tape2.clear_tape()
