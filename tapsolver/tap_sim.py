@@ -1569,13 +1569,10 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				######################## objective optimization (boukouvala)
 
 				if reac_input['Optimization Method'] == 'objective':
-					
-					def calc_loss(p):
-						print('Iteration')
-						print(p)
-						estimate = rf_2np.__call__(p)
-						return estimate
-						#return rf_2np.__call__(np.array([0.5,17.892023742960912]))
+					print(p)
+					estimate = rf_2np.__call__(p)
+					print(estimate)
+					#return rf_2np.__call__(np.array([0.5,17.892023742960912]))
 					
 				#######################
 
