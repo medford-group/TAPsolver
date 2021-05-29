@@ -1571,6 +1571,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				if reac_input['Optimization Method'] == 'objective':
 					rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
 					rf_2np = adReduNp.ReducedFunctionalNumPy(rf_2)
+					print(rf_2)
 					estimate = rf_2.__call__()
 					print(estimate)
 					estimate = rf_2np.__call__(controls)
