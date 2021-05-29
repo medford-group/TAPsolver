@@ -1567,6 +1567,18 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				print('Fitting Kinetic Parameters. Will take some time!')
 
 				######################## objective optimization (boukouvala)
+
+				if reac_input['Optimization Method'] == 'objective':
+					
+					def calc_loss(p):
+						print('Iteration')
+						print(p)
+						estimate = rf_2np.__call__(p)
+						return estimate
+						#return rf_2np.__call__(np.array([0.5,17.892023742960912]))
+					
+				#######################
+
 				if reac_input['Optimization Method'] == 'branch&bound':
 					import PyDDSBB
 					rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
