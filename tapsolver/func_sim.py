@@ -185,7 +185,6 @@ def readInput(sim_file,inputForm = 'old'):
 	linkBackward = []
 
 	for j in range(0,len(reaction_info.index)):
-		print(reaction_info.iloc[j,1])
 		if reaction_info.iloc[j,1].find("#") > 0:
 			Anew, Eanew = reaction_info.iloc[j,1].split("#")
 			if Anew.find("!") < 0:
@@ -314,7 +313,6 @@ def readInput(sim_file,inputForm = 'old'):
 						kinetic_parameters['kb'+str(j)] = float(reaction_info.iloc[j,2])
 						fittingParametersList.append('kb'+str(j))
 				else:
-					print(reaction_info.iloc[j,2])
 					if reaction_info.iloc[j,2].find("{") == 0:
 						link['kb'+str(j)] = reaction_info.iloc[j,2][1:-2]
 						if reaction_info.iloc[j,2] not in fittingParametersList:
@@ -669,6 +667,7 @@ def fluxGeneration(reactor,gasses,reactants,pulse_size,Diff,voidage,dx,radius,dx
 				to_flux.append(2*(Diff[k][0] /(dx)) * (radius**2)*3.14159 )
 	elif reactor == 't_pfr' or 't_pfr_diff':
 		print('to flux generation')
+
 		for k in range(0,gasses):
 			to_flux.append(1)
 		

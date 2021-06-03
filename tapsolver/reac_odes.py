@@ -470,7 +470,6 @@ def R_RRM_func(input_reactants,current_path,data_folder):
 	feed = 1
 	reactants = input_reactants
 	in_reactants = reactants
-	print(reactants)
 	reactants = str(reactants)
 	reactants = reactants.replace('[','')
 	reactants = reactants.replace(']','')

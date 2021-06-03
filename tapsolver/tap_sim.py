@@ -630,7 +630,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		#############################################################
 
 		if reac_input['Experimental Data Folder'].lower() != 'none' and reac_input['Fit Inert'].lower() != 'true' and (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true') or sampling == True or (sens_type == 'total' and reac_input['Sensitivity Analysis'].lower() == 'true') or fit_temperature == True or reac_input['Fitting Gif'].lower() == True:
-			print('Call Ouptu definition')
+			
 			if reac_input['Uncertainty Quantification'].lower() == 'true':
 				print("Uncertainty Quantification")
 			try:
@@ -856,8 +856,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				species_time = reactant_time[current_reac_set-1]
 			else:
 				species_time = reactant_time
-			print(species_pulse_list)
-			print(species_time)
+			
 			if reac_input['Knudsen Test'].lower() == 'true':
 				knudsenTest(legend_label[(int(len(legend_label))-int(reac_input['Number of Inerts'])):],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],reac_input['Reference Pulse Size'],species_pulse_list[(int(len(legend_label))-int(reac_input['Number of Inerts'])):])
 	 
@@ -1696,7 +1695,6 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 					utest = []
 					for just in range(0,len(controls)):
 						utest.append(Constant(0))
-					print('start this calculation')
 					utest[jay_z_num] = Constant(1)
 					H_i = rf_2.hessian(utest)
 					djv = [v.values()[0] for v in H_i]
@@ -1882,8 +1880,6 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			
 			for j_species in range(0,monitored_gas+int(reac_input['Number of Inerts'])):
 				tempDict = np.transpose(dictionary_of_numpy_data[legend_label[j_species]])
-				print('data storage location')
-				print('./'+reac_input['Output Folder Name']+'_folder/flux_data/'+legend_label[j_species]+'.csv')
 				np.savetxt('./'+reac_input['Output Folder Name']+'_folder/flux_data/'+legend_label[j_species]+'.csv', tempDict, delimiter=",")
 	
 		ax2.legend(title="Gas Species")
