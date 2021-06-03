@@ -139,7 +139,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		r_Ao = Ao_in.copy()
 		r_Ea = Ea_in.copy()
 		r_links = reactor_kinetics_input['linked parameters'].copy()
-		print(r_links)
+		print('Define Links')
 		linkForward = reactor_kinetics_input['link forward'].copy()
 		linkBackard = reactor_kinetics_input['link backward'].copy()
 		r_fit = fitting_input.copy()
@@ -202,6 +202,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		#	doe_form_surf = False
 			
 		if reac_input['Fit Parameters'].lower() == 'true' or (sens_type == 'total' and reac_input['Sensitivity Analysis'].lower() == 'true') or reactor_kinetics_input['Uncertainty Quantification'].lower() == 'true':
+			print('Define Controls')
 			controls = []
 			legend_2 = []
 			for j in r_fit:
@@ -388,6 +389,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		
 		if reactor_kinetics_input['Fit Parameters'].lower() == 'true' or (reactor_kinetics_input['Sensitivity Analysis'].lower() == 'true' and sens_type == 'total') or reactor_kinetics_input['Uncertainty Quantification'].lower() == 'true':
 			speciesString = ''
+			print('Define gas species')
 			for k in range(0,int(necessary_values['molecules_in_gas_phase'])):
 				if k != int(necessary_values['molecules_in_gas_phase']):
 					speciesString+='1,'
@@ -630,7 +632,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		#############################################################
 
 		if reac_input['Experimental Data Folder'].lower() != 'none' and reac_input['Fit Inert'].lower() != 'true' and (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true') or sampling == True or (sens_type == 'total' and reac_input['Sensitivity Analysis'].lower() == 'true') or fit_temperature == True or reac_input['Fitting Gif'].lower() == True:
-			
+			print('Call Ouptu definition')
 			if reac_input['Uncertainty Quantification'].lower() == 'true':
 				print("Uncertainty Quantification")
 			try:
@@ -682,6 +684,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				sys.exit() 
 	
 		if reac_input['Uncertainty Quantification'].lower() == 'true':
+			print('Generate UQ Folder')
 			path_2 = reac_input['Output Folder Name']+'_folder/UQ/'
 			generateFolder(path_2)
 			hessFolder = path_2
@@ -778,6 +781,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			rateStrings = rateEqs(rate_array,rev_irr,gForward,arrForward,arrBackward)
 	
 		if reac_input['Experimental Data Folder'].lower() != 'none' and (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Display Objective Points'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true') or sampling == True or (sens_type == 'total' and reac_input['Sensitivity Analysis'].lower() == 'true') or fit_temperature == True:
+			print('Enter Experimental Data folder')
 			for k_fitting in range(0,len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])])):
 				if objSpecies[k_fitting] == '1':
 					for timeStep in range(0,len(output_fitting[legend_label[k_fitting]]['times'])):
@@ -791,7 +795,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		if reac_input['Sensitivity Analysis'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true':
 	
 			if reac_input['Uncertainty Quantification'].lower() == 'true' or (reac_input['Sensitivity Analysis'].lower() == 'true' and sens_type == 'trans'):
-				
+				print('Enter sensitivity function')
 				if reac_input['Sensitivity Parameter'].find('Ga') > -1:
 					c = r_Ga_in[reac_input['Sensitivity Parameter']]
 					c.tlm_value = r_Ga_in[reac_input['Sensitivity Parameter']]
@@ -913,6 +917,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			
 			t = 0
 			if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Sensitivity Analysis'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or sampling == True or fit_temperature == True:
+				print('Define integration section')
 				osub = integration_section()
 				domains = MeshFunction("size_t", mesh,0)
 				domains.set_all(0)
@@ -990,7 +995,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				#		jfunc_2 = assemble(singleRateExpression)
 
 				if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or sampling == True or (sens_type == 'total' and reac_input['Sensitivity Analysis'].lower() == 'true') or fit_temperature == True:
-
+					print('Enter objective function definition')
 					# Define the objective function 	
 					objectiveAnalysis = True
 					selectivity = False
