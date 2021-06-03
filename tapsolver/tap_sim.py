@@ -2147,7 +2147,7 @@ def fit_tap(timeFunc,sigma=None,optim = 'L-BFGS-B',input_file = './input_file.cs
 		general_run(timeFunc,sigma=sigma,optimization=optim,input_file = input_file,fitInert=True,inputForm = 'new')
 
 def run_uncertainty(timeFunc,sigma = None, input_file = './input_file.csv'):
-	if simga != None:
+	if sigma != None:
 		general_run(timeFunc,sigma=sigma,uncertainty_quantificaiton=True,input_file = input_file,inputForm='new')
 	else:
 		general_run(timeFunc,sigma=sigma,uncertainty_quantificaiton=True,input_file = input_file,inputForm='new')
