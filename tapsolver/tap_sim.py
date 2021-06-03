@@ -1713,9 +1713,9 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 					print('The eigenvalues of the hessian are:')
 					hessEigs = np.linalg.eig(hessian_array)[0]
 					print(hessEigs)
-					eigenInfo = np.any((a < 0))
-					if eigenInfo == True:
-						print('Not all eigenvalues are positive. If fitting parameters, might want to run longer.')
+					#eigenInfo = np.any((a < 0))
+					#if eigenInfo == True:
+					#	print('Not all eigenvalues are positive. If fitting parameters, might want to run longer.')
 					np.savetxt(hessFolder+'/eigenvalues.csv', hessEigs, delimiter=",")
 				except:
 					print('Failed to determine eigenvalues')
@@ -1723,6 +1723,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 					print('Generating Covariance Matrix by Inverting the Hessian')
 					print(B)
 					vx_new = np.linalg.inv(B)
+					np.savetxt(hessFolder+'/covariance.csv', vx_new, delimiter=",")
 
 				except:
 					print('Failed to invert hessian')
@@ -2002,7 +2003,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		reactor_kinetics_input['Noise'] = 'FALSE'
 		reactor_kinetics_input['Fit Inert'] = 'FALSE'
 		reactor_kinetics_input['Infinite Inert'] = 'FALSE'
-		
+
 		if fitting_gif != None:
 			reactor_kinetics_input['Fitting Gif'] = 'TRUE'
 			reactor_kinetics_input['xscale'] = xscale
