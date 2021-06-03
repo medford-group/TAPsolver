@@ -2135,12 +2135,12 @@ def run_tapsolver(timeFunc,add_noise=False,pulseNumber = 1,catalyst_data=False,i
 
 	general_run(timeFunc,store_flux_func='TRUE',catalyst_data=catalyst_data,pulseNumber = pulseNumber,input_file = input_file,noise=add_noise,inputForm = 'new')
 
-def run_sensitivity(timeFunc,sigma=sigma,sens_type=None,input_file = './input_file.csv'):
+def run_sensitivity(timeFunc,sigma=None,sens_type=None,input_file = './input_file.csv'):
 	if sens_type == None:
 		sens_type = 'total'
 	general_run(timeFunc,sigma=sigma,store_flux_func='FALSE',catalyst_data='FALSE',input_file = input_file,sensitivityType=sens_type,inputForm = 'new')
 
-def fit_tap(timeFunc,sigma=sigma,optim = 'L-BFGS-B',input_file = './input_file.csv',inertFitting=None):
+def fit_tap(timeFunc,sigma=None,optim = 'L-BFGS-B',input_file = './input_file.csv',inertFitting=None):
 	if inertFitting == None:
 		general_run(timeFunc,sigma=sigma,optimization=optim,input_file = input_file,inputForm = 'new')
 	else:
