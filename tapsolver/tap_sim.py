@@ -1998,7 +1998,6 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 	def call_sim():
 		
 		reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(input_file,inputForm = inputForm)
-		print(reactor_kinetics_input['linked parameters'])
 		reactor_kinetics_input['Number of Pulses'] = pulseNumber
 		reactor_kinetics_input['Fit Parameters'] = 'FALSE'
 		reactor_kinetics_input['Display Experimental Data'] = 'FALSE'
@@ -2010,7 +2009,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		reactor_kinetics_input['Noise'] = 'FALSE'
 		reactor_kinetics_input['Fit Inert'] = 'FALSE'
 		reactor_kinetics_input['Infinite Inert'] = 'FALSE'
-
+		print(kinetic_parameters)
 		if fitting_gif != None:
 			reactor_kinetics_input['Fitting Gif'] = 'TRUE'
 			reactor_kinetics_input['xscale'] = xscale
@@ -2028,10 +2027,8 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			reactor_kinetics_input['Fit Parameters'] = 'TRUE'
 			reactor_kinetics_input['Optimization Method'] = optimization
 			reactor_kinetics_input['Objective Points'] = 'all'
-		print(uncertainty_quantificaiton)
-		if uncertainty_quantificaiton != None:
 
-			print('est')
+		if uncertainty_quantificaiton != None:
 			reactor_kinetics_input['Uncertainty Quantification'] = 'TRUE'
 			reactor_kinetics_input['Fit Parameters'] = 'FALSE'
 		
@@ -2053,11 +2050,8 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			reactor_kinetics_input['experiment_design']=experiment_design
 		else:
 			reactor_kinetics_input['experiment_design'] = None
-		print(reactor_kinetics_input['Uncertainty Quantification'])
 		if reactor_kinetics_input['Sensitivity Analysis'].lower() == 'true' or reactor_kinetics_input['Uncertainty Quantification'].lower() == 'true':
-			print(reactor_kinetics_input['Uncertainty Quantification'])
 			if sens_type == 'trans' or reactor_kinetics_input['Uncertainty Quantification'].lower() == 'true':
-				print(reactor_kinetics_input['Uncertainty Quantification'])
 				for parameters in kinetic_parameters:
 					reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(input_file,inputForm=inputForm)
 					
@@ -2083,9 +2077,8 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 						reactor_kinetics_input['Fit Parameters'] = 'TRUE'
 						reactor_kinetics_input['Optimization Method'] = optimization
 						reactor_kinetics_input['Objective Points'] = 'all'
-			
+					print(uncertainty_quantificaiton)
 					if uncertainty_quantificaiton != None:
-						print('test')
 						reactor_kinetics_input['Uncertainty Quantification'] = 'TRUE'
 						reactor_kinetics_input['Fit Parameters'] = 'FALSE'
 					
