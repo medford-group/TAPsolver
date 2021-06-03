@@ -30,7 +30,7 @@ from ufl import sqrt,exp,ln
 from shutil import copyfile
 import warnings
 
-def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitting_gif=None,xscale=None,yscale=None,pulseNumber=1,store_flux_func='TRUE',catalyst_data='FALSE',input_file = './input_file.csv',sensitivityType=None,noise='FALSE',fitInert=None,inputForm='old',experiment_design=None):
+def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitting_gif=None,xscale=None,yscale=None,pulseNumber=1,store_flux_func='TRUE',catalyst_data='FALSE',input_file = './input_file.csv',sensitivityType=None,noise='FALSE',sigma=None,fitInert=None,inputForm='old',experiment_design=None):
 	
 	sampling = False
 
@@ -46,7 +46,6 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 	#############################################################
 	
 	def tap_simulation_function(reactor_kinetics_input,constants_input,Ao_in,Ea_in,Ga_in,dG_in,fitting_input,arrForward,arrBackward,gForward):
-		print('Test')
 		# Define or clear working Tape of FEniCS / Dolfin-Adjoint
 		tape2 = Tape()
 		tape2.clear_tape()
@@ -139,7 +138,6 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		r_Ao = Ao_in.copy()
 		r_Ea = Ea_in.copy()
 		r_links = reactor_kinetics_input['linked parameters'].copy()
-		print('Define Links')
 		linkForward = reactor_kinetics_input['link forward'].copy()
 		linkBackard = reactor_kinetics_input['link backward'].copy()
 		r_fit = fitting_input.copy()
@@ -637,7 +635,6 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				if type(reac_input['Objective Points']) == float:
 					output_fitting = pointFitting(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],objSpecies)
 				elif reac_input['Objective Points'] == 'all':
-					print('objSpecies')
 					output_fitting = curveFitting(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],objSpecies)
 									
 				else:
@@ -1010,7 +1007,10 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 	
 									try:
 										if legend_label[k_fitting] != 'Inert':
-											jfunc_2 += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))/((0.1)**2)																	
+											if sigma == None:
+												jfunc_2 += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))																	
+											else:
+												jfunc_2 += assemble(inner(u_n[k_fitting]*to_flux[k_fitting] - w3,u_n[k_fitting]*to_flux[k_fitting] - w3)*dP(1))/((sigma)**2)
 										else:
 											pass
 	
@@ -1698,7 +1698,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 					utest[jay_z_num] = Constant(1)
 					H_i = rf_2.hessian(utest)
 					djv = [v.values()[0] for v in H_i]
-					print(djv)
+					#print(djv)
 					B.append(djv)
 
 				hessian_array = np.array(B)
@@ -2013,6 +2013,11 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		else:
 			reactor_kinetics_input['Noise'] = 'FALSE'			
 
+		if sigma != None:
+			reactor_kinetics_input['sigma'] = sigma
+		else:
+			reactor_kinetics_input['sigma'] = 'FALSE'		
+
 		if optimization != None:
 			reactor_kinetics_input['Fit Parameters'] = 'TRUE'
 			reactor_kinetics_input['Optimization Method'] = optimization
@@ -2062,6 +2067,11 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 					reactor_kinetics_input['Noise'] = 'TRUE'
 				else:
 					reactor_kinetics_input['Noise'] = 'FALSE'
+
+				if sigma != None:
+					reactor_kinetics_input['sigma'] = sigma
+				else:
+					reactor_kinetics_input['sigma'] = 'FALSE'					
 
 				if optimization != None:
 					reactor_kinetics_input['Fit Parameters'] = 'TRUE'
@@ -2125,19 +2135,22 @@ def run_tapsolver(timeFunc,add_noise=False,pulseNumber = 1,catalyst_data=False,i
 
 	general_run(timeFunc,store_flux_func='TRUE',catalyst_data=catalyst_data,pulseNumber = pulseNumber,input_file = input_file,noise=add_noise,inputForm = 'new')
 
-def run_sensitivity(timeFunc,sens_type=None,input_file = './input_file.csv'):
+def run_sensitivity(timeFunc,sigma=sigma,sens_type=None,input_file = './input_file.csv'):
 	if sens_type == None:
 		sens_type = 'total'
-	general_run(timeFunc,store_flux_func='FALSE',catalyst_data='FALSE',input_file = input_file,sensitivityType=sens_type,inputForm = 'new')
+	general_run(timeFunc,sigma=sigma,store_flux_func='FALSE',catalyst_data='FALSE',input_file = input_file,sensitivityType=sens_type,inputForm = 'new')
 
-def fit_tap(timeFunc,optim = 'L-BFGS-B',input_file = './input_file.csv',inertFitting=None):
+def fit_tap(timeFunc,sigma=sigma,optim = 'L-BFGS-B',input_file = './input_file.csv',inertFitting=None):
 	if inertFitting == None:
-		general_run(timeFunc,optimization=optim,input_file = input_file,inputForm = 'new')
+		general_run(timeFunc,sigma=sigma,optimization=optim,input_file = input_file,inputForm = 'new')
 	else:
-		general_run(timeFunc,optimization=optim,input_file = input_file,fitInert=True,inputForm = 'new')
+		general_run(timeFunc,sigma=sigma,optimization=optim,input_file = input_file,fitInert=True,inputForm = 'new')
 
-def run_uncertainty(timeFunc,input_file = './input_file.csv'):
-	general_run(timeFunc,uncertainty_quantificaiton=True,input_file = input_file,inputForm='new')
+def run_uncertainty(timeFunc,sigma = None, input_file = './input_file.csv'):
+	if simga != None:
+		general_run(timeFunc,sigma=sigma,uncertainty_quantificaiton=True,input_file = input_file,inputForm='new')
+	else:
+		general_run(timeFunc,sigma=sigma,uncertainty_quantificaiton=True,input_file = input_file,inputForm='new')
 
 def fitting_gif(timeFunc,input_file = './input_file.csv',x_scale='',y_scale='',outputName='./flux.gif'):
 	general_run(timeFunc,fitting_gif=True,xscale=x_scale,yscale=y_scale,input_file = input_file,inputForm='new')
