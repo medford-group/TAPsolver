@@ -1572,7 +1572,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 					rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
 					rf_2np = adReduNp.ReducedFunctionalNumPy(rf_2)
 					return rf_2np
-					
+
 					#return rf_2np.__call__(np.array([0.5,17.892023742960912]))
 					
 				#######################
@@ -2152,9 +2152,7 @@ def fit_tap(timeFunc,optim = 'L-BFGS-B',input_file = './input_file.csv',inertFit
 		general_run(timeFunc,optimization=optim,input_file = input_file,fitInert=True,inputForm = 'new')
 
 def run_uncertainty(timeFunc,input_file = './input_file.csv'):
-	print('TEST')
 	general_run(timeFunc,uncertainty_quantificaiton=True,input_file = input_file,inputForm='new')
-	print('TEST')
 
 def fitting_gif(timeFunc,input_file = './input_file.csv',x_scale='',y_scale='',outputName='./flux.gif'):
 	general_run(timeFunc,fitting_gif=True,xscale=x_scale,yscale=y_scale,input_file = input_file,inputForm='new')
