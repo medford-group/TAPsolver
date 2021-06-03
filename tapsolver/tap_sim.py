@@ -2052,66 +2052,66 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			reactor_kinetics_input['experiment_design'] = None
 		if reactor_kinetics_input['Sensitivity Analysis'].lower() == 'true' or reactor_kinetics_input['Uncertainty Quantification'].lower() == 'true':
 			if sens_type == 'trans' or reactor_kinetics_input['Uncertainty Quantification'].lower() == 'true':
-				for parameters in kinetic_parameters:
-					reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(input_file,inputForm=inputForm)
-					
-					reactor_kinetics_input['Sensitivity Parameter'] = parameters
-					reactor_kinetics_input['Number of Pulses'] = pulseNumber
-					reactor_kinetics_input['Reactor Type'] = 'tap'
-					reactor_kinetics_input['Knudsen Test'] = 'FALSE'
-					reactor_kinetics_input['Fit Inert'] = 'FALSE'
+				#for parameters in kinetic_parameters:
+				reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(input_file,inputForm=inputForm)
+				
+				reactor_kinetics_input['Sensitivity Parameter'] = parameters
+				reactor_kinetics_input['Number of Pulses'] = pulseNumber
+				reactor_kinetics_input['Reactor Type'] = 'tap'
+				reactor_kinetics_input['Knudsen Test'] = 'FALSE'
+				reactor_kinetics_input['Fit Inert'] = 'FALSE'
+				reactor_kinetics_input['Fit Parameters'] = 'FALSE'
+				reactor_kinetics_input['Display Experimental Data'] = 'FALSE'
+				reactor_kinetics_input['Fitting Gif'] = 'FALSE'
+				reactor_kinetics_input['Uncertainty Quantification'] = 'FALSE'
+				reactor_kinetics_input['Infinite Inert'] = 'FALSE'
+				reactor_kinetics_input['Display Objective Points'] = 'FALSE'
+				reactor_kinetics_input['Sensitivity Analysis'] = 'FALSE'
+
+				if noise != 'FALSE':
+					reactor_kinetics_input['Noise'] = 'TRUE'
+				else:
+					reactor_kinetics_input['Noise'] = 'FALSE'
+
+				if optimization != None:
+					reactor_kinetics_input['Fit Parameters'] = 'TRUE'
+					reactor_kinetics_input['Optimization Method'] = optimization
+					reactor_kinetics_input['Objective Points'] = 'all'
+				print(uncertainty_quantificaiton)
+				if uncertainty_quantificaiton != None:
+					reactor_kinetics_input['Uncertainty Quantification'] = 'TRUE'
 					reactor_kinetics_input['Fit Parameters'] = 'FALSE'
-					reactor_kinetics_input['Display Experimental Data'] = 'FALSE'
-					reactor_kinetics_input['Fitting Gif'] = 'FALSE'
-					reactor_kinetics_input['Uncertainty Quantification'] = 'FALSE'
-					reactor_kinetics_input['Infinite Inert'] = 'FALSE'
-					reactor_kinetics_input['Display Objective Points'] = 'FALSE'
-					reactor_kinetics_input['Sensitivity Analysis'] = 'FALSE'
+				
+				if fitting_gif != None:
+					reactor_kinetics_input['Fitting Gif'] = 'TRUE'
+					reactor_kinetics_input['xscale'] = xscale
+					reactor_kinetics_input['yscale'] = yscale
+					reactor_kinetics_input['Display Experimental Data'] = 'TRUE'
 
-					if noise != 'FALSE':
-						reactor_kinetics_input['Noise'] = 'TRUE'
-					else:
-						reactor_kinetics_input['Noise'] = 'FALSE'
+				if sensitivityType != None:
+					reactor_kinetics_input['Sensitivity Analysis'] =  'TRUE'
 
-					if optimization != None:
-						reactor_kinetics_input['Fit Parameters'] = 'TRUE'
-						reactor_kinetics_input['Optimization Method'] = optimization
-						reactor_kinetics_input['Objective Points'] = 'all'
-					print(uncertainty_quantificaiton)
-					if uncertainty_quantificaiton != None:
-						reactor_kinetics_input['Uncertainty Quantification'] = 'TRUE'
-						reactor_kinetics_input['Fit Parameters'] = 'FALSE'
+				if fitInert != None:
+					reactor_kinetics_input['Inert Fit'] =  'TRUE'
+
+				sens_type = sensitivityType					
+
+				print(parameters)
+				reactor_kinetics_input['Display Graph'] = 'FALSE'
+				
+				if reactor_kinetics_input['Fit Parameters'].lower() == 'true' or reactor_kinetics_input['Fit Inert'].lower() == 'true':
+					print('')
+					print('')
 					
-					if fitting_gif != None:
-						reactor_kinetics_input['Fitting Gif'] = 'TRUE'
-						reactor_kinetics_input['xscale'] = xscale
-						reactor_kinetics_input['yscale'] = yscale
-						reactor_kinetics_input['Display Experimental Data'] = 'TRUE'
-
-					if sensitivityType != None:
-						reactor_kinetics_input['Sensitivity Analysis'] =  'TRUE'
-
-					if fitInert != None:
-						reactor_kinetics_input['Inert Fit'] =  'TRUE'
-
-					sens_type = sensitivityType					
-
-					print(parameters)
-					reactor_kinetics_input['Display Graph'] = 'FALSE'
+					print('Running the Sensitivity and Parameter Fitting methods simultaniously is not possible due to conflicts between the tangent linear and adjoint methods.')
+					print('Please run again with one of these methods excluded.')
+					sys.exit()
 					
-					if reactor_kinetics_input['Fit Parameters'].lower() == 'true' or reactor_kinetics_input['Fit Inert'].lower() == 'true':
-						print('')
-						print('')
-					
-						print('Running the Sensitivity and Parameter Fitting methods simultaniously is not possible due to conflicts between the tangent linear and adjoint methods.')
-						print('Please run again with one of these methods excluded.')
-						sys.exit()
-					
-					if reactor_kinetics_input['Sensitivity Analysis'].lower() == 'true':
-						print('')
-						print('Processing '+parameters)
-					print('test 1')	
-					graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters,Ao_in,Ea_in,Ga_in,dG_in,kin_fit,arrForward,arrBackward,gForward)
+				if reactor_kinetics_input['Sensitivity Analysis'].lower() == 'true':
+					print('')
+					print('Processing '+parameters)
+				print('test 1')	
+				graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters,Ao_in,Ea_in,Ga_in,dG_in,kin_fit,arrForward,arrBackward,gForward)
 			
 			elif sens_type == 'total':
 				print('test 2')
