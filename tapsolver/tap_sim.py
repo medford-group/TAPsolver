@@ -792,7 +792,8 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				for timeStep in range(0,len(output_fitting[legend_label[k_fitting]]['times'])):
 					output_fitting[legend_label[k_fitting]]['times'][timeStep] = round(output_fitting[legend_label[k_fitting]]['times'][timeStep],6)
 	
-		if reac_input['Sensitivity Analysis'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true':
+		if reac_input['Sensitivity Analysis'].lower() == 'true':
+		#if reac_input['Sensitivity Analysis'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true':
 	
 			if reac_input['Uncertainty Quantification'].lower() == 'true' or (reac_input['Sensitivity Analysis'].lower() == 'true' and sens_type == 'trans'):
 				print('Enter sensitivity function')
