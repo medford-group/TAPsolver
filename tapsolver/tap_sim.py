@@ -1566,15 +1566,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				######################## objective optimization (boukouvala)
 
 				if reac_input['Optimization Method'] == 'objective':
-					def simpleReturn():
-						return float(jfunc_2)
-					#print(type(jfunc_2))
-					#print(jfunc_2)
-					#passAgain = float(jfunc_2)
-					#print(passAgain)
-					#print(type(passAgain))
-					return simpleReturn()
-					#print('test')
+					return float(jfunc_2)
 					
 				#######################
 
@@ -2122,11 +2114,12 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			if optimization != 'objective':
 				graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters,Ao_in,Ea_in,Ga_in,dG_in,kin_fit,arrForward,arrBackward,gForward)
 			else:
-				print('flag test')
-				
-				return 1#tap_simulation_function(reactor_kinetics_input,kinetic_parameters,Ao_in,Ea_in,Ga_in,dG_in,kin_fit,arrForward,arrBackward,gForward)
-			
-	call_sim()
+				return tap_simulation_function(reactor_kinetics_input,kinetic_parameters,Ao_in,Ea_in,Ga_in,dG_in,kin_fit,arrForward,arrBackward,gForward)
+	
+	if optimization != 'objective': 		
+		call_sim()
+	else:
+		return call_sim()
 
 def run_tapsolver(timeFunc,add_noise=False,pulseNumber = 1,catalyst_data=False,input_file = './input_file.csv'):
 	
