@@ -2164,11 +2164,20 @@ def run_uncertainty(timeFunc,sigma = None, input_file = './input_file.csv'):
 def fitting_gif(timeFunc,input_file = './input_file.csv',x_scale='',y_scale='',outputName='./flux.gif'):
 	general_run(timeFunc,fitting_gif=True,xscale=x_scale,yscale=y_scale,input_file = input_file,inputForm='new')
 
-def vary_Input(variableToChange, newValue, input_file='./input_file.csv'):
+def vary_Input(variable_type,variableToChange=None, newValue, input_file='./input_file.csv'):
 	df1 = pd.read_csv(input_file,header = None)
 	cellRow = df1[df1[0]==variableToChange].index.values[0]
-	df1.iloc[cellRow,1] = newValue
+	cellCol = df1[df1[0]==variableToChange].index.values[1]
 	
+	if variable_type == ('intensity' or 'surface') and variableToChange != None:
+		df1.iloc[cellRow+1,cellCol] = newValue
+	elif variable_type == 'delay' and variableToChange != None:
+		df1.iloc[cellRow+2,cellCol] = newValue
+	elif:
+		df1.iloc[cellRow,1] = newValue
+	else:
+		print('Variable not found in input file.')
+		print('If not a user error, please contact developers.')
 	df1.to_csv('./input_file.csv',header=None,index=False)
 
 def flux_graph(input_file = './input_file.csv',pulse=None,dispExper=False,dispAnalytic=False,dispObjective=False,show_graph=True,store_graph=False,output_name='./flux.png'):
