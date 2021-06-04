@@ -1566,14 +1566,15 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				######################## objective optimization (boukouvala)
 
 				if reac_input['Optimization Method'] == 'objective':
-					print('inside')
-					print(type(jfunc_2))
-					print(jfunc_2)
-					passAgain = float(jfunc_2)
-					print(passAgain)
-					print(type(passAgain))
-					return 1
-					print('test')
+					def simpleReturn():
+						return float(jfunc_2)
+					#print(type(jfunc_2))
+					#print(jfunc_2)
+					#passAgain = float(jfunc_2)
+					#print(passAgain)
+					#print(type(passAgain))
+					return simpleReturn()
+					#print('test')
 					
 				#######################
 
