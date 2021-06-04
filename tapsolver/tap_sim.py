@@ -1571,9 +1571,9 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 					# Feed the 
 					print(controls)
 					print(controls[0].data())
-					print(rf_2np.__call__([3.84,0.717,10.65]))
-					return rf_2np
-
+					print(jfunc_2)
+					#print(rf_2np.__call__([3.84,0.717,10.65]))
+					return jfunc_2
 					#return rf_2np.__call__(np.array([0.5,17.892023742960912]))
 					
 				#######################
@@ -2117,7 +2117,10 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters,Ao_in,Ea_in,Ga_in,dG_in,kin_fit,arrForward,arrBackward,gForward)
 			
 			elif sens_type == 'total':
-				graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters,Ao_in,Ea_in,Ga_in,dG_in,kin_fit,arrForward,arrBackward,gForward)
+				print('this location')
+				objfunction = tap_simulation_function(reactor_kinetics_input,kinetic_parameters,Ao_in,Ea_in,Ga_in,dG_in,kin_fit,arrForward,arrBackward,gForward)
+				print(objfunction)
+				#graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters,Ao_in,Ea_in,Ga_in,dG_in,kin_fit,arrForward,arrBackward,gForward)
 		else:
 			graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters,Ao_in,Ea_in,Ga_in,dG_in,kin_fit,arrForward,arrBackward,gForward)
 		
