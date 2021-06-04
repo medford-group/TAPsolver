@@ -1569,8 +1569,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 					print('inside')
 					print(type(jfunc_2))
 					print(jfunc_2)
-					print(float(jfunc_2))
-					return jfunc_2
+					return float(jfunc_2)
 					
 				#######################
 
