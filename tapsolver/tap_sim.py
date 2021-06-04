@@ -1570,7 +1570,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 					rf_2np = adReduNp.ReducedFunctionalNumPy(rf_2)
 					# Feed the 
 					print(controls)
-					print(controls[0])
+					print(controls[0].data())
 					print(rf_2np.__call__([3.84,0.717,10.65]))
 					return rf_2np
 
