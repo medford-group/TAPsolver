@@ -1566,6 +1566,9 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				######################## objective optimization (boukouvala)
 
 				if reac_input['Optimization Method'] == 'objective':
+					print('inside')
+					print(type(jfunc_2))
+					print(jfunc_2)
 					return jfunc_2
 					
 				#######################
