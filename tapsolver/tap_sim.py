@@ -2114,9 +2114,9 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			if optimization != 'objective':
 				graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters,Ao_in,Ea_in,Ga_in,dG_in,kin_fit,arrForward,arrBackward,gForward)
 			else:
+				print('flag test')
 				objfunction = tap_simulation_function(reactor_kinetics_input,kinetic_parameters,Ao_in,Ea_in,Ga_in,dG_in,kin_fit,arrForward,arrBackward,gForward)
 				return objfunction
-				print('flag test')
 			
 	call_sim()
 
