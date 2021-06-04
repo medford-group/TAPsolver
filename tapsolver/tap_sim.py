@@ -2173,7 +2173,7 @@ def vary_Input(variable_type=None,variableToChange=None, newValue, input_file='.
 		df1.iloc[cellRow+1,cellCol] = newValue
 	elif variable_type == 'delay' and variableToChange != None:
 		df1.iloc[cellRow+2,cellCol] = newValue
-	elif:
+	elif variable_type == 'Temperature':
 		df1.iloc[cellRow,1] = newValue
 	else:
 		print('Variable not found in input file.')
