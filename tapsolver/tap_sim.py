@@ -2145,7 +2145,10 @@ def fit_tap(timeFunc,sigma=None,optim = 'L-BFGS-B',input_file = './input_file.cs
 	if inertFitting == None:
 		general_run(timeFunc,sigma=sigma,optimization=optim,input_file = input_file,inputForm = 'new')
 	elif optim == 'objective':
-		return general_run(timeFunc,sigma=sigma,optimization=optim,input_file = input_file,inputForm = 'new')
+		print('objective step through')
+		new_value = general_run(timeFunc,sigma=sigma,optimization=optim,input_file = input_file,inputForm = 'new')
+		print(new_value)
+		return new_value
 	else:
 		general_run(timeFunc,sigma=sigma,optimization=optim,input_file = input_file,fitInert=True,inputForm = 'new')
 
