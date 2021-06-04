@@ -1569,8 +1569,9 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 					print('inside')
 					print(type(jfunc_2))
 					print(jfunc_2)
+					passAgain = float(jfunc_2)
+					print(passAgain)
 					return float(jfunc_2)
-					print('exit')
 					
 				#######################
 
