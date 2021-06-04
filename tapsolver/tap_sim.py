@@ -2124,7 +2124,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			else:
 				print('flag test')
 				
-				return tap_simulation_function(reactor_kinetics_input,kinetic_parameters,Ao_in,Ea_in,Ga_in,dG_in,kin_fit,arrForward,arrBackward,gForward)
+				return 1#tap_simulation_function(reactor_kinetics_input,kinetic_parameters,Ao_in,Ea_in,Ga_in,dG_in,kin_fit,arrForward,arrBackward,gForward)
 			
 	call_sim()
 
