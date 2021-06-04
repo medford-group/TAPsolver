@@ -2143,12 +2143,14 @@ def run_sensitivity(timeFunc,sigma=None,sens_type=None,input_file = './input_fil
 
 def fit_tap(timeFunc,sigma=None,optim = 'L-BFGS-B',input_file = './input_file.csv',inertFitting=None):
 	if inertFitting == None:
-		general_run(timeFunc,sigma=sigma,optimization=optim,input_file = input_file,inputForm = 'new')
-	elif optim == 'objective':
-		print('objective step through')
-		new_value = general_run(timeFunc,sigma=sigma,optimization=optim,input_file = input_file,inputForm = 'new')
-		print(new_value)
-		return new_value
+		if optim == 'objective':
+			print('objective step through')
+			new_value = general_run(timeFunc,sigma=sigma,optimization=optim,input_file = input_file,inputForm = 'new')
+			print(new_value)
+			return new_value	
+		else:
+			general_run(timeFunc,sigma=sigma,optimization=optim,input_file = input_file,inputForm = 'new')
+	
 	else:
 		general_run(timeFunc,sigma=sigma,optimization=optim,input_file = input_file,fitInert=True,inputForm = 'new')
 
