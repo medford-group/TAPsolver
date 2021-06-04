@@ -2178,7 +2178,7 @@ def vary_Input(variable_type=None,variableToChange=None, newValue=0, input_file=
 	else:
 		print('Variable not found in input file.')
 		print('If not a user error, please contact developers.')
-	df1.to_csv('./input_file.csv',header=None,index=False)
+	df1.to_csv(input_file,header=None,index=False)
 
 def flux_graph(input_file = './input_file.csv',pulse=None,dispExper=False,dispAnalytic=False,dispObjective=False,show_graph=True,store_graph=False,output_name='./flux.png'):
 
