@@ -1570,6 +1570,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 					print(type(jfunc_2))
 					print(jfunc_2)
 					return float(jfunc_2)
+					print('exit')
 					
 				#######################
 
