@@ -2164,7 +2164,7 @@ def run_uncertainty(timeFunc,sigma = None, input_file = './input_file.csv'):
 def fitting_gif(timeFunc,input_file = './input_file.csv',x_scale='',y_scale='',outputName='./flux.gif'):
 	general_run(timeFunc,fitting_gif=True,xscale=x_scale,yscale=y_scale,input_file = input_file,inputForm='new')
 
-def vary_Input(variable_type,variableToChange=None, newValue, input_file='./input_file.csv'):
+def vary_Input(variable_type=None,variableToChange=None, newValue, input_file='./input_file.csv'):
 	df1 = pd.read_csv(input_file,header = None)
 	cellRow = df1[df1[0]==variableToChange].index.values[0]
 	cellCol = df1[df1[0]==variableToChange].index.values[1]
