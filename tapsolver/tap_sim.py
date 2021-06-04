@@ -1566,15 +1566,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				######################## objective optimization (boukouvala)
 
 				if reac_input['Optimization Method'] == 'objective':
-					rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
-					rf_2np = adReduNp.ReducedFunctionalNumPy(rf_2)
-					# Feed the 
-					print(controls)
-					print(controls[0].data())
-					print(jfunc_2)
-					#print(rf_2np.__call__([3.84,0.717,10.65]))
 					return jfunc_2
-					#return rf_2np.__call__(np.array([0.5,17.892023742960912]))
 					
 				#######################
 
@@ -2121,10 +2113,10 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		else:
 			if optimization != 'objective':
 				graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters,Ao_in,Ea_in,Ga_in,dG_in,kin_fit,arrForward,arrBackward,gForward)
-			else:	
-				print('this location')
+			else:
 				objfunction = tap_simulation_function(reactor_kinetics_input,kinetic_parameters,Ao_in,Ea_in,Ga_in,dG_in,kin_fit,arrForward,arrBackward,gForward)
 				return objfunction
+				print('flag test')
 			
 	call_sim()
 
@@ -2152,6 +2144,8 @@ def run_sensitivity(timeFunc,sigma=None,sens_type=None,input_file = './input_fil
 def fit_tap(timeFunc,sigma=None,optim = 'L-BFGS-B',input_file = './input_file.csv',inertFitting=None):
 	if inertFitting == None:
 		general_run(timeFunc,sigma=sigma,optimization=optim,input_file = input_file,inputForm = 'new')
+	elif optim == 'objective':
+		return general_run(timeFunc,sigma=sigma,optimization=optim,input_file = input_file,inputForm = 'new')
 	else:
 		general_run(timeFunc,sigma=sigma,optimization=optim,input_file = input_file,fitInert=True,inputForm = 'new')
 
