@@ -2166,8 +2166,8 @@ def fitting_gif(timeFunc,input_file = './input_file.csv',x_scale='',y_scale='',o
 
 def vary_Input(variable_type=None,variableToChange=None, newValue=0, input_file='./input_file.csv'):
 	df1 = pd.read_csv(input_file,header = None)
-	cellRow = df1[df1[0]==variableToChange].index.values[0]
-	cellCol = df1[df1[0]==variableToChange].index.values[1]
+	cellRow = df1[df1==variableToChange].index.values[0]
+	cellCol = df1[df1==variableToChange].index.values[1]
 	
 	if variable_type == ('intensity' or 'surface') and variableToChange != None:
 		df1.iloc[cellRow+1,cellCol] = newValue
