@@ -2166,7 +2166,7 @@ def fitting_gif(timeFunc,input_file = './input_file.csv',x_scale='',y_scale='',o
 
 def vary_Input(variable_type=None,variableToChange=None, newValue=0, input_file='./input_file.csv'):
 	df1 = pd.read_csv(input_file,header = None)
-	a = df1.where(df1==variableToChange).dropna(how='all').dropna(axis=1)
+	a_vary_input = df1.where(df1==variableToChange).dropna(how='all').dropna(axis=1)
 	cellCol = a_vary_input.columns[0]
 	cellRow = a_vary_input.index[0]
 	
