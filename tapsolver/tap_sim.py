@@ -608,7 +608,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			timeConst = {}
 
 			for jk in range(0,len(reactant_time)):
-				timeConst['sST_'+str(jk)] = Constant(reactant_time[jk]+0.001)
+				timeConst['sST_'+str(jk)] = Constant(round(reactant_time[jk]+0.001,6))
 
 			fnew = eval(pulse_functions(reac_input['reactions_test'],reac_input['Number of Inerts']))
 			F += fnew
@@ -1146,7 +1146,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 									else:
 										solvertemp.solve()
 		
-										if round(t,6) == 0.001+timeDiff:
+										if round(t,6) == round(0.001+timeDiff,6):
 											dt = reac_input['Pulse Duration']/reac_input['Time Steps']
 											dk.assign(dt)
 											u_n.assign(u)
@@ -1157,7 +1157,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 									else:
 										solvertemp.solve(annotate=False)
 		
-										if round(t,6) == 0.001+timeDiff:
+										if round(t,6) == round(0.001+timeDiff,6):
 											dt = reac_input['Pulse Duration']/reac_input['Time Steps']
 											dk.assign(dt)
 											u_n.assign(u)
