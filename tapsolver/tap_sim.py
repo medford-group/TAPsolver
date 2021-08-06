@@ -439,10 +439,14 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 	
 		roundedMesh2 = ((1-cat_location) + 0.5*frac_length)*reac_input['Mesh Size']	
 		Mesh2 = round(((1-cat_location) + 0.5*frac_length)*reac_input['Mesh Size'])
-	
+		Mesh22 = round(((1-cat_location) + 0.5*frac_length)*reac_input['Mesh Size'])/reac_input['Mesh Size']
+		Mesh222 = round(((cat_location) + 0.5*frac_length)*reac_input['Mesh Size'])/reac_input['Mesh Size']
+
 		roundedMesh1 = ((1-cat_location) - 0.5*frac_length)*reac_input['Mesh Size']
 		Mesh1 = round(((1-cat_location) - 0.5*frac_length)*reac_input['Mesh Size'])
-	
+		Mesh12 = round(((1-cat_location) - 0.5*frac_length)*reac_input['Mesh Size'])/reac_input['Mesh Size']
+		Mesh122 = round(((cat_location) - 0.5*frac_length)*reac_input['Mesh Size'])/reac_input['Mesh Size']
+
 		if Mesh2 != roundedMesh2 or Mesh1 != roundedMesh1:
 			print('Warning: Catalyst zone will be refined and rounded to the nearest whole mesh point!')
 			trueMesh = (roundedMesh2 - roundedMesh1)/reac_input['Mesh Size']
@@ -460,7 +464,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		for jayz in range(0,catalystRefinement+1):
 			class thin_zoneTest(SubDomain):
 				def inside(self, x, on_boundary):
-					return between(x[0], (((1-cat_location) - 0.5*frac_length), ((1-cat_location) + 0.5*frac_length)))
+					return between(x[0], ((Mesh12), (Mesh22)))
 			
 			thin_zoneTest = thin_zoneTest()
 			cfDict[jayz] = MeshFunction("bool",mesh,1)
@@ -505,14 +509,14 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 	
 		graph_data,v_d,u_d,u_nd,sens_data,surf_data,cat_data = initializeVariableDictionaries(necessary_values,all_molecules,V,u,u_n)
 	
-		meshCells = int((cat_location + 0.5*frac_length)*reac_input['Mesh Size']) - mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])
+		meshCells = int((Mesh22)*reac_input['Mesh Size']) - mp.ceil((Mesh12)*reac_input['Mesh Size'])
 		frac_temp = (meshCells*2**(int(reac_input['Catalyst Mesh Density'])))/(int(reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))-meshCells)
 		totalNumCells = int(reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))-meshCells
 	
 		# Define subdomains (thin-zone / final cell)
 		class thin_zone(SubDomain):
 			def inside(self, x, on_boundary):
-				return between(x[0], (((1-cat_location) - 0.5*frac_length)-1/reac_input['Mesh Size'], ((1-cat_location) + 0.5*frac_length)+1/reac_input['Mesh Size']))
+				return between(x[0], ((Mesh12)-1/reac_input['Mesh Size'], (Mesh22)+1/reac_input['Mesh Size']))
 				
 		class singlePoint(SubDomain):
 			def inside(self,x,on_boundary):
@@ -924,7 +928,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			
 			cum_sum = 0
 	
-			meshCells = int((cat_location + 0.5*frac_length)*reac_input['Mesh Size']) - mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size']) 
+			meshCells = int((Mesh222)*reac_input['Mesh Size']) - mp.ceil((Mesh122)*reac_input['Mesh Size']) 
 	
 			#############################################################
 			############ SOLVE PDEs AT EACH TIME STEP ###################
@@ -1224,43 +1228,43 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 									print('doe_form_surf false')
 									if additionalCells == 0:
 			
-										for z in range(mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])+1,int((cat_location + 0.5*frac_length)*reac_input['Mesh Size'])+2):
+										for z in range(mp.ceil((Mesh122)*reac_input['Mesh Size'])+1,int((Mesh222)*reac_input['Mesh Size'])+2):
 											if ',' in str(reac_input['Initial Surface Composition']):
 												for z_num,z_sur in enumerate(reac_input['Initial Surface Composition']):	
-													if int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])-1 <= 0:
+													if int((Mesh122)*reac_input['Mesh Size'])-1 <= 0:
 														u_n.vector()[(all_molecules)-(int(reac_input['Number of Inerts'])+z_num+1)] = float(z_sur)
 													else:
 														u_n.vector()[z*(all_molecules)-(int(reac_input['Number of Inerts'])+z_num+1)] = float(z_sur)
 			
 											else:
-												if int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])-1 <= 0:
+												if int((Mesh122)*reac_input['Mesh Size'])-1 <= 0:
 													u_n.vector()[(all_molecules)-(2)] = float(species_pulse_list)
 												else:
 													u_n.vector()[z*(all_molecules)-(2)] = float(species_pulse_list)
 			
 									else:
 			
-										transTest1 = mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])+1
+										transTest1 = mp.ceil((Mesh122)*reac_input['Mesh Size'])+1
 										if ',' in str(reac_input['Initial Surface Composition']):
 											for z_num,z_sur in enumerate(reac_input['Initial Surface Composition']):	
 												u_n.vector()[transTest1*(all_molecules)-(int(reac_input['Number of Inerts'])+z_num+1)] = float(z_sur)*0.5
 			
-										transTest2 = int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))
+										transTest2 = int((Mesh122)*reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))
 										if ',' in str(reac_input['Initial Surface Composition']):
 											for z_num,z_sur in enumerate(reac_input['Initial Surface Composition']):	
 												u_n.vector()[transTest2*(all_molecules)-(int(reac_input['Number of Inerts'])+z_num+1)] = float(z_sur)*0.5
 			
 			
-										for z in range(mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])+2,int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))):
+										for z in range(mp.ceil((Mesh122)*reac_input['Mesh Size'])+2,int((Mesh122)*reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))):
 											if ',' in str(reac_input['Initial Surface Composition']):
 												for z_num,z_sur in enumerate(reac_input['Initial Surface Composition']):	
-													if int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])-1 <= 0:
+													if int((Mesh122)*reac_input['Mesh Size'])-1 <= 0:
 														u_n.vector()[(all_molecules)-(int(reac_input['Number of Inerts'])+z_num+1)] = float(z_sur)
 													else:
 														u_n.vector()[z*(all_molecules)-(int(reac_input['Number of Inerts'])+z_num+1)] = float(z_sur)
 		
 											else:
-												if int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])-1 <= 0:
+												if int((Mesh122)*reac_input['Mesh Size'])-1 <= 0:
 													u_n.vector()[(all_molecules)-(2)] = float(species_pulse_list)
 												else:
 													u_n.vector()[z*(all_molecules)-(2)] = float(species_pulse_list)
@@ -1467,8 +1471,8 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 								new_values = cat_data['rawData'][:,z] 
 								mol_values = cat_data['rawData'][:,z]
 						
-						top = mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])+1
-						bottom = int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))-1
+						top = mp.ceil((Mesh122)*reac_input['Mesh Size'])+1
+						bottom = int((Mesh122)*reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))-1
 	
 						## Change so that only thin-zone data is being stored
 						if thinSize == 'cat':
@@ -1524,8 +1528,8 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 								new_values = cat_data['rawData'][:,z] 
 								mol_values = cat_data['rawData'][:,z]
 						
-						top = mp.ceil((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])+1
-						bottom = int((cat_location - 0.5*frac_length)*reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))-1				
+						top = mp.ceil((Mesh122)*reac_input['Mesh Size'])+1
+						bottom = int((Mesh122)*reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))-1				
 	
 						## Change so that only thin-zone data is being stored
 						if thinSize == 'cat':
