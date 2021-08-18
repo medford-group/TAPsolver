@@ -29,7 +29,7 @@ from pyadjoint import reduced_functional_numpy as adReduNp
 from ufl import sqrt,exp,ln
 from shutil import copyfile
 import warnings
-
+# general run command
 def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitting_gif=None,xscale=None,yscale=None,pulseNumber=1,store_flux_func='TRUE',catalyst_data='FALSE',input_file = './input_file.csv',sensitivityType=None,noise='FALSE',sigma=None,fitInert=None,inputForm='old',experiment_design=None):
 	
 	sampling = False
