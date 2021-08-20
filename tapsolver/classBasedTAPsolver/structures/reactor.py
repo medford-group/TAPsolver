@@ -17,76 +17,96 @@ class reactor():
 
 		zone_void (dict): The bed porosity within each zone.
 
-		zone_diffusion (dict): The diffusion coefficient for each zone.
-
-		zone_residence_time (dict): The residence time within each zone.
-
 		reactor_radius (float): The radius of the reactor.
+		
+		*zone_diffusion (dict): The diffusion coefficient for each zone.
 
-		catalyst_weight (float): The catalyst weight.
+		*zone_residence_time (dict): The residence time within each zone.
 
-		mol_per_pulse (float): The mol per pulse.
+		*catalyst_weight (float): The catalyst weight.
+
+		*mol_per_pulse (float): The mol per pulse.
 
 		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		
 		**TAPsolver Specific Variables**
 
-		
+		mesh (int): The number of cells in the mesh used to solve the PDEs.
+
+		catalyst_mesh_density (int): The number of times the number of mesh cells should be doubled in the catalyst zone.
+
+		temperature (float): The temperature of the reactor (in K).
+
+		output_name (str): The name of the output folder for the results of the analysis. 
+
+		inert_diffusion (float): The reference value of the diffusion coefficient in the inert zone of the reactor.
+
+		catalyst_diffusion (float): The reference value of the diffusion coefficient in the catalyst zone of the reactor. 
+
+		reference_temperature (float): The temperature (in K) that the inert_diff and inert_cat values were determined.
+
+		reference_mass (float): The mass (in a.m.u.) that inert_diff and inert_cat values were determined.
+
+		advection (float): The rate of advection (velocity) of the gas species. One advection value for all gasses.
+
 
 	"""
 
 	def __init__(self):
-		#self.length = [2.80718,0.17364,2.80718]
+		self.zone_lengths = {'zone0': 2.80718, 'zone1': 0.17364, 'zone2': 2.80718}
 		
-		#self.void = [0.4,0.4,0.4]
+		self.zone_voids = {'zone0': 0.4, 'zone1': 0.4, 'zone2': 0.4}
 		
-		#self.radius = 1.0
+		self.reactor_radius = 1.0
 		
-		#self.temp = 385.65
+		self.temperature = 385.65
 		
-		#self.mesh = 200
+		self.mesh = 200
 		
-		self.meshDensity = 4
+		self.catalyst_mesh_density = 4
 		
-		self.outputName = 'exp_new'
+		self.output_name = 'exp_new'
 		
-		self.inertDiff = 16
+		self.inert_diffusion = 16
 		
-		self.catalystDiff = 16
+		self.catalyst_diffusion = 16
 		
-		self.refTemp = 385.6
+		self.reference_temperature = 385.6
 		
-		self.refMass = 40
+		self.reference_mass = 40
 		
 		self.advection = 0
 
-	def readCSVInput(self, fileName):
+	"""
+	
+	This function just converts the input lengths to fractions.
 
-		data = pd.read_csv(fileName,header=None)
+	Args:
+		reactor (class Reactor): The reactor information.
 
-		rows_1, cols_1 = np.where(data == 'Reactor_Information')
-		rows_2, cols_2 = np.where(data == 'Feed_&_Surface_Composition')
-		rows_4, cols_4 = np.where(data == 'Reaction_Information')
+	Returns:
+		zone_fractions (list of floats): The length fraction of each zone in the reactor.
 
-		reactor_info = data.iloc[(1+rows_1[0]):(rows_2[0]-1),:] 
-
-		self.length = [float(reactor_info.iloc[0,1]), float(reactor_info.iloc[0,2]), float(reactor_info.iloc[0,3])]
-		self.void = [float(reactor_info.iloc[1,1]), float(reactor_info.iloc[1,2]), float(reactor_info.iloc[1,3])]
-		self.radius = float(reactor_info.iloc[2,1])
-		self.temp = float(reactor_info.iloc[3,1])
-		self.mesh = int(reactor_info.iloc[4,1])
-		self.meshDensity = int(reactor_info.iloc[5,1])
-		self.outputName = reactor_info.iloc[6,1]
-		self.inertDiff = float(reactor_info.iloc[8,1])
-		self.catalystDiff = float(reactor_info.iloc[9,1])
-		self.refTemp = float(reactor_info.iloc[10,1])
-		self.refMass = float(reactor_info.iloc[11,1])
-		self.advection = float(reactor_info.iloc[12,1])
+	"""
 
 	def lengthFractions(self):
 
 		return [self.length[0]/sum(self.length),self.length[1]/sum(self.length),self.length[2]/sum(self.length)]
 
+	"""
+	
+	This function calculates the central point of the catalyst zone.
+
+	Args:
+		reactor (class Reactor): The reactor information.
+
+	Return:
+		zone_fractions (float): The central point of the catalyst zone.
+
+	"""
+
 	def reactorCenterFraction(self):
 		
 		return (self.length[0] + self.length[0]/2)/sum(self.length)
+
+

@@ -5,7 +5,20 @@ import pandas as pd
 import numpy as np
 from structures import initial_conditions
 
-def readCSV_ic(initial_conditions_data: initial_conditions, fileName):
+def readCSV_ic(fileName):
+
+	"""
+	This function converts the input file initial condition information into an initial condition object.
+
+	Args:
+		input_file (str): Directory path and name of the input file.
+
+	Returns:
+		An initial condition object with reactor parameters from the input_file.
+
+	"""
+
+	initial_conditions_data = initial_conditions()
 
 	data = pd.read_csv(fileName,header=None)
 	rows_1, cols_1 = np.where(data == 'Reactor_Information')
@@ -25,7 +38,6 @@ def readCSV_ic(initial_conditions_data: initial_conditions, fileName):
 				initial_conditions_data.mass = 0
 				initial_conditions_data.intensity = 0
 				initial_conditions_data.delay = 0
-
 
 		class specificAdspecies():
 			def __init__(initial_conditions_data):
@@ -48,3 +60,5 @@ def readCSV_ic(initial_conditions_data: initial_conditions, fileName):
 		initial_conditions_data.surfaceSpecies[j] = specificAdspecies()
 		if jnum == len(surface_species)-1:
 			initial_conditions_data.surfaceSpecies[j].conectration = feed_surf_info.iloc[6,1+jnum]
+
+	return initial_conditions_data

@@ -1,33 +1,12 @@
-import mpmath
-import matplotlib.pyplot as plt
-import matplotlib
-import pandas as pd
-import numpy as np
-import math as mp
-import dijitso
-import time
-import imageio
-import csv
-import ast
-import shutil
+from structures import *
+from file_io import *
 import sys
-import os
-import scipy
-import pip
-import pkg_resources
-import ufl
-import re
-
-from structures import reactor, mechanism, experiment, initial_conditions
-
-
-
-
-
-
+from mechanism_construction import *
+from initial_conditions import *
 
 class sampling():
 	pass
+
 class visualization():
 
 	def __init__(self):
@@ -35,13 +14,6 @@ class visualization():
 		self.mech = mechanism()
 		self.iniCon = initial_conditions()
 		self.expData = experimentalData()
-
-	#def fluxGraph():
-	#def fitGif():
-	#def pulseGif():
-	#def concentrationDistributionGif():
-	#def concentrationDistributionPlot():
-	#
 
 class tapsolver():
 
@@ -52,30 +24,14 @@ class tapsolver():
 		self.expData = experimentalData()
 		self.processNotes = None
 
-	def generatePDEs(self):
-		F = ''
 
-	def confirmConsistency(self):
-		pass
+testGen = readCSV_ic('./input_file_2.csv')
+testGen2 = readCSV_reactor('./input_file_2.csv')
+testGen3 = readCSV_mechanism(testGen3,'./input_file_2.csv')
 
-
-
-
-
-	#def simulation():
-	#def sensitivity():
-	#def fit():
-	#def uq():
-
-testGen = initial_conditions()
-testGen.readCSVInput('./input_file_2.csv')
-testGen.showGasses()
-testGen.showSurface()
-testGen2 = reactor()
-testGen2.readCSVInput('./input_file_2.csv')
-testGen3 = mechanism()
-testGen3.readCSVInput('./input_file_2.csv')
-testGen3.meachanismReactants()
+testGen3 = mechanism_constructor(testGen3)
+f_new, domain = construct_f_equation(testGen3,testGen,testGen2)
+print(f_new)
 sys.exit()
 testGen3.displayProcesses()
 testGen4 = experimentalData()

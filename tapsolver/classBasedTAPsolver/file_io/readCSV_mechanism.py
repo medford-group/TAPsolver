@@ -7,6 +7,19 @@ from structures import mechanism
 
 def readCSV_mechanism(mechanism_data: mechanism, fileName):
 
+	"""
+	This function converts the input file mechanism information into a mechanism object.
+
+	Args:
+		input_file (str): Directory path and name of the input file.
+
+	Returns:
+		A mechanism object with mechanism parameters from the input_file.
+
+	"""
+
+	mechanism_data = mechanism()
+
 	class newProcess():
 		def __init__(mechanism_data):
 			mechanism_data.processString = ''
@@ -124,3 +137,6 @@ def readCSV_mechanism(mechanism_data: mechanism, fileName):
 					mechanism_data.elementaryProcesses[j].forward.backward['k'] = float(n1)
 				else:
 					mechanism_data.elementaryProcesses[j].backward.k = parseValues(n1)
+
+	return mechanism_data
+
