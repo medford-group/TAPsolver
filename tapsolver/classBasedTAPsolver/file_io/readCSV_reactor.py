@@ -3,6 +3,7 @@
 
 import pandas as pd
 import numpy as np
+import sys
 from structures import reactor
 
 def readCSV_reactor(input_name):
@@ -20,12 +21,12 @@ def readCSV_reactor(input_name):
 
 	reactor_data = reactor()
 
-	data = pd.read_csv(input_name,header=None)
+	data = pd.read_csv(input_name,header=None,dtype=object)
 
 	rows_1, cols_1 = np.where(data == 'Reactor_Information')
 	rows_2, cols_2 = np.where(data == 'Feed_&_Surface_Composition')
 	rows_4, cols_4 = np.where(data == 'Reaction_Information')
-
+	
 	reactor_info = data.iloc[(1+rows_1[0]):(rows_2[0]-1),:] 
 
 	reactor_data.zone_lengths = {'zone0': float(reactor_info.iloc[0,1]), 'zone1':  float(reactor_info.iloc[0,2]), 'zone2': float(reactor_info.iloc[0,3])}

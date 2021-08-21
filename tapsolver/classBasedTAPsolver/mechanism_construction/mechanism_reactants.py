@@ -10,8 +10,8 @@ def mechanism_reactants(mechanism_data: mechanism):
 
 	reactants = []
 
-	for k,i in enumerate(mechanism_data.elementaryProcesses.keys()):
-		tempReaction = mechanism_data.elementaryProcesses[k].processString
+	for k,i in enumerate(mechanism_data.elementary_processes.keys()):
+		tempReaction = mechanism_data.elementary_processes[k].processString
 		if '<->' in tempReaction:
 			tempReaction = tempReaction.replace('<->','')
 		else:

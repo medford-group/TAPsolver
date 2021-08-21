@@ -4,8 +4,9 @@
 import pandas as pd
 import numpy as np
 from structures import mechanism
+from mechanism_construction import elementary_process, elementary_process_details
 
-def readCSV_mechanism(mechanism_data: mechanism, fileName):
+def readCSV_mechanism(fileName):
 
 	"""
 	This function converts the input file mechanism information into a mechanism object.
@@ -20,22 +21,6 @@ def readCSV_mechanism(mechanism_data: mechanism, fileName):
 
 	mechanism_data = mechanism()
 
-	class newProcess():
-		def __init__(mechanism_data):
-			mechanism_data.processString = ''
-			mechanism_data.forward = {}
-			mechanism_data.backward = {}
-
-
-	class processDetails():
-		def __init__(mechanism_data):
-			mechanism_data.k = {'value':None,'fd':'fixed'}
-			mechanism_data.Ao = {'value':None,'fd':'fixed'}
-			mechanism_data.Ea = {'value':None,'fd':'fixed'}
-			mechanism_data.Ga = {'value':None,'fd':'fixed'}
-			mechanism_data.dG = {'value':None,'fd':'fixed'}
-			mechanism_data.link = {'variable':0}
-
 	def parseValues(v1):
 		
 		v1Dict = {}
@@ -48,7 +33,7 @@ def readCSV_mechanism(mechanism_data: mechanism, fileName):
 
 		return v1Dict
 
-	data = pd.read_csv(fileName,header=None)
+	data = pd.read_csv(fileName,header=None,dtype=object)
 
 	rows_1, cols_1 = np.where(data == 'Reactor_Information')
 	rows_2, cols_2 = np.where(data == 'Feed_&_Surface_Composition')
@@ -81,62 +66,62 @@ def readCSV_mechanism(mechanism_data: mechanism, fileName):
 
 	for j in range(0,len(reaction_info.index)):
 
-		mechanism_data.elementaryProcesses[j] = newProcess()
+		mechanism_data.elementary_processes[j] = elementary_process()
 			
-		mechanism_data.elementaryProcesses[j].processString = reaction_info.iloc[j,0]
-		mechanism_data.elementaryProcesses[j].forward = processDetails()
-		mechanism_data.elementaryProcesses[j].backward = processDetails()
+		mechanism_data.elementary_processes[j].processString = reaction_info.iloc[j,0]
+		mechanism_data.elementary_processes[j].forward = elementary_process_details()
+		mechanism_data.elementary_processes[j].backward = elementary_process_details()
 
 		if reaction_info.iloc[j,1].find("#") > 0:
 			
 			n1, n2 = reaction_info.iloc[j,1].split("#")
 			if n1.find("{") == 0:
-				mechanism_data.elementaryProcesses[j].forward.link['Ga'] = float(n1)
+				mechanism_data.elementary_processes[j].forward.link['Ga'] = float(n1)
 			else:
-				mechanism_data.elementaryProcesses[j].forward.Ga = parseValues(n1)
+				mechanism_data.elementary_processes[j].forward.Ga = parseValues(n1)
 			if n2.find("{") == 0:
-				mechanism_data.elementaryProcesses[j].forward.link['dG'] = float(n2)
+				mechanism_data.elementary_processes[j].forward.link['dG'] = float(n2)
 			else:
-				mechanism_data.elementaryProcesses[j].forward.dG = parseValues(n2)
+				mechanism_data.elementary_processes[j].forward.dG = parseValues(n2)
 			
 		elif reaction_info.iloc[j,1].find("$") > 0:
 
 			n1, n2 = reaction_info.iloc[j,1].split("$")
 			if n1.find("{") == 0:
-				mechanism_data.elementaryProcesses[j].forward.link['Ao'] = float(n1)
+				mechanism_data.elementary_processes[j].forward.link['Ao'] = float(n1)
 			else:
-				mechanism_data.elementaryProcesses[j].forward.Ao = parseValues(n1)
+				mechanism_data.elementary_processes[j].forward.Ao = parseValues(n1)
 			if n2.find("{") == 0:
-				mechanism_data.elementaryProcesses[j].forward.link['Ea'] = float(n2)
+				mechanism_data.elementary_processes[j].forward.link['Ea'] = float(n2)
 			else:
-				mechanism_data.elementaryProcesses[j].forward.Ea = parseValues(n2)
+				mechanism_data.elementary_processes[j].forward.Ea = parseValues(n2)
 			
 		else:
 			n1 = reaction_info.iloc[j,1]
 			if n1.find("{") == 0:
-				mechanism_data.elementaryProcesses[j].forward.Ao = parseValues(n1)
+				mechanism_data.elementary_processes[j].forward.Ao = parseValues(n1)
 			else:
-				mechanism_data.elementaryProcesses[j].forward.k = parseValues(n1)
+				mechanism_data.elementary_processes[j].forward.k = parseValues(n1)
 			
 		if str(reaction_info.iloc[j,2]) != 'nan':
 				
 			if reaction_info.iloc[j,2].find("$") > 0:
 				n1, n2 = reaction_info.iloc[j,2].split("$")
 				if n1.find("{") == 0:
-					mechanism_data.elementaryProcesses[j].forward.link['Ao'] = float(n1)
+					mechanism_data.elementary_processes[j].forward.link['Ao'] = float(n1)
 				else:
-					mechanism_data.elementaryProcesses[j].backward.Ao = parseValues(n1)
+					mechanism_data.elementary_processes[j].backward.Ao = parseValues(n1)
 				if n2.find("{") == 0:
-					mechanism_data.elementaryProcesses[j].forward.link['Ea'] = float(n1)
+					mechanism_data.elementary_processes[j].forward.link['Ea'] = float(n1)
 				else:	
-					mechanism_data.elementaryProcesses[j].backward.Ea = parseValues(n2)
+					mechanism_data.elementary_processes[j].backward.Ea = parseValues(n2)
 			
 			else:
 				n1 = reaction_info.iloc[j,2]
 				if n1.find("{") == 0:
-					mechanism_data.elementaryProcesses[j].forward.backward['k'] = float(n1)
+					mechanism_data.elementary_processes[j].forward.backward['k'] = float(n1)
 				else:
-					mechanism_data.elementaryProcesses[j].backward.k = parseValues(n1)
+					mechanism_data.elementary_processes[j].backward.k = parseValues(n1)
 
 	return mechanism_data
 

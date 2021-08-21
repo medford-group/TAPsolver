@@ -87,13 +87,13 @@ def construct_f_equation(mechanism_data: mechanism,initial_conditions_data: init
 
 		together = neg+pos
 		
-		if mechanism_data.elementaryProcesses[k].forward.Ga['value'] != None:
+		if mechanism_data.elementary_processes[k].forward.Ga['value'] != None:
 			#if k in gForward:#,r_Ga_in,r_dG_in
 			new_neg = make_g(k,'f')
-		elif mechanism_data.elementaryProcesses[k].forward.Ao['value'] != None:	
+		elif mechanism_data.elementary_processes[k].forward.Ao['value'] != None:	
 			#elif k in arrForward:
 			new_neg = make_arr(k,'f')
-		elif mechanism_data.elementaryProcesses[k].forward.link['variable'] != None:
+		elif mechanism_data.elementary_processes[k].forward.link['variable'] != None:
 			#elif k in linkForward:
 			new_neg = make_link(k,'f')
 		else:
@@ -102,13 +102,13 @@ def construct_f_equation(mechanism_data: mechanism,initial_conditions_data: init
 		for j,v in enumerate(neg):
 			new_neg = new_neg+"*(u_d['u_"+str(v+1)+"']**"+str(abs(val_neg[j]))+")"
 
-		if mechanism_data.elementaryProcesses[k].backward.Ga['value'] != None:
+		if mechanism_data.elementary_processes[k].backward.Ga['value'] != None:
 			new_pos = make_g(k,'b')
-		elif mechanism_data.elementaryProcesses[k].backward.Ao['value'] != None:
+		elif mechanism_data.elementary_processes[k].backward.Ao['value'] != None:
 			new_pos = make_arr(k,'b')
-		elif mechanism_data.elementaryProcesses[k].backward.link['variable'] != 0:
+		elif mechanism_data.elementary_processes[k].backward.link['variable'] != 0:
 			new_pos = make_link(k,'b')
-		elif mechanism_data.elementaryProcesses[k].backward.k['value'] != None:
+		elif mechanism_data.elementary_processes[k].backward.k['value'] != None:
 			new_pos = make_constant(k,'b')
 		else:
 			irr = True
@@ -146,11 +146,11 @@ def construct_f_equation(mechanism_data: mechanism,initial_conditions_data: init
 			
 		together = neg+pos
 
-		if mechanism_data.elementaryProcesses[k].forward.Ga['value'] != None:
+		if mechanism_data.elementary_processes[k].forward.Ga['value'] != None:
 			new_neg = make_g(k,'f')
-		elif mechanism_data.elementaryProcesses[k].forward.Ao['value'] != None:	
+		elif mechanism_data.elementary_processes[k].forward.Ao['value'] != None:	
 			new_neg = make_arr(k,'f')
-		elif mechanism_data.elementaryProcesses[k].forward.link['variable'] != None:	
+		elif mechanism_data.elementary_processes[k].forward.link['variable'] != None:	
 			new_neg = make_link(k,'f')
 		else:
 			new_neg = make_constant(k,'f')
@@ -158,13 +158,13 @@ def construct_f_equation(mechanism_data: mechanism,initial_conditions_data: init
 		for j,v in enumerate(neg):
 			new_neg = new_neg+"*(u_nd['u_n"+str(v+1)+"']**"+str(abs(val_neg[j]))+")"
 			
-		if mechanism_data.elementaryProcesses[k].backward.Ga['value'] != None:
+		if mechanism_data.elementary_processes[k].backward.Ga['value'] != None:
 			new_pos = make_g(k,'b')
-		elif mechanism_data.elementaryProcesses[k].backward.Ao['value'] != None:
+		elif mechanism_data.elementary_processes[k].backward.Ao['value'] != None:
 			new_pos = make_arr(k,'b')
-		elif mechanism_data.elementaryProcesses[k].backward.link['variable'] != 0:
+		elif mechanism_data.elementary_processes[k].backward.link['variable'] != 0:
 			new_pos = make_link(k,'b')
-		elif mechanism_data.elementaryProcesses[k].backward.k['value'] != None:
+		elif mechanism_data.elementary_processes[k].backward.k['value'] != None:
 			new_pos = make_constant(k,'b')
 		else:
 			irr = True

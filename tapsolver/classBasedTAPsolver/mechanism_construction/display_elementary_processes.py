@@ -5,28 +5,45 @@ import pandas as pd
 import numpy as np
 from structures import mechanism
 
-def displayProcesses(mechanism_data: mechanism):
+def display_elementary_processes(mechanism_data: mechanism):
+	
+	"""
+	
+	Function to clearly define all of the parameters 
+	
+	Args:
+		
+		elementary_processes (int): The number of cells in the mesh used to solve the PDEs.
+
+		rate_array (numpy array): The stoichiometric matrix of the microkinetic model.
+
+		reactions (list): The individual elementary processes introduced in the mechanism (also found in elementary_processes).
+
+		reactants (list): The reactive gas and surface species in the mechanism.   
+
+	"""
+
 	print('ELEMENTARY PROCESSES')
 	
-	for k in mechanism_data.elementaryProcesses.keys():
+	for k in mechanism_data.elementary_processes.keys():
 		print('__________________________________')
-		print('|'+'Reaction '+str(k)+': '+mechanism_data.elementaryProcesses[k].processString)
+		print('|'+'Reaction '+str(k)+': '+mechanism_data.elementary_processes[k].processString)
 		print('|')
 		print('|'+'forward - ')
-		print('|'+str(mechanism_data.elementaryProcesses[k].forward.k))
-		print('|'+str(mechanism_data.elementaryProcesses[k].forward.Ao))
-		print('|'+str(mechanism_data.elementaryProcesses[k].forward.Ea))
-		print('|'+str(mechanism_data.elementaryProcesses[k].forward.Ga))
-		print('|'+str(mechanism_data.elementaryProcesses[k].forward.dG))
-		print('|'+str(mechanism_data.elementaryProcesses[k].forward.link))
+		print('| k: '+str(mechanism_data.elementary_processes[k].forward.k))
+		print('| Ao: '+str(mechanism_data.elementary_processes[k].forward.Ao))
+		print('| Ea: '+str(mechanism_data.elementary_processes[k].forward.Ea))
+		print('| Ga: '+str(mechanism_data.elementary_processes[k].forward.Ga))
+		print('| dG: '+str(mechanism_data.elementary_processes[k].forward.dG))
+		print('| link: '+str(mechanism_data.elementary_processes[k].forward.link))
 		print('|')
 		print('|'+'backward - ')
-		print('|'+str(mechanism_data.elementaryProcesses[k].backward.k))
-		print('|'+str(mechanism_data.elementaryProcesses[k].backward.Ao))
-		print('|'+str(mechanism_data.elementaryProcesses[k].backward.Ea))
-		print('|'+str(mechanism_data.elementaryProcesses[k].backward.Ga))
-		print('|'+str(mechanism_data.elementaryProcesses[k].backward.dG))
-		print('|'+str(mechanism_data.elementaryProcesses[k].backward.link))
+		print('| k: '+str(mechanism_data.elementary_processes[k].backward.k))
+		print('| Ao: '+str(mechanism_data.elementary_processes[k].backward.Ao))
+		print('| Ea: '+str(mechanism_data.elementary_processes[k].backward.Ea))
+		print('| Ga: '+str(mechanism_data.elementary_processes[k].backward.Ga))
+		print('| dG: '+str(mechanism_data.elementary_processes[k].backward.dG))
+		print('| link: '+str(mechanism_data.elementary_processes[k].backward.link))
 		print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 	print('')
 	print('')
