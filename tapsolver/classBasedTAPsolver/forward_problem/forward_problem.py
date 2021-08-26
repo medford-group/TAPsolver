@@ -7,26 +7,35 @@ import sys
 import pandas as pd
 import numpy as np
 import math as mp
-import dijitso
+#import dijitso
 import time
 import os
 import scipy
+import copy
 
 from structures import *
 from file_io import *
 from mechanism_construction import *
 from initial_conditions import *
 
-def tap_simulate(reactor_data: reactor, mechanism_data: mechanism, initial_conditions_data: initial_conditions):
+def tapsolver_run(reactor_data: reactor, mechanism_data: mechanism, initial_conditions_data: initial_conditions):
+
+	def generateFolder(path_name):
+		try:  
+			os.mkdir(path_name)
+		except OSError:  
+			pass
+		else:  
+			pass
 
 	kbt = 1.38064852e-23
 	hb = 6.62607004e-34
 	Rgas = 8.314
 
-	warnings.simplefilter(action='ignore', category=FutureWarning)
-	tape2 = Tape()
-	tape2.clear_tape()
-	set_working_tape(tape2)
+	##warnings.simplefilter(action='ignore', category=FutureWarning)
+	##tape2 = Tape()
+	##tape2.clear_tape()
+	##set_working_tape(tape2)
 
 	######################## DEFINING OUTPUT FOLDER INFORMATION #############################
 
@@ -39,19 +48,54 @@ def tap_simulate(reactor_data: reactor, mechanism_data: mechanism, initial_condi
 	######################## READING KINETIC PARAMETER INFORMATION ###########################
 
 	# Declare and define the constants of interest
-	r_Ga_in = Ga_in.copy()
-	r_dG_in = dG_in.copy()
-	r_const = constants_input.copy()
-	r_Ao = Ao_in.copy()
-	r_Ea = Ea_in.copy()
-	r_links = reactor_kinetics_input['linked parameters'].copy()
-	linkForward = reactor_kinetics_input['link forward'].copy()
-	linkBackard = reactor_kinetics_input['link backward'].copy()
-	r_fit = fitting_input.copy()
+	mechanism_copy = copy.deepcopy(mechanism_data)
 
+	if mechanism_copy.rate_array == None:
+		mechanism_copy = mechanism_constructor(mechanism_copy)
+	mechanism_processes = mechanism_copy.elementary_processes.keys()
+	
+	r_Ga_in = {}
+	r_dG_in = {}
+	r_const = {}
+	r_Ao = {}
+	r_Ea = {}
+	r_links = {}
+
+	for j in mechanism_processes:
+		print(j)
+		#"k'+f+str(j)+'"
+		if mechanism_copy.elementary_processes[j].forward.Ga['value'] != None and mechanism_copy.elementary_processes[j].forward.default == 'g':
+			r_Ga_in["kf"+str(j)] = Constant(mechanism_copy.elementary_processes[j].forward.Ga['value'])
+		if mechanism_copy.elementary_processes[j].forward.dG['value'] != None and mechanism_copy.elementary_processes[j].forward.default == 'g':
+			r_dG_in["kf"+str(j)] = Constant(mechanism_copy.elementary_processes[j].forward.dG['value'])
+		if mechanism_copy.elementary_processes[j].forward.k['value'] != None and mechanism_copy.elementary_processes[j].forward.default == 'k':
+			r_const["kf"+str(j)] = Constant(mechanism_copy.elementary_processes[j].forward.k['value'])
+		if mechanism_copy.elementary_processes[j].forward.Ao['value'] != None and mechanism_copy.elementary_processes[j].forward.default == 'a':
+			r_Ao["kf"+str(j)] = Constant(mechanism_copy.elementary_processes[j].forward.Ao['value'])
+		if mechanism_copy.elementary_processes[j].forward.Ea['value'] != None and mechanism_copy.elementary_processes[j].forward.default == 'a':
+			r_Ea["kf"+str(j)] = Constant(mechanism_copy.elementary_processes[j].forward.Ea['value'])
+
+		if mechanism_copy.elementary_processes[j].backward.k['value'] != None and mechanism_copy.elementary_processes[j].backward.default == 'k':
+			r_const["kb"+str(j)] = Constant(mechanism_copy.elementary_processes[j].backward.k['value'])
+		if mechanism_copy.elementary_processes[j].backward.Ao['value'] != None and mechanism_copy.elementary_processes[j].backward.default == 'a':
+			r_Ao["kb"+str(j)] = Constant(mechanism_copy.elementary_processes[j].backward.Ao['value'])
+		if mechanism_copy.elementary_processes[j].backward.Ea['value'] != None and mechanism_copy.elementary_processes[j].backward.default == 'a':
+			r_Ea["kb"+str(j)] = Constant(mechanism_copy.elementary_processes[j].backward.Ea['value'])
+
+	print(r_Ga_in)
+	print(r_dG_in)
+	print(r_const)
+	print(r_Ao)
+	print(r_Ea)
+	print(r_links)
+
+
+
+	sys.exit()
 	for jnum,j in enumerate(Ga_in):
 		#print(((kbt*reac_input['Reactor Temperature']/hb)*exp(-Ga_in["Ga"+str(jnum)])))
 		#print(((kbt*reac_input['Reactor Temperature']/hb)*exp(-(Ga_in["Ga"+str(jnum)] - dG_in["dG"+str(jnum)]))))
+
 		r_Ga_in[j] = Constant(r_Ga_in[j])
 	
 	for j in r_dG_in:
@@ -73,6 +117,10 @@ def tap_simulate(reactor_data: reactor, mechanism_data: mechanism, initial_condi
 	if reac_input['Fit Parameters'].lower() == 'true' or (sens_type == 'total' and reac_input['Sensitivity Analysis'].lower() == 'true') or reactor_kinetics_input['Uncertainty Quantification'].lower() == 'true':
 		controls = []
 		legend_2 = []
+
+		if mechanism_copy.default == 'k':
+			print('test')
+
 		for j in r_fit:
 			if j.find('Ga') > -1: # 'Ga' and 'dG'
 				controls.append(Control(r_Ga_in[j]))

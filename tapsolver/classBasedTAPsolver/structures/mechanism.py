@@ -17,6 +17,7 @@ class mechanism():
 
 		reactants (list): The reactive gas and surface species in the mechanism.   
 
+		default (str): Define what kind of parameters should be used for the simulation or inverse problem ('k': rate constants, 'g': free energy, 'a': activation, 'l': linked, 'm': mixed (process dependent)).
 	"""
 
 	def __init__(self):
@@ -25,3 +26,4 @@ class mechanism():
 		self.rate_array = None
 		self.reactions = None
 		self.reactants = None
+		self.default = 'k'

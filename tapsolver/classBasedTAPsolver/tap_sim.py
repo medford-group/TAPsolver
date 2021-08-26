@@ -4,6 +4,7 @@ import sys
 import pandas as pd
 
 from mechanism_construction import *
+from forward_problem import *
 from initial_conditions import *
 from reference_files import *
 
@@ -30,11 +31,17 @@ class tapsolver():
 		self.expData = experimentalData()
 		self.processNotes = None
 
-testGen2 = load_example('inl_reactor_1.obj')
-examples()
-testGen2 = readCSV_reactor('./input_file_2.csv')
-testGen3 = readCSV_mechanism('./input_file_2.csv')
-testGen = readCSV_ic('./input_file_2.csv')
+#testGen1 = load_example('inl_reactor_1.obj')
+testGen1 = readCSV_reactor('./input_file_2.csv')
+testGen2 = readCSV_mechanism('./input_file_2.csv')
+testGen3 = readCSV_ic('./input_file_2.csv')
+
+forward_problem(testGen1,testGen2,testGen3)
+
+# elementary_process, elementary_process_details
+
+
+sys.exit()
 
 testGen_test = load_example('parallel_1.obj')
 display_elementary_processes(testGen_test)
