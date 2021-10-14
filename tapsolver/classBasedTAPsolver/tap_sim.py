@@ -36,26 +36,27 @@ testGen1 = readCSV_reactor('./input_file_2.csv')
 testGen2 = readCSV_mechanism('./input_file_2.csv')
 testGen3 = readCSV_ic('./input_file_2.csv')
 
-forward_problem(testGen1,testGen2,testGen3)
+print(testGen1.cross_sectional_area())
+print(testGen1.reactor_radius)
+testGen1.reactor_radius = 2
+print(testGen1.cross_sectional_area())
+print(testGen1.reactor_radius)
+forward_problem(1,testGen1,testGen2,testGen3)
 
 # elementary_process, elementary_process_details
-
-
 sys.exit()
 
 testGen_test = load_example('parallel_1.obj')
 display_elementary_processes(testGen_test)
-#sys.exit()
 
 new_reactor = pickle.dump(testGen3,open('./parallel_2.obj','wb'))
 new_reactor2 = pickle.load(open('./parallel_2.obj','rb'))
 print(new_reactor2)
-sys.exit()
 
 testGen3 = mechanism_constructor(testGen3)
 f_new, domain = construct_f_equation(testGen3,testGen,testGen2)
 display_elementary_processes(testGen3)
-sys.exit()
+
 testGen3.displayProcesses()
 testGen4 = experimentalData()
 testGen4.readCSVInput('./input_file_2.csv',testGen.gasses)

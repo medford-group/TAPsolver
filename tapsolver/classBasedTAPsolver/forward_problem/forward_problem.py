@@ -12,38 +12,55 @@ import time
 import os
 import scipy
 import copy
+import warnings
 
 from structures import *
 from file_io import *
 from mechanism_construction import *
 from initial_conditions import *
 
-def tapsolver_run(reactor_data: reactor, mechanism_data: mechanism, initial_conditions_data: initial_conditions):
+# Return reduced functional
+
+warnings.simplefilter(action='ignore', category=FutureWarning)
+set_log_level(30)
+tol = 1E-14
+
+def forward_problem(pulse_time, reactor_data: reactor, mechanism_data: mechanism, initial_conditions_data: initial_conditions):
+
+
+
+	######################## DEFINING INITIAL CONSTANTS #############################
+
+	time_steps = pulse_time*1000
+	dk = Constant(pulse_time/time_steps)
+	cat_location = 1 - reac_input['Catalyst Location']
+
+	# Standard Constants
+	kbt = 1.38064852e-23
+	hb = 6.62607004e-34
+	Rgas = 8.314
+	reference_pulse_size = 1
+	
+
+	######################## DEFINING OUTPUT FOLDER INFORMATION #############################
 
 	def generateFolder(path_name):
 		try:  
 			os.mkdir(path_name)
 		except OSError:  
 			pass
-		else:  
+		else: 
 			pass
-
-	kbt = 1.38064852e-23
-	hb = 6.62607004e-34
-	Rgas = 8.314
-
-	##warnings.simplefilter(action='ignore', category=FutureWarning)
-	##tape2 = Tape()
-	##tape2.clear_tape()
-	##set_working_tape(tape2)
-
-	######################## DEFINING OUTPUT FOLDER INFORMATION #############################
 
 	path = './'+reactor_data.output_name+'_folder/'
 	generateFolder(path)
 			
 	path_3 = './'+reactor_data.output_name+'_folder/flux_data/'
 	generateFolder(path_3)
+
+	user_data = pd.read_csv(input_file,header=None)
+	user_data.to_csv(path+input_file,header=None,index=False)
+	original_input_structure = user_data.copy()
 
 	######################## READING KINETIC PARAMETER INFORMATION ###########################
 
@@ -62,8 +79,6 @@ def tapsolver_run(reactor_data: reactor, mechanism_data: mechanism, initial_cond
 	r_links = {}
 
 	for j in mechanism_processes:
-		print(j)
-		#"k'+f+str(j)+'"
 		if mechanism_copy.elementary_processes[j].forward.Ga['value'] != None and mechanism_copy.elementary_processes[j].forward.default == 'g':
 			r_Ga_in["kf"+str(j)] = Constant(mechanism_copy.elementary_processes[j].forward.Ga['value'])
 		if mechanism_copy.elementary_processes[j].forward.dG['value'] != None and mechanism_copy.elementary_processes[j].forward.default == 'g':
@@ -82,17 +97,15 @@ def tapsolver_run(reactor_data: reactor, mechanism_data: mechanism, initial_cond
 		if mechanism_copy.elementary_processes[j].backward.Ea['value'] != None and mechanism_copy.elementary_processes[j].backward.default == 'a':
 			r_Ea["kb"+str(j)] = Constant(mechanism_copy.elementary_processes[j].backward.Ea['value'])
 
-	print(r_Ga_in)
-	print(r_dG_in)
-	print(r_const)
-	print(r_Ao)
-	print(r_Ea)
-	print(r_links)
+	#print(r_Ga_in)
+	#print(r_dG_in)
+	#print(r_const)
+	#print(r_Ao)
+	#print(r_Ea)
+	#print(r_links)
 
 
-
-	sys.exit()
-	for jnum,j in enumerate(Ga_in):
+	for jnum,j in enumerate(r_Ga_in):
 		#print(((kbt*reac_input['Reactor Temperature']/hb)*exp(-Ga_in["Ga"+str(jnum)])))
 		#print(((kbt*reac_input['Reactor Temperature']/hb)*exp(-(Ga_in["Ga"+str(jnum)] - dG_in["dG"+str(jnum)]))))
 
@@ -112,34 +125,7 @@ def tapsolver_run(reactor_data: reactor, mechanism_data: mechanism, initial_cond
 	for j in r_links:
 		r_links[j] = Constant(r_links[j])
 
-	doe_form_pulse = True
 
-	if reac_input['Fit Parameters'].lower() == 'true' or (sens_type == 'total' and reac_input['Sensitivity Analysis'].lower() == 'true') or reactor_kinetics_input['Uncertainty Quantification'].lower() == 'true':
-		controls = []
-		legend_2 = []
-
-		if mechanism_copy.default == 'k':
-			print('test')
-
-		for j in r_fit:
-			if j.find('Ga') > -1: # 'Ga' and 'dG'
-				controls.append(Control(r_Ga_in[j]))
+	# Initialize the grid system, time step size, pulse size
+	r_param, dx_r, dx2_r, frac_length, cat_location = establishMesh(reac_input['len_inert_1'],reac_input['len_cat'],reac_input['len_inert_2'],reac_input['Mesh Size'])
 	
-			elif j.find('dG') > -1: # 'Ga' and 'dG'			
-				controls.append(Control(r_dG_in[j]))
-				
-			elif j.find('Ao') > -1:
-				controls.append(Control(r_Ao[j]))
-	
-			elif j.find('Ea') > -1:
-				controls.append(Control(r_Ea[j]))
-
-			elif j.find('{') > -1:
-				controls.append(Control(r_links[j[1:-1]]))
-	
-			else:
-				controls.append(Control(r_const[j]))
-			legend_2.append(j)
-
-
-

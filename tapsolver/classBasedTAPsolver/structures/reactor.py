@@ -74,6 +74,8 @@ class reactor():
 		
 		self.advection = 0
 
+		self.mesh_size = 200
+
 	"""
 	
 	This function just converts the input lengths to fractions.
@@ -107,3 +109,16 @@ class reactor():
 		return (self.length[0] + self.length[0]/2)/sum(self.length)
 
 
+#### Include details
+
+	def cross_sectional_area(self):
+		return (self.reactor_radius**2)*3.14159
+
+	def total_length(self):
+		return self.zone_lengths['zone0'] + self.zone_lengths['zone1'] + self.zone_lengths['zone2']
+
+	def mesh_step_size(self):
+		return self.total_length()/mesh_size
+
+	def point_volume(self):
+		return self.mesh_step_size()*cross_sectional_area()*self.zone_voids['zone0']

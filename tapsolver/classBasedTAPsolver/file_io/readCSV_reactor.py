@@ -6,22 +6,22 @@ import numpy as np
 import sys
 from structures import reactor
 
-def readCSV_reactor(input_name):
+def readCSV_reactor(fileName):
 
 	"""
 	This function converts the input file reactor information into a reactor object.
 
 	Args:
-		input_file (str): Directory path and name of the input file.
+		fileName (str): Directory path and name of the input file.
 
 	Returns:
-		A reactor object with reactor parameters from the input_file.
+		A reactor object with reactor parameters from the fileName.
 
 	"""
 
 	reactor_data = reactor()
 
-	data = pd.read_csv(input_name,header=None,dtype=object)
+	data = pd.read_csv(fileName,header=None,dtype=object)
 
 	rows_1, cols_1 = np.where(data == 'Reactor_Information')
 	rows_2, cols_2 = np.where(data == 'Feed_&_Surface_Composition')
