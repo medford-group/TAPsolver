@@ -2,9 +2,9 @@
 
 from fenics import *
 from fenics_adjoint import *
-from .func_sim import *
-from .vari_form import *
-from .reac_odes import *
+from func_sim import *
+from vari_form import *
+from reac_odes import *
 import mpmath
 import matplotlib.pyplot as plt
 import matplotlib
@@ -166,7 +166,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		#if reac_input['experiment_design'] != None:
 		relevant_kinetic_parameter = 'kf0'
 		doe_form_pulse = True
-		doe_form_surf = False
+		doe_form_surf = True
 
 
 		#r_const = constants_input
@@ -740,7 +740,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 	
 			problemtemp = NonlinearVariationalProblem(Ftemp,u,bcs,Jtemp)
 			solvertemp = NonlinearVariationalSolver(problemtemp)
-	
+
 			solver.parameters["newton_solver"]["relative_tolerance"] = 1.0e-8
 			solver.parameters["newton_solver"]["absolute_tolerance"] = 1e-10
 	
@@ -1170,7 +1170,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 											dk.assign(dt)
 											u_n.assign(u)
 											solver.solve()
-								
+											
 								#############################################################
 								################### STORE THIN-ZONE DATA ####################
 								#############################################################
@@ -1335,6 +1335,14 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				sens_time_list.append(t)
 				progressBar(t, reac_input['Pulse Duration'])
 				#time.sleep(0.2)
+				Uvector = as_backend_type(u.vector()).get_local()
+				Uvector[Uvector <= DOLFIN_EPS] = DOLFIN_EPS
+				u.vector().set_local(Uvector)
+				
+				##Uvector = as_backend_type(u[0]).get_local()
+				##u_n[0].set_local(u)
+
+				# Original solution
 				u_n.assign(u)
 				
 				t += dt
@@ -1534,7 +1542,8 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 					for j_species in range(0,all_molecules-int(reac_input['Number of Inerts'])):
 						new_values = [] 
 						mol_values = []
-		
+						
+						#for z in range(0, int(reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))):
 						for z in range(0, int(reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))-meshCells):
 	
 							if z != 0:
@@ -1553,7 +1562,9 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 						if thinSize == 'cat':
 							cat_dataRate['convtime_'+str(j_species)] = np.flip(np.transpose(mol_values[top:bottom,:]),axis=1)
 							np.savetxt(pulse_path+necessary_values['reactants'][j_species]+'.csv', np.flip(np.transpose(mol_values[top:bottom,:]),axis=1), delimiter=",")
-				
+							#cat_dataRate['convtime_'+str(j_species)] = np.flip(np.transpose(mol_values[:,:]),axis=1)
+							#np.savetxt(pulse_path+necessary_values['reactants'][j_species]+'.csv', np.flip(np.transpose(mol_values[:,:]),axis=1), delimiter=",")
+
 						elif thinSize == 'point':
 							centerPoint = int((top + bottom)/2)
 							cat_dataRate['convtime_'+str(j_species)] = np.transpose(mol_values[centerPoint,:])
@@ -1811,6 +1822,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 	
 					reac_time['Time Steps'] = 3000
 					analyticalTiming = np.arange(0, reac_input['Time Steps']*dt, dt).tolist()
+					
 					for kjc in range(0,monitored_gas):
 						outlet = []
 						
@@ -1820,7 +1832,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 							factor = float(species_pulse_list[kjc])*reac_input['Reference Pulse Size']
 						
 						for k in range(0,int(reac_input['Time Steps'])+1):
-							analyticalValue = 0
+							analyticalValue = 0.0
 							if k*dt - species_time[kjc] > 0:
 								for n in range(0,50):
 									analyticalValue += ((-1)**n)*(2*n+1)*np.exp((-(n+0.5)**2)*(3.14159**2)*((k*dt - species_time[kjc])*(D[kjc][0]/(eb[0]*(np.sum(r_param)**2)))))
@@ -1872,7 +1884,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			################## ADDITION OF WHITE NOISE ##################
 			#############################################################
 	
-			sig = 0.1
+			sig = 1
 			beta_2 = 0.00270
 			w_2 = 2*3.14159*70
 	
@@ -2212,7 +2224,7 @@ def vary_Input(variable_type=None,variableToChange=None, newValue=0, input_file=
 		df1.iloc[cellRow+1,cellCol] = newValue
 	elif variable_type == 'delay' and variableToChange != None:
 		df1.iloc[cellRow+2,cellCol] = newValue
-	elif variable_type == 'Temperature':
+	elif variable_type == 'temperature':
 		df1.iloc[cellRow,1] = newValue
 	elif variableToChange == 'Output Folder Name':
 		df1.iloc[cellRow,1] = newValue
@@ -2369,7 +2381,8 @@ def flux_graph(input_file = './input_file.csv',pulse=None,dispExper=False,dispAn
 	# Inert Plot
 	if reac_input['Infinite Inert'].lower() == 'true':
 		# For reactant / product species
-		analyticalTiming = np.arange(0, reac_input['Time Steps']*dt, dt).tolist()
+		analyticalTiming = np.arange(0.0, reac_input['Time Steps']*dt+0.0, dt).tolist()
+		
 		for kjc in range(0,monitored_gas):
 			outlet = []
 			
@@ -2544,55 +2557,63 @@ def pulse_gif(input_file = './input_file.csv',output_name = './output.gif'):
 
 	plt.close('all')
 
-def concnDistGif(input_file = './input_file.csv',dataType='surf',output_name='./cat.gif',pulse=1,inputForm='old'):
+def concnDistGif(input_file = './input_file.csv',dataType='surf',output_name='./cat.gif',pulse=1,inputForm='new'):
 	
 	reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(input_file,inputForm = inputForm)
 	reac_input = reactor_kinetics_input
 	fit_temperature = False
-
+	temp_input = pd.read_csv(input_file,header=None)
+	print(temp_input)
 	r_links = reactor_kinetics_input['linked parameters'].copy()
-	print(r_links)
 	linkForward = reactor_kinetics_input['link forward'].copy()
 	linkBackard = reactor_kinetics_input['link backward'].copy()
+	print(reac_input)
+	necessary_values, rate_array, rev_irr = make_f_equation(reac_input['reactions_test'],reac_input['Number of Reactants'],'tap',reac_input['Number of Inerts'],'FALSE',arrForward,arrBackward,gForward,reac_input['linked names'],linkForward,linkBackard,fit_temperature)
+	print(necessary_values['reactants'])
+	#necessary_values, rate_array, rev_irr = make_f_equation(reac_input['reactions_test'],reac_input['Number of Reactants'],'tap',reac_input['Number of Inerts'],reac_input['Advection'],arrForward,arrBackward,gForward,reac_input['linked names'],linkForward,linkBackard,fit_temperature)
 
-	necessary_values, rate_array, rev_irr = make_f_equation(reac_input['reactions_test'],reac_input['Number of Reactants'],'tap',reac_input['Number of Inerts'],reac_input['Advection'],arrForward,arrBackward,gForward,reac_input['linked names'],linkForward,linkBackard,fit_temperature)
-
-	try:
-		dataLocation = reac_input['Output Folder Name']+'_folder/thin_data/'
-		dfColumns = pd.read_csv(dataLocation+necessary_values['reactants'][0]+'.csv',header=None)
-	except:
+	#necessary_values, rate_array, rev_irr = make_f_equation(reac_input['reactions_test'],reac_input['Number of Reactants'],'tap',reac_input['Number of Inerts'],reac_input['Advection'],arrForward,arrBackward,gForward,reac_input['linked names'],linkForward,linkBackard,fit_temperature)
+	for j in necessary_values['reactants']:
+		#try:
+		#	dataLocation = reac_input['Output Folder Name']+'_folder/thin_data/'
+		#	dfColumns = pd.read_csv(dataLocation+j+'.csv',header=None)
+		#except:
 		dataLocation = reac_input['Output Folder Name']+'_folder/thin_data/pulse_'+str(pulse)+'/'
-		dfColumns = pd.read_csv(dataLocation+necessary_values['reactants'][0]+'.csv',header=None)
+		dfColumns = pd.read_csv(dataLocation+j+'.csv',header=None)
 
-	dataDictionary = {}
+		#dataDictionary = {}
 
-	for knum,k in enumerate(necessary_values['reactants']):
-		dataDictionary[k] = pd.read_csv(dataLocation+k+'.csv',header=None)
-	
-	def plotCat(time,type_of_data):
+		#for knum,k in enumerate(necessary_values['reactants']):
+		#	dataDictionary[k] = pd.read_csv(dataLocation+k+'.csv',header=None)
+		ymax = np.amax(dfColumns.to_numpy())
+		def plotCat(time,type_of_data):
 
-		fig,ax = plt.subplots()
-		for knum,k in enumerate(necessary_values['reactants']):
+			fig,ax = plt.subplots()
+			#for knum,k in enumerate(dfColumns.columns):
 			#dfTemp = pd.read_csv(dataLocation+k+'.csv',header=None)
-			if dataType == 'surf':
-				if knum > necessary_values['molecules_in_gas_phase']:
-					ax.plot(dataDictionary[k].iloc[:,time],label = k)
-			elif dataType == 'gas':
-				if knum < necessary_values['molecules_in_gas_phase']:
-					ax.plot(dataDictionary[k].iloc[:,time],label = k)
-			else:
-				if necessary_values['reactants'] in dataType:
-					ax.plot(dataDictionary[k].iloc[:,time],label = k)
+			#if dataType == 'surf':
+			#if knum > necessary_values['molecules_in_gas_phase']:
+			ax.plot(dfColumns.iloc[time,:])
+			ax.set_ylim(0,1.1*ymax)
+			#ax.set_xlim(250,1600)
+			#ax.set_ylim(-0.001*ymax,0.001*ymax)
 
-		ax.legend('Species')
-		fig.canvas.draw()
-		image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
-		image  = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+			#elif dataType == 'gas':
+			#	if knum < necessary_values['molecules_in_gas_phase']:
+			#		ax.plot(dfColumns.iloc[:,time],label = k)
+			#else:
+			#	if necessary_values['reactants'] in dataType:
+			#		ax.plot(dataDictionary[k].iloc[:,time],label = k)
+
+			#ax.legend('Species')
+			fig.canvas.draw()
+			image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
+			image  = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
 	
-		return image
-	#print(dfColumns[0].count())
+			return image
+		#print(dfColumns[0].count())
 	
-	imageio.mimsave(output_name, [plotCat(i,dataType) for i in list(range(0,dfColumns[0].count()))], fps=4)
+		imageio.mimsave('./'+j+'.gif', [plotCat(i,dataType) for i in list(range(0,dfColumns[0].count()))], fps=1000)
 
 def concDistPlot(input_file = './input_file.csv',dataType='surf',output_name='./cat.gif',pulse=1):
 	
