@@ -26,4 +26,5 @@ class mechanism():
 		self.rate_array = None
 		self.reactions = None
 		self.reactants = None
-		self.default = 'k'
+
+	#def add_elementary_process(self, number = 0, ):

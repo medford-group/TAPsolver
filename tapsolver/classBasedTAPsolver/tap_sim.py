@@ -1,12 +1,89 @@
 from structures import *
+from reactor_species import *
 from file_io import *
+from mechanism_construction import *
+from forward_problem import *
+import json
 import sys
+
+testGen1 = readCSV_reactor('./input_file_2.csv')
+new_reactor_species = reactor_species()
+new_reactor_species.advection = 0
+CO = define_gas()
+CO.mass = 28
+CO.intensity = 3
+CO.delay = 0.1
+new_reactor_species.add_gas('CO',CO)
+O2 = define_gas()
+O2.mass = 36
+O2.intensity = 1
+O2.delay = 0.3
+new_reactor_species.add_gas('O2',O2)
+CO2 = define_gas()
+CO2.mass = 36
+CO2.intensity = 1
+CO2.delay = 0.3
+new_reactor_species.add_gas('CO2',CO2)
+new_reactor_species.gasses['CO'].mass = 2
+#new_reactor_species.reference_temeprature = 450
+#print(display_gasses(new_reactor_species))
+argon = define_gas()
+argon.mass = 36
+argon.intensity = 1
+argon.delay = 0.3
+new_reactor_species.add_inert_gas('argon',argon)
+s = define_adspecies()
+s.concentration = 100
+new_reactor_species.add_adspecies('*',s)
+s = define_adspecies()
+s.concentration = 0
+new_reactor_species.add_adspecies('CO*',s)
+s = define_adspecies()
+s.concentration = 0
+new_reactor_species.add_adspecies('O*',s)
+new_mechanism = mechanism()
+
+new_mechanism.elementary_processes[0] = elementary_process()			
+new_mechanism.elementary_processes[0].processString = '* + CO <-> CO*'
+new_mechanism.elementary_processes[0].forward = elementary_process_details()
+new_mechanism.elementary_processes[0].backward = elementary_process_details()
+
+new_mechanism.elementary_processes[1] = elementary_process()			
+new_mechanism.elementary_processes[1].processString = '2* + O2 <-> 2O*'
+new_mechanism.elementary_processes[1].forward = elementary_process_details()
+new_mechanism.elementary_processes[1].backward = elementary_process_details()
+
+new_mechanism.elementary_processes[2] = elementary_process()			
+new_mechanism.elementary_processes[2].processString = 'O* + CO* <-> 2* + CO2'
+new_mechanism.elementary_processes[2].forward = elementary_process_details()
+new_mechanism.elementary_processes[2].backward = elementary_process_details()
+
+mechanism_constructor(new_mechanism)
+new_mechanism.elementary_processes[0].forward.k["value"] = 4
+new_mechanism.elementary_processes[0].backward.k["value"] = 1
+new_mechanism.elementary_processes[1].forward.k["value"] = 4
+new_mechanism.elementary_processes[1].backward.k["value"] = 1
+new_mechanism.elementary_processes[2].forward.k["value"] = 4
+new_mechanism.elementary_processes[2].backward.k["value"] = 1
+display_elementary_processes(new_mechanism)
+
+TAP_test = TAPobject()
+TAP_test.mechanism = new_mechanism
+TAP_test.reactor_species = new_reactor_species
+TAP_test.reactor = testGen1
+forward_problem(1,TAP_test)
+sys.exit()
+print(display_gasses(new_reactor_species))
+
+
+
 import pandas as pd
 
 from mechanism_construction import *
 from forward_problem import *
 from initial_conditions import *
 from reference_files import *
+
 
 import os
 import pickle

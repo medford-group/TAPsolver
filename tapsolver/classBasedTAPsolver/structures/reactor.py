@@ -1,6 +1,7 @@
 
 # Copyright 2021, Battelle Energy Alliance, LLC All Rights Reserved
 
+
 class reactor():
 	
 	"""
@@ -49,76 +50,59 @@ class reactor():
 
 	"""
 
-	def __init__(self):
-		self.zone_lengths = {'zone0': 2.80718, 'zone1': 0.17364, 'zone2': 2.80718}
+	def __init__(self, zone_lengths = {0: 2.80718, 1: 0.17364, 2: 2.80718}, zone_voids = {0: 0.4, 1: 0.4, 2: 0.4}, reactor_radius = 1.0, temperature = 385.65, total_length = None, catalyst_center_fraction=0):
 		
-		self.zone_voids = {'zone0': 0.4, 'zone1': 0.4, 'zone2': 0.4}
-		
-		self.reactor_radius = 1.0
-		
-		self.temperature = 385.65
-		
-		self.mesh = 200
-		
-		self.catalyst_mesh_density = 4
-		
-		self.output_name = 'exp_new'
-		
-		self.inert_diffusion = 16
-		
-		self.catalyst_diffusion = 16
-		
-		self.reference_temperature = 385.6
-		
-		self.reference_mass = 40
-		
-		self.advection = 0
+		self.zone_lengths = zone_lengths
+		self.zone_voids = zone_voids
+		self.reactor_radius = reactor_radius
+		self.temperature = temperature
 
-		self.mesh_size = 200
+	@property
+	def zone_lengths(self):
+		return self._zone_lengths
+	@zone_lengths.setter
+	def zone_lengths(self,value):
+		if value[0] <= 0 or value[1] < 0 or value[2] <= 0:
+			raise ValueError("Zone length dimensions must all be positive (non-negative ")
+		self._zone_lengths = {0: value[0], 1: value[1], 2: value[2]}
+		self._total_length = value[0] + value[1] + value[2]
+		self._length_fractions = [value[0]/self.total_length,value[1]/self.total_length,value[2]/self.total_length]
+		self.catalyst_center_fraction = (value[0] + value[1]/2)/self.total_length
 
-	"""
-	
-	This function just converts the input lengths to fractions.
-
-	Args:
-		reactor (class Reactor): The reactor information.
-
-	Returns:
-		zone_fractions (list of floats): The length fraction of each zone in the reactor.
-
-	"""
-
-	def lengthFractions(self):
-
-		return [self.length[0]/sum(self.length),self.length[1]/sum(self.length),self.length[2]/sum(self.length)]
-
-	"""
-	
-	This function calculates the central point of the catalyst zone.
-
-	Args:
-		reactor (class Reactor): The reactor information.
-
-	Return:
-		zone_fractions (float): The central point of the catalyst zone.
-
-	"""
-
-	def reactorCenterFraction(self):
-		
-		return (self.length[0] + self.length[0]/2)/sum(self.length)
-
-
-#### Include details
-
-	def cross_sectional_area(self):
-		return (self.reactor_radius**2)*3.14159
-
+	@property
 	def total_length(self):
-		return self.zone_lengths['zone0'] + self.zone_lengths['zone1'] + self.zone_lengths['zone2']
+		return self._total_length
+	@total_length.setter
+	def total_length(self, value):
+		self._total_length = self.zone_lengths[0] + self.zone_lengths[1] + self.zone_lengths[2]
 
-	def mesh_step_size(self):
-		return self.total_length()/mesh_size
+	@property
+	def length_fractions(self):
+		return self._length_fractions
+	@length_fractions.setter
+	def length_fractions(self,value):
+		self._length_fractions = [self.zone_lengths[0]/self.total_length,self.zone_lengths[1]/self.total_length,self.zone_lengths[2]/self.total_length]
 
-	def point_volume(self):
-		return self.mesh_step_size()*cross_sectional_area()*self.zone_voids['zone0']
+	@property
+	def catalyst_center_fraction(self):
+		return self._catalyst_center_fraction
+	@catalyst_center_fraction.setter
+	def catalyst_center_fraction(self,value):
+		self._catalyst_center_fraction = (self.zone_lengths[0] + self.zone_lengths[1]/2)/self.total_length
+
+	@property
+	def reactor_radius(self):
+		return self._reactor_radius
+	@reactor_radius.setter
+	def reactor_radius(self,value):
+		if value <= 0:
+			raise ValueError("Reactor radius must be positive (non-negative ")
+		self._reactor_radius = value
+		self._cross_sectional_radius = (value**2)*3.14159
+
+	@property
+	def cross_sectional_radius(self):
+		return self._cross_sectional_radius
+	@cross_sectional_radius.setter
+	def cross_sectional_radius(self,value):
+		self._cross_sectional_radius = (self._reactor_radius**2)*3.14159
