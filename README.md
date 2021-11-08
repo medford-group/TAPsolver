@@ -1,6 +1,6 @@
 
 <p align="center">
-  <img src="https://github.com/medford-group/TAPsolver/blob/master/docs/figures/tapsolver_logo.pdf">
+  <img src="https://github.com/medford-group/TAPsolver/blob/master/docs/figures/tapsolver_logo.jpg">
 </p>
 
 TAPsolver is an open-source, python program for the analysis of Temporal Analysis of Products (TAP) reactor experiments. The methods of analysis include:
