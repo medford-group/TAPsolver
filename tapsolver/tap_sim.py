@@ -2,9 +2,9 @@
 
 from fenics import *
 from fenics_adjoint import *
-from .func_sim import *
-from .vari_form import *
-from .reac_odes import *
+from func_sim import *
+from vari_form import *
+from reac_odes import *
 import mpmath
 import matplotlib.pyplot as plt
 import matplotlib
@@ -65,7 +65,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 	
 		sens_type = sensitivityType
 
-		if (sens_type != 'trans' and sens_type != 'total') and reactor_kinetics_input['Sensitivity Analysis'].lower() == 'true':
+		if (sens_type != 'trans' and sens_type != 'total' and sens_type != 'initial') and reactor_kinetics_input['Sensitivity Analysis'].lower() == 'true':
 			print('Error: sensitivity analysis must be "trans" or "total"')
 			sys.exit()
 
@@ -166,7 +166,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		#if reac_input['experiment_design'] != None:
 		relevant_kinetic_parameter = 'kf0'
 		doe_form_pulse = True
-		doe_form_surf = False
+		doe_form_surf = True
 
 
 		#r_const = constants_input
@@ -199,7 +199,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		#	doe_form_pulse = True
 		#	doe_form_surf = False
 			
-		if reac_input['Fit Parameters'].lower() == 'true' or (sens_type == 'total' and reac_input['Sensitivity Analysis'].lower() == 'true') or reactor_kinetics_input['Uncertainty Quantification'].lower() == 'true':
+		if reac_input['Fit Parameters'].lower() == 'true' or ((sens_type == 'total' or sens_type == 'initial') and reac_input['Sensitivity Analysis'].lower() == 'true') or reactor_kinetics_input['Uncertainty Quantification'].lower() == 'true':
 			controls = []
 			legend_2 = []
 			for j in r_fit:
@@ -384,7 +384,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			
 			thermo_drc[str(vnum+necessary_values['molecules_in_gas_phase']+1)] = Constant(0)
 		
-		if reactor_kinetics_input['Fit Parameters'].lower() == 'true' or (reactor_kinetics_input['Sensitivity Analysis'].lower() == 'true' and sens_type == 'total') or reactor_kinetics_input['Uncertainty Quantification'].lower() == 'true':
+		if reactor_kinetics_input['Fit Parameters'].lower() == 'true' or (reactor_kinetics_input['Sensitivity Analysis'].lower() == 'true' and (sens_type == 'total' or sens_type == 'initial')) or reactor_kinetics_input['Uncertainty Quantification'].lower() == 'true':
 			speciesString = ''
 			for k in range(0,int(necessary_values['molecules_in_gas_phase'])):
 				if k != int(necessary_values['molecules_in_gas_phase']):
@@ -605,8 +605,12 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			intensConst = {}
 			for jk in range(0,len(reactant_feed)):
 				intensConst['inten_'+str(jk)] = Constant(reactant_feed[jk]*Inert_pulse_conc)
-			#	controls.append(Control(intensConst['inten_'+str(jk)]))
-			
+			if sens_type == 'initial':
+				#controls = []
+				for jk in range(0,len(reactant_feed)):
+					controls.append(Control(intensConst['inten_'+str(jk)]))
+				
+
 			reactant_time = list(map(float, reac_input['Pulse Time'].split(',')))
 			
 			timeConst = {}
@@ -631,7 +635,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		##### DEFINE METHOD OF OPTIMIZATION (OBJECTIVE FUNC.) #######
 		#############################################################
 
-		if reac_input['Experimental Data Folder'].lower() != 'none' and reac_input['Fit Inert'].lower() != 'true' and (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true') or sampling == True or (sens_type == 'total' and reac_input['Sensitivity Analysis'].lower() == 'true') or fit_temperature == True or reac_input['Fitting Gif'].lower() == True:
+		if reac_input['Experimental Data Folder'].lower() != 'none' and reac_input['Fit Inert'].lower() != 'true' and (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true') or sampling == True or ((sens_type == 'total' or sens_type == 'initial') and reac_input['Sensitivity Analysis'].lower() == 'true') or fit_temperature == True or reac_input['Fitting Gif'].lower() == True:
 			
 			if reac_input['Uncertainty Quantification'].lower() == 'true':
 				print("Uncertainty Quantification")
@@ -674,7 +678,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				generateFolder(path_molecules)
 				sensFolder = path_molecules
 	
-			elif sens_type == 'total':
+			elif sens_type == 'total' or sens_type == 'initial':
 				path_2 = reac_input['Output Folder Name']+'_folder/sensitivity/'
 				generateFolder(path_2)			
 	
@@ -697,7 +701,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		
 		if sens_type == 'trans':
 			storeSens(reac_input['Sensitivity Analysis'],reac_input['Output Folder Name'],monitored_gas,legend_label)
-		elif sens_type == 'total':
+		elif sens_type == 'total' or sens_type == 'initial':
 			pass
 		else:
 			pass
@@ -736,7 +740,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 	
 			problemtemp = NonlinearVariationalProblem(Ftemp,u,bcs,Jtemp)
 			solvertemp = NonlinearVariationalSolver(problemtemp)
-	
+
 			solver.parameters["newton_solver"]["relative_tolerance"] = 1.0e-8
 			solver.parameters["newton_solver"]["absolute_tolerance"] = 1e-10
 	
@@ -778,7 +782,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		if reac_input['Thin-Zone Analysis'].lower() == 'true':
 			rateStrings = rateEqs(rate_array,rev_irr,gForward,arrForward,arrBackward)
 	
-		if reac_input['Experimental Data Folder'].lower() != 'none' and (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Display Objective Points'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true') or sampling == True or (sens_type == 'total' and reac_input['Sensitivity Analysis'].lower() == 'true') or fit_temperature == True:
+		if reac_input['Experimental Data Folder'].lower() != 'none' and (reac_input['Fit Parameters'].lower() == 'true' or reac_input['Display Objective Points'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true') or sampling == True or ((sens_type == 'total' or sens_type == 'initial') and reac_input['Sensitivity Analysis'].lower() == 'true') or fit_temperature == True:
 			for k_fitting in range(0,len(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])])):
 				if objSpecies[k_fitting] == '1':
 					for timeStep in range(0,len(output_fitting[legend_label[k_fitting]]['times'])):
@@ -813,7 +817,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				Sw_new2 = interpolate(Sw_new,SV_du)
 				Sw3 = project(Sw_new2,SV_du)
 			
-			elif sens_type == 'total':
+			elif sens_type == 'total' or sens_type == 'initial':
 				pass
 	
 			else:
@@ -830,7 +834,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 					sensFuncs[str(k_gasses)] = []
 					sensRates[str(k_gasses)] = []
 
-			elif sens_type == 'total':
+			elif sens_type == 'total' or sens_type == 'initial':
 				pass
 			else:
 				print('Sensitivity analysis is not properly defined.')
@@ -878,7 +882,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				for k_sens in range(len(necessary_values['reactants'])):
 					RRM_der[k_sens] = []
 			
-			elif sens_type == 'total':
+			elif sens_type == 'total' or sens_type != 'initial':
 				pass
 	
 			else:
@@ -988,7 +992,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				#	except:
 				#		jfunc_2 = assemble(singleRateExpression)
 
-				if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or sampling == True or (sens_type == 'total' and reac_input['Sensitivity Analysis'].lower() == 'true') or fit_temperature == True:
+				if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or sampling == True or ((sens_type == 'total' or sens_type == 'initial') and reac_input['Sensitivity Analysis'].lower() == 'true') or fit_temperature == True:
 					# Define the objective function 	
 					objectiveAnalysis = True
 					selectivity = False
@@ -1166,7 +1170,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 											dk.assign(dt)
 											u_n.assign(u)
 											solver.solve()
-								
+											
 								#############################################################
 								################### STORE THIN-ZONE DATA ####################
 								#############################################################
@@ -1294,7 +1298,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				#############################################################
 				################ STORE SENSITIVITY DATA #####################
 				#############################################################
-	
+
 				if reac_input['Sensitivity Analysis'].lower() == 'true':
 					
 					if sens_type == 'trans':
@@ -1319,18 +1323,26 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 
 						#sys.exit()
 
-					elif sens_type == 'total':
+					elif sens_type == 'total' or sens_type == 'initial':
 	
 						pass
 	
 					else:
 						print('Sensitivity analysis is not properly defined.')
 						sys.exit()
-						
+				
 				
 				sens_time_list.append(t)
 				progressBar(t, reac_input['Pulse Duration'])
 				#time.sleep(0.2)
+				Uvector = as_backend_type(u.vector()).get_local()
+				Uvector[Uvector <= DOLFIN_EPS] = DOLFIN_EPS
+				u.vector().set_local(Uvector)
+				
+				##Uvector = as_backend_type(u[0]).get_local()
+				##u_n[0].set_local(u)
+
+				# Original solution
 				u_n.assign(u)
 				
 				t += dt
@@ -1339,6 +1351,17 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			print()
 			print(processTime(start_time))
 	
+			def derivCB_sens(j,dj,m):
+
+				djv = [v.values()[0] for v in dj]
+
+				with open('./derivSens.txt', 'w') as f:
+					f.write(str(djv))
+					f.close
+				with open('./obj.txt', 'w') as f:
+					f.write(str(j))
+					f.close
+
 			if reac_input['Sensitivity Analysis'].lower() == 'true':
 				if sens_type == 'trans':
 					print()
@@ -1346,14 +1369,16 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 					print('Evaluating Tape with Tangent Linear Method. Could take some time.')
 					tape2.evaluate_tlm()
 	
-				elif sens_type == 'total':
-					dJdm = compute_gradient(jfunc_2, controls)
-					djv = [v.values()[0] for v in dJdm]
-					print(djv)
-					with open('./'+reac_input['Output Folder Name']+'_folder/sensitivity/objSens.txt', 'w') as f:
-						f.write("Parameters: "+str(legend_2))
-						f.write("Change: "+str(djv))
-						f.close
+				elif sens_type == 'total' or sens_type == 'initial':
+					rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2,derivative_cb_post=derivCB_sens)
+					rf_2.derivative()
+#					dJdm = compute_gradient(jfunc_2, controls)
+#					djv = [v.values()[0] for v in dJdm]
+#					print(djv)
+#					with open('./'+reac_input['Output Folder Name']+'_folder/sensitivity/objSens.txt', 'w') as f:
+#						f.write("Parameters: "+str(legend_2))
+#						f.write("Change: "+str(djv))
+#						f.close
 	
 				else:
 					print('Sensitivity analysis is not properly defined.')
@@ -1383,7 +1408,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 							np.savetxt(sensFolder+'/dr_'+necessary_values['reactants'][numEachSens]+'.csv',newList,delimiter=",")
 		
 
-				elif sens_type == 'total':
+				elif sens_type == 'total' or sens_type == 'initial':
 					pass
 	
 				else:
@@ -1420,11 +1445,12 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 					f.write("Change: "+str(dj_values))
 					f.write('\n')
 					f.write("Constants: "+str(x_values))
-	
+
 					f.close
 				print(j)
 				print(djv)
 				print(mv)
+
 	
 			def hessCB(j,dj,m):
 				it_times.append(time.time())
@@ -1516,7 +1542,8 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 					for j_species in range(0,all_molecules-int(reac_input['Number of Inerts'])):
 						new_values = [] 
 						mol_values = []
-		
+						
+						#for z in range(0, int(reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))):
 						for z in range(0, int(reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))-meshCells):
 	
 							if z != 0:
@@ -1535,7 +1562,9 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 						if thinSize == 'cat':
 							cat_dataRate['convtime_'+str(j_species)] = np.flip(np.transpose(mol_values[top:bottom,:]),axis=1)
 							np.savetxt(pulse_path+necessary_values['reactants'][j_species]+'.csv', np.flip(np.transpose(mol_values[top:bottom,:]),axis=1), delimiter=",")
-				
+							#cat_dataRate['convtime_'+str(j_species)] = np.flip(np.transpose(mol_values[:,:]),axis=1)
+							#np.savetxt(pulse_path+necessary_values['reactants'][j_species]+'.csv', np.flip(np.transpose(mol_values[:,:]),axis=1), delimiter=",")
+
 						elif thinSize == 'point':
 							centerPoint = int((top + bottom)/2)
 							cat_dataRate['convtime_'+str(j_species)] = np.transpose(mol_values[centerPoint,:])
@@ -1793,6 +1822,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 	
 					reac_time['Time Steps'] = 3000
 					analyticalTiming = np.arange(0, reac_input['Time Steps']*dt, dt).tolist()
+					
 					for kjc in range(0,monitored_gas):
 						outlet = []
 						
@@ -1802,7 +1832,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 							factor = float(species_pulse_list[kjc])*reac_input['Reference Pulse Size']
 						
 						for k in range(0,int(reac_input['Time Steps'])+1):
-							analyticalValue = 0
+							analyticalValue = 0.0
 							if k*dt - species_time[kjc] > 0:
 								for n in range(0,50):
 									analyticalValue += ((-1)**n)*(2*n+1)*np.exp((-(n+0.5)**2)*(3.14159**2)*((k*dt - species_time[kjc])*(D[kjc][0]/(eb[0]*(np.sum(r_param)**2)))))
@@ -1854,7 +1884,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			################## ADDITION OF WHITE NOISE ##################
 			#############################################################
 	
-			sig = 0.1
+			sig = 1
 			beta_2 = 0.00270
 			w_2 = 2*3.14159*70
 	
@@ -2034,7 +2064,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			reactor_kinetics_input['Inert Fit'] =  'TRUE'
 
 		sens_type = sensitivityType
-		if (sens_type != 'trans' and sens_type != 'total') and reactor_kinetics_input['Sensitivity Analysis'].lower() == 'true':
+		if (sens_type != 'trans' and sens_type != 'total' and sens_type != 'initial') and reactor_kinetics_input['Sensitivity Analysis'].lower() == 'true':
 			print('loc 1')
 			print('Error: sensitivity analysis must be "trans" or "total"')
 			sys.exit()
@@ -2112,7 +2142,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 				
 				graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters,Ao_in,Ea_in,Ga_in,dG_in,kin_fit,arrForward,arrBackward,gForward)
 			
-			elif sens_type == 'total':
+			elif sens_type == 'total' or sens_type == 'initial':
 				graph_data, legend_label,in_reactants = tap_simulation_function(reactor_kinetics_input,kinetic_parameters,Ao_in,Ea_in,Ga_in,dG_in,kin_fit,arrForward,arrBackward,gForward)
 		else:
 			if optimization != 'objective':
@@ -2146,6 +2176,22 @@ def run_sensitivity(timeFunc,sigma=None,sens_type=None,input_file = './input_fil
 		sens_type = 'total'
 	general_run(timeFunc,sigma=sigma,store_flux_func='FALSE',catalyst_data='FALSE',input_file = input_file,sensitivityType=sens_type,inputForm = 'new')
 
+	with open('./derivSens.txt', 'r') as f:
+		lines = f.readlines()
+	f.close
+	lines = [x.strip() for x in lines]
+	derivs = eval(lines[0])
+	print(derivs)
+
+	with open('./obj.txt', 'r') as f:
+		lines = f.readlines()
+	f.close
+	lines = [x.strip() for x in lines]
+	objs = eval(lines[0])
+	print(objs)
+
+	return derivs, objs
+
 def fit_tap(timeFunc,sigma=None,optim = 'L-BFGS-B',input_file = './input_file.csv',inertFitting=None):
 	if inertFitting == None:
 		if optim == 'objective':
@@ -2178,7 +2224,7 @@ def vary_Input(variable_type=None,variableToChange=None, newValue=0, input_file=
 		df1.iloc[cellRow+1,cellCol] = newValue
 	elif variable_type == 'delay' and variableToChange != None:
 		df1.iloc[cellRow+2,cellCol] = newValue
-	elif variable_type == 'Temperature':
+	elif variable_type == 'temperature':
 		df1.iloc[cellRow,1] = newValue
 	elif variableToChange == 'Output Folder Name':
 		df1.iloc[cellRow,1] = newValue
@@ -2335,7 +2381,8 @@ def flux_graph(input_file = './input_file.csv',pulse=None,dispExper=False,dispAn
 	# Inert Plot
 	if reac_input['Infinite Inert'].lower() == 'true':
 		# For reactant / product species
-		analyticalTiming = np.arange(0, reac_input['Time Steps']*dt, dt).tolist()
+		analyticalTiming = np.arange(0.0, reac_input['Time Steps']*dt+0.0, dt).tolist()
+		
 		for kjc in range(0,monitored_gas):
 			outlet = []
 			
@@ -2510,55 +2557,63 @@ def pulse_gif(input_file = './input_file.csv',output_name = './output.gif'):
 
 	plt.close('all')
 
-def concnDistGif(input_file = './input_file.csv',dataType='surf',output_name='./cat.gif',pulse=1,inputForm='old'):
+def concnDistGif(input_file = './input_file.csv',dataType='surf',output_name='./cat.gif',pulse=1,inputForm='new'):
 	
 	reactor_kinetics_input,kinetic_parameters,kin_in,Ao_in,Ea_in,Ga_in,dG_in,gForward,kin_fit,arrForward,arrBackward = readInput(input_file,inputForm = inputForm)
 	reac_input = reactor_kinetics_input
 	fit_temperature = False
-
+	temp_input = pd.read_csv(input_file,header=None)
+	print(temp_input)
 	r_links = reactor_kinetics_input['linked parameters'].copy()
-	print(r_links)
 	linkForward = reactor_kinetics_input['link forward'].copy()
 	linkBackard = reactor_kinetics_input['link backward'].copy()
+	print(reac_input)
+	necessary_values, rate_array, rev_irr = make_f_equation(reac_input['reactions_test'],reac_input['Number of Reactants'],'tap',reac_input['Number of Inerts'],'FALSE',arrForward,arrBackward,gForward,reac_input['linked names'],linkForward,linkBackard,fit_temperature)
+	print(necessary_values['reactants'])
+	#necessary_values, rate_array, rev_irr = make_f_equation(reac_input['reactions_test'],reac_input['Number of Reactants'],'tap',reac_input['Number of Inerts'],reac_input['Advection'],arrForward,arrBackward,gForward,reac_input['linked names'],linkForward,linkBackard,fit_temperature)
 
-	necessary_values, rate_array, rev_irr = make_f_equation(reac_input['reactions_test'],reac_input['Number of Reactants'],'tap',reac_input['Number of Inerts'],reac_input['Advection'],arrForward,arrBackward,gForward,reac_input['linked names'],linkForward,linkBackard,fit_temperature)
-
-	try:
-		dataLocation = reac_input['Output Folder Name']+'_folder/thin_data/'
-		dfColumns = pd.read_csv(dataLocation+necessary_values['reactants'][0]+'.csv',header=None)
-	except:
+	#necessary_values, rate_array, rev_irr = make_f_equation(reac_input['reactions_test'],reac_input['Number of Reactants'],'tap',reac_input['Number of Inerts'],reac_input['Advection'],arrForward,arrBackward,gForward,reac_input['linked names'],linkForward,linkBackard,fit_temperature)
+	for j in necessary_values['reactants']:
+		#try:
+		#	dataLocation = reac_input['Output Folder Name']+'_folder/thin_data/'
+		#	dfColumns = pd.read_csv(dataLocation+j+'.csv',header=None)
+		#except:
 		dataLocation = reac_input['Output Folder Name']+'_folder/thin_data/pulse_'+str(pulse)+'/'
-		dfColumns = pd.read_csv(dataLocation+necessary_values['reactants'][0]+'.csv',header=None)
+		dfColumns = pd.read_csv(dataLocation+j+'.csv',header=None)
 
-	dataDictionary = {}
+		#dataDictionary = {}
 
-	for knum,k in enumerate(necessary_values['reactants']):
-		dataDictionary[k] = pd.read_csv(dataLocation+k+'.csv',header=None)
-	
-	def plotCat(time,type_of_data):
+		#for knum,k in enumerate(necessary_values['reactants']):
+		#	dataDictionary[k] = pd.read_csv(dataLocation+k+'.csv',header=None)
+		ymax = np.amax(dfColumns.to_numpy())
+		def plotCat(time,type_of_data):
 
-		fig,ax = plt.subplots()
-		for knum,k in enumerate(necessary_values['reactants']):
+			fig,ax = plt.subplots()
+			#for knum,k in enumerate(dfColumns.columns):
 			#dfTemp = pd.read_csv(dataLocation+k+'.csv',header=None)
-			if dataType == 'surf':
-				if knum > necessary_values['molecules_in_gas_phase']:
-					ax.plot(dataDictionary[k].iloc[:,time],label = k)
-			elif dataType == 'gas':
-				if knum < necessary_values['molecules_in_gas_phase']:
-					ax.plot(dataDictionary[k].iloc[:,time],label = k)
-			else:
-				if necessary_values['reactants'] in dataType:
-					ax.plot(dataDictionary[k].iloc[:,time],label = k)
+			#if dataType == 'surf':
+			#if knum > necessary_values['molecules_in_gas_phase']:
+			ax.plot(dfColumns.iloc[time,:])
+			ax.set_ylim(0,1.1*ymax)
+			#ax.set_xlim(250,1600)
+			#ax.set_ylim(-0.001*ymax,0.001*ymax)
 
-		ax.legend('Species')
-		fig.canvas.draw()
-		image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
-		image  = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+			#elif dataType == 'gas':
+			#	if knum < necessary_values['molecules_in_gas_phase']:
+			#		ax.plot(dfColumns.iloc[:,time],label = k)
+			#else:
+			#	if necessary_values['reactants'] in dataType:
+			#		ax.plot(dataDictionary[k].iloc[:,time],label = k)
+
+			#ax.legend('Species')
+			fig.canvas.draw()
+			image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
+			image  = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
 	
-		return image
-	#print(dfColumns[0].count())
+			return image
+		#print(dfColumns[0].count())
 	
-	imageio.mimsave(output_name, [plotCat(i,dataType) for i in list(range(0,dfColumns[0].count()))], fps=4)
+		imageio.mimsave('./'+j+'.gif', [plotCat(i,dataType) for i in list(range(0,dfColumns[0].count()))], fps=1000)
 
 def concDistPlot(input_file = './input_file.csv',dataType='surf',output_name='./cat.gif',pulse=1):
 	
