@@ -1,0 +1,34 @@
+Reactor_Information,,,
+Zone Length,2.80718,0.17364,2.80718
+Zone Void,0.4,0.4,0.4
+Reactor Radius,1,,
+Reactor Temperature,385.65,,
+Mesh Size,200,,
+Catalyst Mesh Density,4,,
+Output Folder Name,exp_new,,
+Experimental Data Folder,none,,
+Reference Diffusion Inert,16,,
+Reference Diffusion Catalyst,16,,
+Reference Temperature,385.5,,
+Reference Mass,40,,
+Advection Value,0,,
+,,,
+Feed_&_Surface_Composition,,,
+,A,B,C
+Intensity,1,0.5,0
+Time,0,0.1,0
+Mass,28.01,32,44
+,,,
+,A*,B*,*
+Initial Concentration,0,0,30
+,,,
+Reaction_Information,,,
+A + * <-> A*,{a},{b},
+B + * <-> B*,{a},{b},
+A* + B* <-> C + *,{c},{d},
+,,,
+Linked Kinetics,,,
+a,4,,
+b,1,,
+c,10,,
+d,0.2,,
