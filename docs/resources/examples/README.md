@@ -4,125 +4,55 @@
 * [Documentation](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/Documentation)
 * [Questions & Development](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/questionsDiscussion)
 
-# Tutorial + Examples
+# TAPsolver Crash Course
 
-Two examples are presented: one for carbon monoxide adsorption and carbon monoxide oxidation. These give the user an appropriate understanding of TAPsolvers functions and how to properly implement them. It should be easy for the user to implement their own, more complex simulations after following these two examples.
+An example of how to run TAPsolver (with predefined input files) is presented here. Approaches for varying the input files will be added later. The two input files necessary to run these TAPsolver functions are provided in this folder (i.e. input_file_exp.csv and input_file_fit.csv) and should be downloaded to the directory where the processes will be run.
 
-Some details are glossed over, but can be found [here](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/input_file).
-
-## Getting started:
+## Getting started and running a simulation (the forward problem):
 
 All available functions written in TAPsolver are accesable through the importing of the tapsolver package as follows:
 
 	from tapsolver import *
 
-To run simulations and analyze kinetic data using TAPsolver, the input file must be constructed. The input file is primarily defined through two components: the reactor and the microkinetic model. Users can easily generate a standard reactor file with the following command:
+With the two input files in the directory where this script is being written, a basic forward simulation can be run with:
 
-	define_reactor(reactor_name='./exampleReactor.csv')
+	run_tapsolver(1,input_file='./input_file_exp.csv',add_noise=True,pulseNumber=1)
 
-This will provide standard input values which can be manually altered. Reactor files can easily be recycled for future experiments and multiple can be generated before analysis.
+where the "1" represents the amount of time to simulate each pulse for (in units of seconds), "input_file" is the file you wish to use to run the simulation, "add_noise" specifies if you would like to include normally distrubuted noise around the outlet flux curves, and the "pulseNumber" details how many pulses the user would like to include in the simulation.
 
-Next, a set of elementary reactions must manually be defined in a csv file. The list of elementary reactions are entered in each row of the first column. A simple example can be generated withh:
+So, the user can exclude noise by changing "add_noise" to False and run a multi-pulse (state-altering) experiment by changing "pulseNumber" to 10. To visualize the outlet fluxes, the following command can be utilized:
 
-	reaction_example(reaction_file = './reaction_example.csv')
+flux_graph(input_file = './input_file_exp.csv',pulse=[1,2,3,4,5],output_name='./flux.png')
 
-Once both the reactor and microkinetic model are defined, the simulation input file can be constructed by running the following command:
+where "pulse" represents which pulses you wish to include in the visual (if variable is excluded in function call, it defaults to the first pulse) and "output_name" is the file name you wish to save the figure as (if variable is excluded in function call, it defaults to './flux.png'). Some additional parameters to adjust what you're viewing include:
 
-	input_construction(reactor_name='.exampleReactor.csv',reaction_name='./exampleName.csv',new_name='./input_file.csv')
+	flux_graph(input_file = './input_file_exp.csv',dispAnalytic=True)
 
-with the parameter 'new name' indicating the input file name. Once this is constructed, the only remaining simulation parameters required are 
+which plots the analytical solution for pure diffusion (the gas species were not reacting at all).
 
-If you would like to generate these files in bulk or run using high-throughput computing, a dictionary defining the mechanisms and parameter variations can be written and called using the following command:
+	flux_graph(input_file = './input_file_exp.csv',store_graph=False)
 
-	bulk_structure(reactor_setup='./exampleReactor.csv',iterDict=variationDictionaries,baseName='testGeneration')
+which means no plot will be saved upon generation.
 
-with iterDict and baseName representing the dictionary of values and directory name for the files to be stored. This dictionary takes in values like mechanisms, pulse intensities, pulse timing and initial surface composition. An example of how to define the dictionary for an oxygen scrambling problem is as follows:
+	flux_graph(input_file = './input_file_exp.csv',dispExper=False)
 
-	mechs = {'mech1':'./o2_mech_1.csv','mech2':'./o2_mech_2.csv','mech3':'./o2_mech_3.csv'}
+which shows the experimental data (if it specified in the input file).
 
-	inten = {'O218':[0.9,1]}
+You can also generate a gif showing the pulsing process (instead of viewing all pulses simultaneously) with the command:
 
-	tim = {'O218':[1e3,7e3,1e4]}
-
-	surf = {'*':[1e3,7e3,1e4]}
-
-	variationDictionaries = {}
-
-	variationDictionaries['mechanisms'] = mechs
-
-	variationDictionaries['intensity'] = inten
-
-	variationDictionaries['time'] = tim
-
-	variationDictionaries['surface'] = surf 
-
-Although this might seem like an unnecessary number of steps to define the input file for a single analysis, I would like to highlight how flexible this truely is. The frustration of working with new code is frequently based on a limited understanding or unnecessarily rigid options. With this input format, the microkinetic model is automatically constructed and filled with user values. The most challenging task is reduced to trying to identify the correct microkinetic model rather than ensuring it is defined correctly. 
-
-## Running a simulation (the forward problem)
-
-Once the input file is defined, it is somewhat straight forward to run a simulation. The only two required inputs are the duration of the simulation (how long are you monitoring the gas) and the input file you're simulating. 
-
-	run_tapsolver(sim_time=1,sim_file='./input_file.csv')
-
-Additional parameters can be defined in the function:
-
-	pulseNumber = 1 # How many pulses would you like to simulate?
-
-	includeNoise = 'TRUE' # Would you like to include some white noise in the synthetic data?
-
-	store_thin_func = 'FALSE' # Would you like to store the surface compositionover time?
-
-	store_flux_func = 'TRUE' # Would you like to store the outlet flux data?
-
-
-The results of the simulation should can be found in the output folder name (defined in the input file).
-
+	pulse_gif(input_file = './input_file_exp.csv',output_name = './output.gif')
 
 ## Analyzing the data (the inverse problem)
 
-There are three primary functions available for the analysis of transient data using TAPsolver: sensitivity analysis, parameter fitting and uncertainty quantification. These can be performed with the following aptly named functions:
+The input_file "./input_file_exp.csv" is used to generate our synthetic set of data. We assume that this is a black box where we can manipulate the inputs (temperature, intensity, delay, etc.) and get out outlet fluxes (with noise if desired). In most circumstances, we will not be able to observe the microkinetic model specified in the input_file and it is our job to determine what it is.
 
-	run_sensitivity(sim_time=0.1, sim_file='./input_file.csv')
+With this in mind, we write the additional input_file "./input_file_fit.csv" with some proposed mechanism (in which we have no structural uncertainty whatsoever, a circumstance that is likely to never happen :) ). To fit the proposed model to the experimental data, we can run the command: 
 
-	fit_parameters(sim_time=0.1, sim_file='./input_file.csv')
+	fit_tap(0.1,sigma=0.1,input_file = './input_file_fit.csv')
 
-	run_uncertainty(sim_time=0.1, sim_file='./input_file.csv')
+with the commands '0.1' representing the window of time to fit the parameter over (0.1 seconds), 'sigma' being the assumed noise distribution (1 S.D. = 0.1 nmol/s) and the input_file used with the propsed mechanism included. 
 
-Two notes should be made. First, the run sensitivity command has two modes of operation: overall (what is used to fit kinetic parameters to the experimental data) and transient (how the sensitivity of each kinetic parameter varies over time). These two options each serve their own useful purpose, but the function will default to the overall sensitivity. Second, the run uncertainty command provides the user with the value of the Hessian for the optimization process. As is noted in the literature (include source for the uq from hessian), an accurate value of the Hessian can accurately define the uncertainty of the fitted kinetic parameters.
+An additionally useful method for analyzing the proposed model is to quantify the uncertainty through a Hessian-analysis (i.e. looking at the second order derivatives at the local minimum to determine the confidence in your kinetic parameters). This is accomplished through the command:
 
-## Visualizing results
+	run_uncertainty(0.06,sigma=0.1,input_file = './input_file_fit.csv')
 
-### Outlet flux graphs
-
-Last, and potentially the most important component, is how to easily visualize your results. The current visualization options in TAPsolver focus on the simulation and fitting results, although options for visualizing the transient sensitivity have been developed in a non-general format. To view the results of the simulation, run the command:
-
-	flux_graph(sim_time=1,sim_file='./input_file.csv',pulse=1)
-
-The final value pulse indicates which pulses you would like to visualize and can be defined as an integer representing the pulse number or a list of all the pulses you would like to view together (i.e. [1,5,11,20]). NOTES: disp_analytic only shows the first analytical solution (not all pulses)
-
-Additional parameters can be defined in the function:
-
-	disp_analytical = True # Would you like to plot the analytical solution (pure diffusion) alongside simulated pulses?
-
-	disp_exper = True # Would you like to display the experimental data?
-
-	disp_objective = True # Would you like to disply the objective points from the experimental data?
-
-	show_graph = True # Would you like the graph to be shown?
-
-	store_graph = True # Would you like to store the generated graph?
-
-	output_name = True # If stored, what would you like the output file name to be called?	 
-
-### Pulsing gif (pulse-by-pulse visual)
-
-You can also generate a gif showing each pulse in your simulation in series with the command:
-
-	pulse_gif(sim_file='./input_file.csv',fileName='./output.gif')
-
-### Fitting gif (convergence to local minimum)
-
-The convergence of the parameter fitting routine can also be visualized with the command:
-
-	fitting_gif(sim_time=0.1,sim_file = './sim_file.csv',input_file='./input_file.csv')
-	
