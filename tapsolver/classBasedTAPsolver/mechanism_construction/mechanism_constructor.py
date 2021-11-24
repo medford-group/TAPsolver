@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 from structures import mechanism
 from .mechanism_reactants import mechanism_reactants
+import sys
 
 def mechanism_constructor(mechanism_data: mechanism):
 	
@@ -79,5 +80,5 @@ def mechanism_constructor(mechanism_data: mechanism):
 	mechanism_data.rate_array = rate_array
 	mechanism_data.reactions = reactions
 	mechanism_data.reactants = reactants
-
+	
 	return mechanism_data

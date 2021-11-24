@@ -12,6 +12,9 @@ class define_gas():
 		self.catalyst_diffusion = 0
 		self.intensity = 0
 		self.delay = 0
+		self.noise = 0 
+		self.std = 0
+		self.temperature_used = 0
 
 		self.initial_concentration = 0
 		self.inlet_concentration = 0
@@ -22,14 +25,16 @@ class define_gas():
 		return self._mass
 	@mass.setter
 	def mass(self,value):
+		if value == (float or int):		
+			if value < 0:
+				raise ValueError("Mass must be positive (non-negative)")
 		
-		if value < 0:
-			raise ValueError("Mass must be positive (non-negative)")
-		
-		if self.inert_diffusion > 0 and self.catalyst_diffusion > 0:
-			prior_mass = self.mass
-			self._mass = value
-			self.inert_diffusion = self.inert_diffusion*mp.sqrt(prior_mass)/mp.sqrt(self._mass)
-			self.catalyst_diffusion = self.catalyst_diffusion*mp.sqrt(prior_mass)/mp.sqrt(self._mass)
+			if self.inert_diffusion > 0 and self.catalyst_diffusion > 0:
+				prior_mass = self.mass
+				self._mass = value
+				self.inert_diffusion = self.inert_diffusion*mp.sqrt(prior_mass)/mp.sqrt(self._mass)
+				self.catalyst_diffusion = self.catalyst_diffusion*mp.sqrt(prior_mass)/mp.sqrt(self._mass)
+			else:
+				self._mass = value
 		else:
 			self._mass = value

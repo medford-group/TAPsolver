@@ -24,7 +24,7 @@ class mechanism():
 		
 		self.elementary_processes = {}
 		self.rate_array = None
-		self.reactions = None
-		self.reactants = None
+		self.reactions = []
+		self.reactants = []
 
 	#def add_elementary_process(self, number = 0, ):

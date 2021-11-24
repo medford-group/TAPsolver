@@ -1,77 +1,174 @@
+from fenics import *
+from fenics_adjoint import *
 from structures import *
 from reactor_species import *
 from file_io import *
 from mechanism_construction import *
 from forward_problem import *
+import jsonpickle
 import json
 import sys
+import copy
 
-testGen1 = readCSV_reactor('./input_file_2.csv')
+# Add data storage
+# Add thin zone storage
+# Add data read
+# Add object storage
+# Add objective function reading
+# Add control specifications
+# Read / make new objects
+
+# 1. Edit TAP object
+# 2. Store in the new folder
+# 3. Edit TAP object
+
+testGen1 = reactor()
+#testGen1 = readCSV_reactor('./input_file_2.csv')
 new_reactor_species = reactor_species()
 new_reactor_species.advection = 0
+
 CO = define_gas()
-CO.mass = 28
-CO.intensity = 3
-CO.delay = 0.1
+CO.mass = 36
+CO.intensity = 1
+CO.delay = 0.0
 new_reactor_species.add_gas('CO',CO)
+
 O2 = define_gas()
 O2.mass = 36
 O2.intensity = 1
-O2.delay = 0.3
+O2.delay = 0.0
 new_reactor_species.add_gas('O2',O2)
+
 CO2 = define_gas()
 CO2.mass = 36
 CO2.intensity = 1
-CO2.delay = 0.3
+CO2.delay = 0.0
 new_reactor_species.add_gas('CO2',CO2)
-new_reactor_species.gasses['CO'].mass = 2
-#new_reactor_species.reference_temeprature = 450
-#print(display_gasses(new_reactor_species))
+
 argon = define_gas()
 argon.mass = 36
 argon.intensity = 1
-argon.delay = 0.3
+argon.delay = 0.0
 new_reactor_species.add_inert_gas('argon',argon)
+
+helium = define_gas()
+helium.mass = 36
+helium.intensity = 1
+helium.delay = 0.0
+new_reactor_species.add_inert_gas('helium',helium)
+
+
+#jsonStr = json.dumps(vars(new_reactor_species))
+
+#sys.exit()
+
 s = define_adspecies()
-s.concentration = 100
-new_reactor_species.add_adspecies('*',s)
-s = define_adspecies()
-s.concentration = 0
+s.concentration = 30
 new_reactor_species.add_adspecies('CO*',s)
+
 s = define_adspecies()
-s.concentration = 0
+s.concentration = 20
 new_reactor_species.add_adspecies('O*',s)
 new_mechanism = mechanism()
 
-new_mechanism.elementary_processes[0] = elementary_process()			
-new_mechanism.elementary_processes[0].processString = '* + CO <-> CO*'
+s = define_adspecies()
+s.concentration = 10
+new_reactor_species.add_adspecies('*',s)
+
+new_mechanism.elementary_processes[0] = elementary_process()
+new_mechanism.elementary_processes[0].processString = 'CO + * <-> CO*'
 new_mechanism.elementary_processes[0].forward = elementary_process_details()
 new_mechanism.elementary_processes[0].backward = elementary_process_details()
 
-new_mechanism.elementary_processes[1] = elementary_process()			
-new_mechanism.elementary_processes[1].processString = '2* + O2 <-> 2O*'
+new_mechanism.elementary_processes[1] = elementary_process()
+new_mechanism.elementary_processes[1].processString = 'O2 + 2* <-> 2O*'
 new_mechanism.elementary_processes[1].forward = elementary_process_details()
 new_mechanism.elementary_processes[1].backward = elementary_process_details()
 
 new_mechanism.elementary_processes[2] = elementary_process()			
-new_mechanism.elementary_processes[2].processString = 'O* + CO* <-> 2* + CO2'
+new_mechanism.elementary_processes[2].processString = 'CO* + O* <-> 2* + CO2'
 new_mechanism.elementary_processes[2].forward = elementary_process_details()
 new_mechanism.elementary_processes[2].backward = elementary_process_details()
 
 mechanism_constructor(new_mechanism)
-new_mechanism.elementary_processes[0].forward.k["value"] = 4
+
+new_mechanism.elementary_processes[0].forward.k["value"] = 1
 new_mechanism.elementary_processes[0].backward.k["value"] = 1
-new_mechanism.elementary_processes[1].forward.k["value"] = 4
+new_mechanism.elementary_processes[1].forward.k["value"] = 1
 new_mechanism.elementary_processes[1].backward.k["value"] = 1
-new_mechanism.elementary_processes[2].forward.k["value"] = 4
+new_mechanism.elementary_processes[2].forward.k["value"] = 1
 new_mechanism.elementary_processes[2].backward.k["value"] = 1
-display_elementary_processes(new_mechanism)
+
 
 TAP_test = TAPobject()
 TAP_test.mechanism = new_mechanism
 TAP_test.reactor_species = new_reactor_species
 TAP_test.reactor = testGen1
-forward_problem(1,TAP_test)
+
+#dumped = jsonpickle.encode({1: testGen1})
+#save_object(testGen1,'./reactor_gen_test.json')
+#save_object(new_mechanism,'./new_mechanism_test.json')
+#save_object(new_reactor_species,'./reactor_species_test.json')
+#load_reactor = read_reactor_object('./reactor_gen_test.json')
+#
+#load_species = read_reactor_species_object('./reactor_species.json')
+#load_mechanism = read_mechanism_object('./mechanism.json')
+
+#TAP_test = TAPobject()
+#TAP_test.mechanism = load_mechanism 
+#TAP_test.reactor_species = load_species
+#TAP_test.reactor = load_reactor
+
+#helium.intensity = Constant(helium.intensity)
+#helium.intensity = Control(helium.intensity)
+#TAP_test_2 = new_experiments(TAP_test,'-B')
+#print(display_gasses(TAP_test_2.reactor_species))
+#print(TAP_test_2)
+TAP_test.gasses_objective = ['CO','O2','CO2']
+list_of_variables = ['TAPobject_data.reactor_species.gasses["CO"].mass','TAPobject_data.reactor_species.temperature']
+#TAP_test_2 = TAP_test.copy()
+#sys.exit()
+#TAP_test_2.reactor_species.temperature[1] = 350
+
+#print(TAP_test_2.reactor_species.gasses['CO'].catalyst_diffusion)
+#print(TAP_test_2.reactor_species.gasses['CO-B'].catalyst_diffusion)
+
+#print(TAP_test_2.reactor_species.inert_gasses['helium'].inert_diffusion)
+#print(TAP_test_2.reactor_species.inert_gasses['helium-B'].inert_diffusion)
+
+#sys.exit()
+#TAP_test_2.gasses_objective = ['CO','O2','CO2']
+
+for k in range(0,5):
+	TAP_test.parameters_of_interest = ['TAPobject_data.mechanism.elementary_processes[0].forward.k["value"]']
+	TAP_test.output_name = './exp_new/flux_data_'+str(k)+'.json'
+	TAP_test.reactor_species.temperature = k*365.5#{0:365.5,1:k*365.5}
+	forward_problem(0.02,1,TAP_test)
+	sys.exit()
+
+sys.exit()
+
+#with open('./reactor.json', 'r', encoding='utf-8') as f:
+#	dumped2 = f
+#f.close()
+
+sys.exit()
+
+sys.exit()
+print(dumped)
+sameObject = jsonpickle.decode(dumped)['1']
+print(sameObject.reactor_species.gasses)
+
+
+
+
+def json_load_file(filename, use_jsonpickle = True):
+	f = open(filename)
+json_str = f.read()
+
+TAP_test.mesh = 200
+TAP_test.catalyst_mesh_density = 5
+forward_problem(1,1,TAP_test)
 sys.exit()
 print(display_gasses(new_reactor_species))
 
@@ -118,7 +215,7 @@ print(testGen1.reactor_radius)
 testGen1.reactor_radius = 2
 print(testGen1.cross_sectional_area())
 print(testGen1.reactor_radius)
-forward_problem(1,testGen1,testGen2,testGen3)
+#forward_problem(1,testGen1,testGen2,testGen3)
 
 # elementary_process, elementary_process_details
 sys.exit()

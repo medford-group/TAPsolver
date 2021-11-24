@@ -7,57 +7,136 @@ import sys
 import pandas as pd
 import numpy as np
 import math as mp
-#import dijitso
 import time
 import os
 import scipy
 import copy
 import warnings
+import matplotlib.pyplot as plt
 
 from structures import *
 from file_io import *
 from mechanism_construction import *
 from reactor_species import *
 from reference_parameters import *
+from simulation_notes import *
+from inverse_problem import *
+
+import jsonpickle
+import json
+import ufl
+import dijitso
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 set_log_level(30)
 tol = 1E-20
 runge_kutta_approach = False
+standard_parameters = load_standard_parameters()
 
-def forward_problem(pulse_time, TAPobject_data: TAPobject):
+def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject):
+		
+	TAPobject_data = copy.deepcopy(TAPobject_data_original)
+	tape2 = Tape()
+	tape2.clear_tape()
+	set_working_tape(tape2)
+
+	#print(TAPobject_data.data_name)
+	#print(TAPobject_data.output_name)
+	#sys.exit()
+	if TAPobject_data.data_name != None:
+		with open(TAPobject_data.data_name) as f:
+			data = json.loads(f.read())
+			output_data = jsonpickle.decode(data)['1']
+		f.close()
+	TAPobject_data.experimental_data = output_data
+
+	species_time = []
+	for j in TAPobject_data.reactor_species.gasses:
+		species_time.append(TAPobject_data.reactor_species.gasses[j].delay)
+	for j in TAPobject_data.reactor_species.inert_gasses:
+		species_time.append(TAPobject_data.reactor_species.inert_gasses[j].delay)			
 	
-	simplifiedTimeStep = False
+	TAPobject_data.reactor_species.reference_mass = Constant(TAPobject_data.reactor_species.reference_mass)
+	if type(TAPobject_data.reactor_species.temperature) == dict:
+		for j_temp_number, j_temps in enumerate(TAPobject_data.reactor_species.temperature): 
+			TAPobject_data.reactor_species.temperature[j_temp_number] = Constant(TAPobject_data.reactor_species.temperature[j_temp_number])
+	else:
+		TAPobject_data.reactor_species.temperature = Constant(TAPobject_data.reactor_species.temperature)
+	
+	TAPobject_data.reactor_species.reference_temperature = Constant(TAPobject_data.reactor_species.reference_temperature)
+	TAPobject_data.reactor.zone_voids[0] = Constant(TAPobject_data.reactor.zone_voids[0])
+	TAPobject_data.reactor_species.catalyst_diffusion = Constant(TAPobject_data.reactor_species.catalyst_diffusion)
+	TAPobject_data.reactor.zone_voids[1] = Constant(TAPobject_data.reactor.zone_voids[1])
+	standard_parameters['kbt'] = Constant(standard_parameters['kbt'])
+	standard_parameters['h'] = Constant(standard_parameters['h'])
+	standard_parameters['Rgas'] = Constant(standard_parameters['Rgas'])
+	TAPobject_data.reactor.reactor_radius = Constant(TAPobject_data.reactor.reactor_radius)
+	
+	species_order_dictionary = {}
+	total_species = 0
+	for k in TAPobject_data.reactor_species.gasses:
+		species_order_dictionary[k] = total_species
+		TAPobject_data.reactor_species.gasses[k].mass = Constant(TAPobject_data.reactor_species.gasses[k].mass)
+		TAPobject_data.reactor_species.gasses[k].delay = Constant(TAPobject_data.reactor_species.gasses[k].delay)
+		TAPobject_data.reactor_species.gasses[k].intensity = Constant(TAPobject_data.reactor_species.gasses[k].intensity)
+		total_species += 1
+	for k in TAPobject_data.reactor_species.inert_gasses:
+		species_order_dictionary[k] = total_species
+		TAPobject_data.reactor_species.inert_gasses[k].mass = Constant(TAPobject_data.reactor_species.inert_gasses[k].mass)
+		TAPobject_data.reactor_species.inert_gasses[k].delay = Constant(TAPobject_data.reactor_species.inert_gasses[k].delay)
+		TAPobject_data.reactor_species.inert_gasses[k].intensity = Constant(TAPobject_data.reactor_species.inert_gasses[k].intensity)	
+		total_species += 1
+	for k in TAPobject_data.reactor_species.adspecies:
+		species_order_dictionary[k] = total_species
+		TAPobject_data.reactor_species.adspecies[k].concentration = Constant(TAPobject_data.reactor_species.adspecies[k].concentration)
+		total_species += 1
 
-	######################## DEFINING INITIAL CONSTANTS #############################
+	if TAPobject_data.mechanism.reactants != []:
+		for k,z in enumerate(TAPobject_data.mechanism.rate_array):
+			if TAPobject_data.mechanism.elementary_processes[k].forward.use == 'G':
+				TAPobject_data.mechanism.elementary_processes[k].forward.Ga['value'] = Constant(TAPobject_data.mechanism.elementary_processes[k].forward.Ga['value'])
+				TAPobject_data.mechanism.elementary_processes[k].forward.dG['value'] = Constant(TAPobject_data.mechanism.elementary_processes[k].forward.dG['value'])				
+			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'E':
+				TAPobject_data.mechanism.elementary_processes[k].forward.Ao['value'] = Constant(TAPobject_data.mechanism.elementary_processes[k].forward.Ao['value'])
+				TAPobject_data.mechanism.elementary_processes[k].forward.Ea['value'] = Constant(TAPobject_data.mechanism.elementary_processes[k].forward.Ea['value'])
+			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'k':
+				TAPobject_data.mechanism.elementary_processes[k].forward.k['value'] = Constant(TAPobject_data.mechanism.elementary_processes[k].forward.k['value'])									
+			if TAPobject_data.mechanism.elementary_processes[k].backward.use == 'G':
+				TAPobject_data.mechanism.elementary_processes[k].backward.Ga['value'] = Constant(TAPobject_data.mechanism.elementary_processes[k].backward.Ga['value'])
+				TAPobject_data.mechanism.elementary_processes[k].backward.dG['value'] = Constant(TAPobject_data.mechanism.elementary_processes[k].backward.dG['value'])
+			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'E':
+				TAPobject_data.mechanism.elementary_processes[k].backward.Ao['value'] = Constant(TAPobject_data.mechanism.elementary_processes[k].backward.Ao['value'])
+				TAPobject_data.mechanism.elementary_processes[k].backward.Ea['value'] = Constant(TAPobject_data.mechanism.elementary_processes[k].backward.Ea['value'])
+			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'k':
+				TAPobject_data.mechanism.elementary_processes[k].backward.k['value'] = Constant(TAPobject_data.mechanism.elementary_processes[k].backward.k['value'])
 
 	time_steps = pulse_time*1000
+
 	dk = Constant(pulse_time/time_steps)
 	cat_location = 1 - TAPobject_data.reactor.catalyst_center_fraction
-	standard_parameters = load_standard_parameters()
 
 	dx_r = TAPobject_data.reactor.total_length/TAPobject_data.mesh
 	point_volume = dx_r*TAPobject_data.reactor.cross_sectional_radius*TAPobject_data.reactor.zone_voids[0]
 	reference_pulse_concentration = TAPobject_data.reactor_species.reference_pulse_size/point_volume
-
+	
+	controls = []
+	for j in TAPobject_data.parameters_of_interest:
+		#controls.append(Control(TAPobject_data.reactor_species.temperature[j_temp_number]))
+		controls.append(Control(TAPobject_data.mechanism.elementary_processes[0].forward.k['value']))
 
 	mesh = UnitIntervalMesh(int(TAPobject_data.mesh))
-	#kinetic_information = load_kinetics(mechanism_data)
-	#print(kinetic_information)
-
 
 	cfDict = {}
+	roundedMesh2 = ((1-cat_location) + 0.5*TAPobject_data.reactor.length_fractions[1])*TAPobject_data.mesh
+	Mesh2 = round(((1-cat_location) + 0.5*TAPobject_data.reactor.length_fractions[1])*TAPobject_data.mesh)
+	Mesh22 = round(((1-cat_location) + 0.5*TAPobject_data.reactor.length_fractions[1])*TAPobject_data.mesh)/TAPobject_data.mesh
+	Mesh222 = round(((cat_location) + 0.5*TAPobject_data.reactor.length_fractions[1])*TAPobject_data.mesh)/TAPobject_data.mesh
+
+	roundedMesh1 = ((1-cat_location) - 0.5*TAPobject_data.reactor.length_fractions[1])*TAPobject_data.mesh
+	Mesh1 = round(((1-cat_location) - 0.5*TAPobject_data.reactor.length_fractions[1])*TAPobject_data.mesh)
+	Mesh12 = round(((1-cat_location) - 0.5*TAPobject_data.reactor.length_fractions[1])*TAPobject_data.mesh)/TAPobject_data.mesh
+	Mesh122 = round(((cat_location) - 0.5*TAPobject_data.reactor.length_fractions[1])*TAPobject_data.mesh)/TAPobject_data.mesh
 	
-	roundedMesh2 = ((1-cat_location) + 0.5*TAPobject_data.reactor.zone_lengths[0])*TAPobject_data.mesh
-	Mesh2 = round(((1-cat_location) + 0.5*TAPobject_data.reactor.zone_lengths[0])*TAPobject_data.mesh)
-	Mesh22 = round(((1-cat_location) + 0.5*TAPobject_data.reactor.zone_lengths[0])*TAPobject_data.mesh)/TAPobject_data.mesh
-	Mesh222 = round(((cat_location) + 0.5*TAPobject_data.reactor.zone_lengths[0])*TAPobject_data.mesh)/TAPobject_data.mesh
-
-	roundedMesh1 = ((1-cat_location) - 0.5*TAPobject_data.reactor.zone_lengths[0])*TAPobject_data.mesh
-	Mesh1 = round(((1-cat_location) - 0.5*TAPobject_data.reactor.zone_lengths[0])*TAPobject_data.mesh)
-	Mesh12 = round(((1-cat_location) - 0.5*TAPobject_data.reactor.zone_lengths[0])*TAPobject_data.mesh)/TAPobject_data.mesh
-	Mesh122 = round(((cat_location) - 0.5*TAPobject_data.reactor.zone_lengths[0])*TAPobject_data.mesh)/TAPobject_data.mesh
-
 	if Mesh2 != roundedMesh2 or Mesh1 != roundedMesh1:
 		print('Warning: Catalyst zone will be refined and rounded to the nearest whole mesh point!')
 		trueMesh = (roundedMesh2 - roundedMesh1)/TAPobject_data.mesh
@@ -82,7 +161,14 @@ def forward_problem(pulse_time, TAPobject_data: TAPobject):
 		
 		thin_zoneTest.mark(cfDict[jayz],jayz)
 		mesh = refine(mesh,cfDict[jayz],True)
-	
+
+	meshCells = int((Mesh22)*TAPobject_data.mesh) - mp.ceil((Mesh12)*TAPobject_data.mesh)
+	totalNumCells = TAPobject_data.mesh+meshCells*2**(TAPobject_data.catalyst_mesh_density)-meshCells
+
+	top = mp.ceil((Mesh122)*TAPobject_data.mesh)+1 
+	bottom = int((Mesh122)*TAPobject_data.mesh)+meshCells*2**(TAPobject_data.catalyst_mesh_density)-1
+	catalyst_center_cell = int((top+bottom)/2)
+
 	P1 = FiniteElement('CG',mesh.ufl_cell(),1)
 
 	elements = []
@@ -104,7 +190,7 @@ def forward_problem(pulse_time, TAPobject_data: TAPobject):
 	tempA = TestFunctions(V)
 	tempB = split(u)
 	tempC = split(u_n)
-	
+
 	for knum,k in enumerate(list(TAPobject_data.reactor_species.gasses.keys())):
 		v_d['v_'+k] = tempA[knum]
 		u_d['u_'+k] = tempB[knum]
@@ -117,10 +203,6 @@ def forward_problem(pulse_time, TAPobject_data: TAPobject):
 		v_d['v_'+k] = tempA[len(TAPobject_data.reactor_species.gasses)+len(TAPobject_data.reactor_species.adspecies)+knum]
 		u_d['u_'+k] = tempB[len(TAPobject_data.reactor_species.gasses)+len(TAPobject_data.reactor_species.adspecies)+knum]
 		u_nd['u_n'+k] = tempC[len(TAPobject_data.reactor_species.gasses)+len(TAPobject_data.reactor_species.adspecies)+knum]
-
-
-	meshCells = int((Mesh22)*TAPobject_data.mesh) - mp.ceil((Mesh12)*TAPobject_data.mesh)
-	totalNumCells = TAPobject_data.mesh+meshCells*2**(TAPobject_data.catalyst_mesh_density)-meshCells
 	
 	if TAPobject_data.reactor_species.advection > 0:
 			
@@ -155,7 +237,6 @@ def forward_problem(pulse_time, TAPobject_data: TAPobject):
 	dx = Measure("dx",subdomain_data=domains)
 	dT = Measure("dx",subdomain_data=boundary_parts0)
 		
-	# Define inlet and outlet boundaries
 	def boundary_L(x, on_boundary):
 		return on_boundary and near(x[0],0,tol)
 	
@@ -171,324 +252,445 @@ def forward_problem(pulse_time, TAPobject_data: TAPobject):
 	right = CompiledSubDomain("near(x[0], 1.)")
 	boundary_parts = MeshFunction("size_t", mesh,  mesh.topology().dim()-1)
 	right.mark(boundary_parts, 1)
-	
+
 	bcs = []
 	for k in range(0,len(TAPobject_data.reactor_species.gasses)):
 		bcs.append(DirichletBC(V.sub(k),Constant(0),boundary_R))
 	
 	for k in range(0,len(TAPobject_data.reactor_species.inert_gasses)):
-		bcs.append(DirichletBC(V.sub(len(TAPobject_data.reactor_species.gasses)+len(TAPobject_data.reactor_species.inert_gasses)-(1+k)),Constant(0),boundary_R))
+		bcs.append(DirichletBC(V.sub(len(TAPobject_data.reactor_species.gasses)+len(TAPobject_data.reactor_species.adspecies)+k),Constant(0),boundary_R))
 	
-	F_new = construct_f_equation(TAPobject_data)
-	
-	theta = 1
-	Ftemp = eval(F_new)
-	theta = 0.5
-	F = eval(F_new)
-	#except NameError:
-	#	errorOutput(reac_input['reactions_test'])
+	if type(TAPobject_data.reactor_species.temperature) != dict:
+		F_new = construct_f_equation(TAPobject_data)
+	else:
+		F_new = construct_f_equation_multiple_experiments(TAPobject_data)
 
-	#controls = []
+	constantT = Constant(0)
 	b0Test2 = Expression('x[0] < 0.002500001 ? 0.5 : 0', degree=0)
-			
-	#pulseIntensities = [Inert_pulse_conc/2,Inert_pulse_conc,Inert_pulse_conc*0,Inert_pulse_conc/2,Inert_pulse_conc/2]
-	#pulseTimes = [0.01,0.001,0.001,0.001,0.001]
-	reactant_feed = list(map(float, reac_input['Pulse Size'].split(',')))
 
-	intensityFunctions ={}
-	intensConst = {}
-	for jk in range(0,len(reactant_feed)):
-		intensConst['inten_'+str(jk)] = Constant(reactant_feed[jk]*Inert_pulse_conc)
-	if sens_type == 'initial':
-		#controls = []
-		for jk in range(0,len(reactant_feed)):
-			controls.append(Control(intensConst['inten_'+str(jk)]))
+	Fpulses = ''
+	for knum,k in enumerate(TAPobject_data.reactor_species.gasses):
+		TAPobject_data.reactor_species.gasses[k].intensity = Constant(TAPobject_data.reactor_species.gasses[k].intensity)
+		#Fpulses += "-TAPobject_data.reactor_species.gasses['"+k+"'].intensity*reference_pulse_concentration*b0Test2*exp(-(constantT - round(TAPobject_data.reactor_species.gasses['"+k+"'].delay+0.001,6))*(constantT - round(TAPobject_data.reactor_species.gasses['"+k+"'].delay+0.001,6))/(4*0.00000000001))*v_d['v_"+k+"']*dx"
+		Fpulses += "-TAPobject_data.reactor_species.gasses['"+k+"'].intensity*reference_pulse_concentration*b0Test2*exp(-(constantT - round(TAPobject_data.reactor_species.gasses['"+k+"'].delay,6))*(constantT - round(TAPobject_data.reactor_species.gasses['"+k+"'].delay,6))/(0.00000000001))*v_d['v_"+k+"']*dx"
+		if knum < len(TAPobject_data.reactor_species.gasses)-1:
+			Fpulses += ' + '
+	for knum,k in enumerate(TAPobject_data.reactor_species.inert_gasses):
+		TAPobject_data.reactor_species.inert_gasses[k].intensity = Constant(TAPobject_data.reactor_species.inert_gasses[k].intensity)
+		#Fpulses += "-TAPobject_data.reactor_species.inert_gasses['"+k+"'].intensity*reference_pulse_concentration*b0Test2*exp(-(constantT - round(TAPobject_data.reactor_species.inert_gasses['"+k+"'].delay+0.001,6))*(constantT - round(TAPobject_data.reactor_species.inert_gasses['"+k+"'].delay+0.001,6))/(4*0.00000000001))*v_d['v_"+k+"']*dx"
+		Fpulses += "-TAPobject_data.reactor_species.inert_gasses['"+k+"'].intensity*reference_pulse_concentration*b0Test2*exp(-(constantT - round(TAPobject_data.reactor_species.inert_gasses['"+k+"'].delay,6))*(constantT - round(TAPobject_data.reactor_species.inert_gasses['"+k+"'].delay,6))/(0.00000000001))*v_d['v_"+k+"']*dx"
+		if knum < len(TAPobject_data.reactor_species.inert_gasses)-1:
+			Fpulses += ' + '
+
+	for knum,k in enumerate(TAPobject_data.reactor_species.adspecies):
+		TAPobject_data.reactor_species.adspecies[k].concentration = Constant(TAPobject_data.reactor_species.adspecies[k].concentration)
+		Fpulses += "-TAPobject_data.reactor_species.adspecies['"+k+"'].concentration*exp(-(constantT)*(constantT)/(0.00000000001))*v_d['v_"+k+"']*dx"
+		if knum < len(TAPobject_data.reactor_species.adspecies)-1:
+			Fpulses += ' + '
+	
+	# dk*("+"(TAPobject_data.reactor_species.inert_diffusion*sqrt(TAPobject_data.reactor_species.reference_mass*TAPobject_data.reactor_species.temperature)/sqrt(TAPobject_data.reactor_species.reference_temperature*TAPobject_data.reactor_species.gasses['"+species_name+"'].mass))
+
+	F_new += Fpulses
+
+	#!#! ADDING INVERSE ANALYSIS
+	if TAPobject_data.tangent_linear_sensitivity == True:
+		#TAPobject_data.reactor_species.gasses['CO'].intensity = Control(TAPobject_data.reactor_species.gasses['CO'].intensity)
+		#TAPobject_data.mechanism.elementary_processes[0].forward.k["value"] = Control(TAPobject_data.mechanism.elementary_processes[0].forward.k["value"])
+		#c = TAPobject_data.mechanism.elementary_processes[0].forward.k["value"]
+		#c.tlm_value = TAPobject_data.mechanism.elementary_processes[0].forward.k["value"]
+		sens_param = eval(TAPobject_data.parameters_of_interest[0])
 		
-	reactant_time = list(map(float, reac_input['Pulse Time'].split(',')))
+		c = sens_param
+		c.tlm_value = sens_param
+		#c = TAPobject_data.reactor_species.gasses['CO'].intensity
+		#c.tlm_value = TAPobject_data.reactor_species.gasses['CO'].intensity
+	
+		SV_du = FunctionSpace(mesh,P1)
+		Sw_new = Expression('A',A=Constant(1),degree=0)
+		Sw_new2 = interpolate(Sw_new,SV_du)
+		Sw3 = project(Sw_new2,SV_du)
+	
+		sensFuncs = {}
+		for k_gasses in TAPobject_data.reactor_species.gasses:
+			sensFuncs[k_gasses] = []
+
+	#if TAPobject_data.adjoint_sensitivitiy == True:
+	#	#print(TAPobject_data.parameters_of_interest[0])
+	#	controls = [TAPobject_data.reactor_species.gasses['CO'].intensity]
+	#	# output_fitting = pointFitting(legend_label[:int(len(legend_label)-reac_input['Number of Inerts'])],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],objSpecies)
+
+
+	theta = Constant(1)
+	Ftemp = eval(F_new)
+	theta = Constant(0.5)
+	F = eval(F_new)
+
+	J = derivative(F,u)
+	Jtemp = derivative(Ftemp,u)
+	
+	variational_solver = 'newton'
+	if variational_solver == 'constrained':
+		snes_solver_parameters = {"nonlinear_solver": "snes","snes_solver": {"linear_solver": "lu","line_search":'basic',"maximum_iterations": 10,"report": False,"error_on_nonconvergence": False}}
 			
-	timeConst = {}
-
-	for jk in range(0,len(reactant_time)):
-		timeConst['sST_'+str(jk)] = Constant(round(reactant_time[jk]+0.001,6))
-
-	fnew = eval(pulse_functions(reac_input['reactions_test'],reac_input['Number of Inerts']))
-	F += fnew
-
-	sys.exit()
-	# Standard Constants
-	
-	
-
-	######################## DEFINING OUTPUT FOLDER INFORMATION #############################
-
-	def generateFolder(path_name):
-		try:  
-			os.mkdir(path_name)
-		except OSError:  
-			pass
-		else: 
-			pass
-
-	path = './'+reactor_data.output_name+'_folder/'
-	generateFolder(path)
-			
-	path_3 = './'+reactor_data.output_name+'_folder/flux_data/'
-	generateFolder(path_3)
-
-	######################## READING KINETIC PARAMETER INFORMATION ###########################
-
-
-
-
-
-
-
-	
-
-	######################## Define  ###########################
-
-
-
-	# Construct the rate expression based on the microkinetic model
-	necessary_values, rate_array, rev_irr = make_f_equation(reac_input['reactions_test'],reac_input['Number of Reactants'],'tap',reac_input['Number of Inerts'],reac_input['Advection'],arrForward,arrBackward,gForward,reac_input['linked names'],linkForward,linkBackard,fit_temperature)
-
-
-
-'''
-			for j_species in range(0,monitored_gas+int(reac_input['Number of Inerts'])):
-				tempDict = np.transpose(dictionary_of_numpy_data[legend_label[j_species]])
-				np.savetxt('./'+reac_input['Output Folder Name']+'_folder/flux_data/'+legend_label[j_species]+'.csv', tempDict, delimiter=",")
-
-
-try:
-			theta = 1
-			Ftemp = eval(necessary_values['F'])
-			theta = 0.5
-			F = eval(necessary_values['F'])
-		except NameError:
-			errorOutput(reac_input['reactions_test'])
-	
-		#############################################################
-		############# DEFINE VARIATIONAL PROBLEM ####################
-		#############################################################
-	
-		J = derivative(F,u)
-		Jtemp = derivative(Ftemp,u)
-	
-		# Define a constrained variational problem solver
-		reac_input['Variational Solver'] = 'newton'
-	
-		if reac_input['Variational Solver'].lower() == 'constrained':
-			snes_solver_parameters = {"nonlinear_solver": "snes","snes_solver": {"linear_solver": "lu","line_search":'basic',"maximum_iterations": 10,"report": False,"error_on_nonconvergence": False}}
-			
-			lower = Function(V)
-			upper = Function(V) 
-			
-			ninfty = Function(V); ninfty.vector()[:] = 0
-			pinfty = Function(V); pinfty.vector()[:] =  np.infty
-	
-			
-			problem = NonlinearVariationalProblem(F,u,bcs,J)
-			
-			problem.set_bounds(ninfty,pinfty)
-	
-			solver = NonlinearVariationalSolver(problem)
-			solver.parameters.update(snes_solver_parameters)
+		lower = Function(V)
+		upper = Function(V) 
 		
-		# Define a newton variational problem solver
-		elif reac_input['Variational Solver'].lower() == 'newton':
-			problem = NonlinearVariationalProblem(F,u,bcs,J)
-			solver = NonlinearVariationalSolver(problem)
+		ninfty = Function(V); ninfty.vector()[:] = 0
+		pinfty = Function(V); pinfty.vector()[:] =  np.infty
 	
-			problemtemp = NonlinearVariationalProblem(Ftemp,u,bcs,Jtemp)
-			solvertemp = NonlinearVariationalSolver(problemtemp)
-	
-			solver.parameters["newton_solver"]["relative_tolerance"] = 1.0e-8
-			solver.parameters["newton_solver"]["absolute_tolerance"] = 1e-10
-
-
-		for k_pulse in range(0,int(reac_input['Number of Pulses'])):
-	
-			start_time = time.time()
-			
-			if sampling == False:
-				print("")
-				print("Simulation Status: "+"Pulse #"+str(k_pulse+1))
-	
-			species_pulse_list = reactant_feed#reactant_feed[current_reac_set-1]
-			
-			if type(reactant_time[current_reac_set-1]) == list:
-				species_time = reactant_time[current_reac_set-1]
-			else:
-				species_time = reactant_time
-			
-			if reac_input['Knudsen Test'].lower() == 'true':
-				knudsenTest(legend_label[(int(len(legend_label))-int(reac_input['Number of Inerts'])):],reac_input['Time Steps'],reac_input['Experimental Data Folder'],reac_input['Pulse Duration'],reac_input['Objective Points'],reac_input['Reference Pulse Size'],species_pulse_list[(int(len(legend_label))-int(reac_input['Number of Inerts'])):])
-	 
-			dt = reac_input['Pulse Duration']/reac_input['Time Steps']
-			
-			for kTimeStep,kTime in enumerate(species_time.copy()):
-				tNew = dt*round(float(kTime)/dt)
-				species_time[kTimeStep] = round(tNew,6)		
-			
-			
-
-	
-			graph_data = {}
-			u_graph_data = {}
-			
-			for k_gasses in range(0,necessary_values['molecules_in_gas_phase']):
-				graph_data['conVtime_'+str(k_gasses)] = []
-				u_graph_data['conVtime_'+str(k_gasses)] = []
-			
-			for kjc in range(0,int(reac_input['Number of Inerts'])):
-				graph_data['conVtime_'+str((necessary_values['gas_num']+1)+necessary_values['surf_num']+kjc)] = []
-			
-			surf_data['timing'] = []
-			
-			for j_gasses in range(necessary_values['molecules_in_gas_phase'],len(necessary_values['reactants'])-1):
-				surf_data['conVtime_'+str(j_gasses)] = []
-			
-			graph_data['timing'] = []
-	
-			cat_data['timing'] = []
-			
-			for z_gasses in range(0,all_molecules+1):
-				cat_data['conVtime_'+str(z_gasses)] = []
-	
-			cat_data['rawData'] = []
-			
-			t = 0
-
-			
-			test_new = project(-u.dx(0),V)
-			test_new_split = test_new.split(deepcopy=False)
-	
-			w_new = Expression("1", degree=0)
-			w_new2 = interpolate(w_new,V_du)
-	
-			x_dim = list(range(0, int(reac_input['Mesh Size'])+1))
-			
-			cum_sum = 0
-t = 0
-
-
-			#############################################################
-			############ SOLVE PDEs AT EACH TIME STEP ###################
-			#############################################################
-
-			# Design of experiment form
-	
-			while t <= reac_input['Pulse Duration']:
-				if round(t/0.001,4).is_integer() == True:
-					graph_data['timing'].append(t)
-				
-				for k in range(0,monitored_gas):
-					if round(t/0.001,4).is_integer() == True:
-						new_val = (to_flux[k]*( u_n.vector().get_local()[(all_molecules)+k]))
-						graph_data['conVtime_'+str(k)].append((new_val))
-	
-				for kjc in range(0,int(reac_input['Number of Inerts'])):
-					if round(t/0.001,4).is_integer() == True:
-						new_val = ((to_flux[monitored_gas+kjc]*u_n.vector().get_local()[2*(all_molecules+1)-2-(int(reac_input['Number of Inerts'])-kjc)]))
-						graph_data['conVtime_'+str(all_molecules-(int(reac_input['Number of Inerts'])-kjc))].append((new_val))
-				
-				mesh_size = reac_input['Mesh Size']
+		problem = NonlinearVariationalProblem(F,u,bcs,J)
 		
-				#############################################################
-				######## STEP FOR CONSTRUCTING OBJECTIVE FUNCTION ###########
-				#############################################################
-
-
-
-				if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or sampling == True or ((sens_type == 'total' or sens_type == 'initial') and reac_input['Sensitivity Analysis'].lower() == 'true') or fit_temperature == True:
-					# Define the objective function 	
-					objectiveAnalysis = True
-					selectivity = False
-					conversion = False
-					yieldValue = False
+		problem.set_bounds(ninfty,pinfty)
 	
-
-				if simplifiedTimeStep == False:
-					if runge_kutta_approach == False:	
-						if round(t,6) not in species_time:
-							#timeDiff = round(t,6)
-							try:
-								if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true' or reac_input['Sensitivity Analysis'].lower() == 'true':
-									# C.N. method
-									if t > 0.0011+timeDiff:
-										solver.solve()
-									# B.E. method
-									else:
-										solvertemp.solve()
+		solver = NonlinearVariationalSolver(problem)
+		solver.parameters.update(snes_solver_parameters)
 		
-										if round(t,6) == round(0.001+timeDiff,6):
-											dt = reac_input['Pulse Duration']/reac_input['Time Steps']
-											dk.assign(dt)
-											u_n.assign(u)
-											solver.solve()
-								else:
-									if t > 0.0011+timeDiff:
-										solver.solve(annotate = False)
-									else:
-										solvertemp.solve(annotate=False)
-		
-										if round(t,6) == round(0.001+timeDiff,6):
-											dt = reac_input['Pulse Duration']/reac_input['Time Steps']
-											dk.assign(dt)
-											u_n.assign(u)
-											solver.solve()
-								
-								#############################################################
-								################### STORE THIN-ZONE DATA ####################
-								#############################################################
-								
-								if reac_input['Thin-Zone Analysis'].lower() == 'true':
-									
-									arrayNew = np.vstack((cat_data['rawData'],u_n.vector().get_local()))
-									cat_data['rawData'] = arrayNew
+	elif variational_solver == 'newton':
+		problem = NonlinearVariationalProblem(F,u,bcs,J)
+		solver = NonlinearVariationalSolver(problem)
 	
-							except RuntimeError:
-								print('Time Step Failure')
-								sys.exit()
+		problemtemp = NonlinearVariationalProblem(Ftemp,u,bcs,Jtemp)
+		solvertemp = NonlinearVariationalSolver(problemtemp)
+
+		solver.parameters["newton_solver"]["relative_tolerance"] = 1.0e-8
+		solver.parameters["newton_solver"]["absolute_tolerance"] = 1e-10
+
+	synthetic_data = {}
+	synthetic_data['time'] = {}
+	if TAPobject_data.store_flux_data == True:
+		for j in TAPobject_data.reactor_species.gasses:
+			synthetic_data[j] =  {}
+		for j in TAPobject_data.reactor_species.inert_gasses:
+			synthetic_data[j] =  {}
+	if TAPobject_data.store_catalyst_data == True:
+		for j in TAPobject_data.reactor_species.adspecies:
+			synthetic_data[j] =  {}
+
+	if TAPobject_data.tangent_linear_sensitivity == True:
+		sensitivity_output = {}
+			
+		for k_sens in TAPobject_data.reactor_species.gasses:
+			sensitivity_output[k_sens] = []
+
+	if TAPobject_data.tangent_linear_sensitivity == True or TAPobject_data.adjoint_sensitivitiy == True  or TAPobject_data.optimize == True:
+		osub = integration_section()
+		domains = MeshFunction("size_t", mesh,0)
+		domains.set_all(0)
+		osub.mark(domains, 1)
+		dP = Measure('vertex',domain = mesh, subdomain_data=domains)
+	#!#!
+	#for knum,k in enumerate(TAPobject_data.reactor_species.gasses):
+	#	print(TAPobject_data.reactor_species.gasses[k].inert_diffusion)
+	#for knum,k in enumerate(TAPobject_data.reactor_species.inert_gasses):
+	#	print(TAPobject_data.reactor_species.inert_gasses[k].inert_diffusion)
+	#print(TAPobject_data.output_name)
+	#if TAPobject_data.output_name != None:
+	#	path_4 = './'+TAPobject_data.output_name+'/'
+	#	print(path_4)
+	#	try: 
+	#		os.mkdir(path_4)
+	#	except OSError:  
+	#		pass
+	#	else:  
+	#		pass
+
+	output_data = curveFitting(pulse_time,TAPobject_data)
+	
+	for k_pulse in range(0,pulse_number):
+		print('Pulse #: '+str(k_pulse))
+		t = 0
+		dt = pulse_time/time_steps
+		start_time = time.time()
+		
+		synthetic_data['time'][k_pulse] =  []
+		if TAPobject_data.store_flux_data == True:
+			for j in TAPobject_data.reactor_species.gasses:
+				synthetic_data[j][k_pulse] =  []
+			for j in TAPobject_data.reactor_species.inert_gasses:
+				synthetic_data[j][k_pulse] =  []
+		if TAPobject_data.store_catalyst_data == True:
+			for j in TAPobject_data.reactor_species.adspecies:
+				synthetic_data[j][k_pulse] =  []
+
+		all_species = len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.inert_gasses) + len(TAPobject_data.reactor_species.adspecies)
+		time_step = 0
+
+		while t <= pulse_time:
+
+			synthetic_data['time'][k_pulse].append(t)
+			if TAPobject_data.store_flux_data == True:
+				for knum,k in enumerate(TAPobject_data.reactor_species.gasses):
+					synthetic_data[k][k_pulse].append(2*(float(TAPobject_data.reactor_species.gasses[k].inert_diffusion) /(float(dx_r))) * (float(TAPobject_data.reactor.reactor_radius)**2)*3.14159*( float(u_n.vector().get_local()[(all_species)+knum])))
+				for knum,k in enumerate(TAPobject_data.reactor_species.inert_gasses):
+					synthetic_data[k][k_pulse].append(2*(float(TAPobject_data.reactor_species.inert_gasses[k].inert_diffusion) /(float(dx_r))) * (float(TAPobject_data.reactor.reactor_radius)**2)*3.14159*( float(u_n.vector().get_local()[all_species+len(TAPobject_data.reactor_species.gasses)+len(TAPobject_data.reactor_species.adspecies)+knum])))		
+			if TAPobject_data.store_catalyst_data == True:
+				for knum,k in enumerate(TAPobject_data.reactor_species.adspecies):
+					synthetic_data[k][k_pulse].append(float(u_n.vector().get_local()[(catalyst_center_cell*(len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.adspecies) + len(TAPobject_data.reactor_species.inert_gasses)))+all_species+len(TAPobject_data.reactor_species.gasses)+knum]))
+					
+			if TAPobject_data.store_catalyst_data == True:
+				pass
+			#for j in TAPobject_data.reactor_species.adspecies:
+			#	synthetic_data[j][k_pulse] =  {}
+
+			if TAPobject_data.optimize == True:
+				for k_fitting in (TAPobject_data.gasses_objective): #  and TAPobject_data.inert_gasses_objective
+					if round(t,6) in output_data[k_fitting]['times']:
+						c_exp = output_data[k_fitting]['values'][output_data[k_fitting]['times'].index(round(t,6))]
+						slope = (-c_exp)/(1/TAPobject_data.mesh)
+						intercept = c_exp - ((1-(1/TAPobject_data.mesh))*slope)
+						w_new = Expression('A*x[0]+B',A=Constant(slope),B=Constant(intercept),degree=0)
+						w_new2 = interpolate(w_new,V_du)
+						w3 = project(w_new2,V_du)	
+
+						#try:
+						#	jfunc_2 += assemble(inner(u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3,u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3)*dP(1))#/((sigma)**2)
 						
-						else:
-							if dt == 0.0001:
-								pass
-							else:
-								dt = 0.0001
-								dk.assign(dt)
-		
-							if round(t,6) in species_time:
-								timeDiff = round(t,6)
-		
-							if reac_input['Reactor Type'] == 'tap':
-							
-								if reac_input['Fit Parameters'].lower() == 'true':
-									if t == 0:
-										for k in range(0,int(reac_input['Number of Reactants'])):
-											u_n.vector()[int((all_molecules)*((reac_input['Mesh Size']+1)+additionalCells))+k-(all_molecules)] = -1e-10
-		
-								if doe_form_pulse == False:
-									for k in range(0,int(reac_input['Number of Reactants'])):
-									
-										if species_time[k] == round(t,6):
-											u_n.vector()[int((all_molecules)*((reac_input['Mesh Size']+1)+(meshCells*2**(int(reac_input['Catalyst Mesh Density']))-meshCells)))+k-(all_molecules)] = float(species_pulse_list[k])*Inert_pulse_conc#list_species_pulse[k]
-									# Define: Pulse
-									for k_step in range(0,int(reac_input['Number of Inerts'])):
-										if species_time[-1-k_step] == round(t,6):
-											u_n.vector()[int((all_molecules)*((reac_input['Mesh Size']+1)+(meshCells*2**(int(reac_input['Catalyst Mesh Density']))-meshCells))-1-k_step)] = float(species_pulse_list[-1-k_step])*Inert_pulse_conc###??? Added the porosity contribution
-								
+						#except UnboundLocalError:
+						#	w_temp_2 = Expression('1',degree=0) 
+						#	w_temp2_2 = interpolate(w_temp_2,V_du)
+						#	w4_2 = project(w_temp2_2,V_du)		
+						jfunc_2 = assemble( inner( (2*(TAPobject_data.reactor_species.gasses[k].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159*( u_n[knum])), Sw3/Constant(0.00758*2*0.999341) ) * dP(1) )
+						#jfunc_2 = assemble(  (2*(TAPobject_data.reactor_species.gasses[k].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159*( u_n[knum])), Sw3/Constant(0.00758*2*0.999341) ) * dP(1) 
+						#jfunc_2 = assemble(inner(u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3,u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3)*dP(1))#/((sigma)**2)
 
-	 							#############################################################
-								################### STORE THIN-ZONE DATA ####################
-								#############################################################
+				if TAPobject_data.thermodynamic_constraints == True and t == 0:
+					w_temp = {}
+					w_temp2 = {}
+					w4 = {}
+					tempFunc = {}
+
+					for kip in thermoReactions.keys():
+						w_temp[kip] = Expression(str(reactor_kinetics_input['thermo values'][kip]),degree=0) # deltaG = sum(-R*T*ln(kf/kb))
+						w_temp2[kip] = interpolate(w_temp[kip],V_du)
+						w4[kip] = project(w_temp2[kip],V_du)		
+						thermoWeight = 1e-2	
+
+						for jnum,jval in enumerate(thermoReactions[kip]):
+																				
+							if jnum == 0:
+								tempFunc[kip] = thermoStoich[kip][jnum]*(-0.008314*reac_input['Reactor Temperature'])*ln(r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
+							else:
+								tempFunc[kip] += thermoStoich[kip][jnum]*(-0.008314*reac_input['Reactor Temperature'])*ln(r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
+
+						tempFunc[kip] = (tempFunc[kip]-w4[kip])*thermoWeight
+						jfunc_2 += assemble(inner(tempFunc[kip],tempFunc[kip])*dx())
+						#jfunc_2 += assemble(inner(tempFunc,tempFunc)*dx())
+						print('Simulated Thermo Value')
+						print(jfunc_2)
+
+
+			#flux_data[pulse_number]['time'].append(t)
+			#for knum,k in enumerate(list(TAPobject_data.reactor_species.gasses.keys())):
+			#	flux_data[pulse_number][k].append( 2*(TAPobject_data.reactor_species.gasses[k].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159*( u_n.vector().get_local()[(all_species)+knum]))
+			#for knum,k in enumerate(list(TAPobject_data.reactor_species.inert_gasses.keys())):
+			#	flux_data[pulse_number][k].append( 2*(TAPobject_data.reactor_species.inert_gasses[k].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159*( u_n.vector().get_local()[all_species+len(TAPobject_data.reactor_species.gasses)+len(TAPobject_data.reactor_species.adspecies)+knum]))
+			
+			#graph_data['conVtime_'+str(k)].append((new_val))
+
+			if round(t,6) not in species_time:
+				try:
+					if TAPobject_data.tangent_linear_sensitivity == True or TAPobject_data.adjoint_sensitivitiy == True or TAPobject_data.optimize == True:
+						if t > 0.0011+timeDiff:
+							solver.solve()
+						else:
+							solvertemp.solve()
+							if round(t,6) == round(0.001+timeDiff,6):
+								dt = pulse_time/time_steps
+								dk.assign(dt)
+								u_n.assign(u)
+								solver.solve()
+					else:
+						print('test')
+						if t > 0.0011+timeDiff:
+							solver.solve(annotate = False)
+						else:
+							solvertemp.solve(annotate=False)
+							if round(t,6) == round(0.001+timeDiff,6):
+								dt = pulse_time/time_steps
+								dk.assign(dt)
+								u_n.assign(u)
+								solver.solve()
+										
+				except RuntimeError:
+					print('Time Step Failure')
+					sys.exit()
+							
+			else:
+				if dt == 0.0001:
+					pass
+				else:
+					dt = 0.0001
+					dk.assign(dt)
+			
+				if round(t,6) in species_time:
+					timeDiff = round(t,6)
+						
+				try:
+					if TAPobject_data.tangent_linear_sensitivity == True or TAPobject_data.adjoint_sensitivitiy == True or TAPobject_data.optimize == True:
+						solvertemp.solve()
+					else:
+						print('test')
+						solvertemp.solve(annotate = False)
 		
-								if reac_input['Thin-Zone Analysis'].lower() == 'true':
-								
-									if round(t,6) != 0:
-										arrayNew = np.vstack((cat_data['rawData'],u_n.vector().get_local()))
-										cat_data['rawData'] = arrayNew
-									else:
-										cat_data['rawData'] = u_n.vector().get_local()
-'''
+				except RuntimeError:
+					print('Time Step Failure')
+					sys.exit()
+				
+
+			#!#! ADDING INVERSE ANALYSIS
+			if TAPobject_data.tangent_linear_sensitivity == True:
+				for knum,k in enumerate(TAPobject_data.reactor_species.gasses):
+					new_val = (2*(TAPobject_data.reactor_species.gasses[k].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159*( u_n.vector().get_local()[(all_species)+knum]))
+					sensFuncs[k].append(assemble( inner( (2*(TAPobject_data.reactor_species.gasses[k].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159*( u_n[knum])), Sw3/Constant(0.00758*2*0.999341) ) * dP(1) ))
+					#sensFuncs[k].append(assemble( ( inner(u[knum], Sw3/Constant(0.0075000000000000015)) )* dx(1)))
+
+			if TAPobject_data.adjoint_sensitivitiy == True:
+				pass
+				#print()
+				#temp11 = (assemble( ( inner(( (TAPobject_data.reactor_species.gasses[k].inert_diffusion ) * (TAPobject_data.reactor.reactor_radius**2)*3.14159*u_n[0]), Sw3/Constant(0.00758*2*0.999341)) )* dP(1)))
+				#temp12 = (2*(TAPobject_data.reactor_species.gasses[k].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159*( u_n.vector().get_local()[(all_species)+0]))
+				#try:
+				#	print(temp11/temp12)
+				#except:
+				#	pass
+				#print(sensFuncs['CO'][-1])
+			#!#!
+
+			progressBar(t, pulse_time)
+
+			Uvector = as_backend_type(u.vector()).get_local()
+			Uvector[Uvector <= DOLFIN_EPS] = DOLFIN_EPS
+			u.vector().set_local(Uvector)
+			
+			u_n.assign(u)
+				
+			t += dt
+			constantT.assign(round(t,6))
+			time_step += 1
+		print(processTime(start_time))
+
+	if TAPobject_data.optimize == True:
+		rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2)#,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
+		
+		low_bounds = []
+		up_bounds = []
+		
+		for gt in range(0,len(controls)):
+			low_bounds.append(0)
+			up_bounds.append(np.inf)
+		
+		u_opt_2 = minimize(rf_2, bounds = (low_bounds,up_bounds), tol=1e-22, options={"ftol":1e-22,"gtol":1e-22})
+		sys.exit()
+
+	if reac_input['Uncertainty Quantification'].lower() == 'true':
+		start_time = time.time()
+		print()
+		print('Calculating hessian. Could take some time.')
+
+		rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2)# ,hessian_cb_post=hessCB
+
+		rf_2.derivative()
+		utest = []
+		B = []
+		for just in range(0,len(controls)):
+			utest.append(Constant(0))
+
+		for jay_z_num in range(0,len(controls)):
+			utest = []
+			for just in range(0,len(controls)):
+				utest.append(Constant(0))
+			utest[jay_z_num] = Constant(1)
+			H_i = rf_2.hessian(utest)
+			djv = [v.values()[0] for v in H_i]
+			#print(djv)
+			B.append(djv)
+
+		hessian_array = np.array(B)
+
+		B = hessian_array
+
+		print('Finished generating hessian, storing now.')
+		np.savetxt(hessFolder+'/hessian.csv', hessian_array, delimiter=",")
+		try:
+			print('The eigenvalues of the hessian are:')
+			hessEigs = np.linalg.eig(hessian_array)[0]
+			print(hessEigs)
+			#eigenInfo = np.any((a < 0))
+			#if eigenInfo == True:
+			#	print('Not all eigenvalues are positive. If fitting parameters, might want to run longer.')
+			np.savetxt(hessFolder+'/eigenvalues.csv', hessEigs, delimiter=",")
+		except:
+			print('Failed to determine eigenvalues')
+		try:
+			print('Generating Covariance Matrix by Inverting the Hessian')
+			print(B)
+			vx_new = np.linalg.inv(B)
+			np.savetxt(hessFolder+'/covariance.csv', vx_new, delimiter=",")
+
+		except:
+			print('Failed to invert hessian')
+		try:
+			print('The first and second standard deviations of each parameter are:')
+			#print('vx_new value')
+			#print(vx_new)
+			std_1 = np.diagonal(np.sqrt(vx_new))
+			print(std_1)
+			np.savetxt(hessFolder+'/std_1.csv', std_1, delimiter=",")
+			std_2 = np.diagonal(2*np.sqrt(vx_new))
+			print(std_2)
+			np.savetxt(hessFolder+'/std_2.csv', std_2, delimiter=",")
+		except:
+			print('Failed to calculate confidence interval')
+
+
+
+	#!#! ADDING INVERSE ANALYSIS
+	if TAPobject_data.tangent_linear_sensitivity == True:
+		print()
+		start_time = time.time()
+		print('Evaluating Tape with Tangent Linear Method. Could take some time.')
+		tape2.evaluate_tlm()
+		print(processTime(start_time))
+	
+	if TAPobject_data.tangent_linear_sensitivity == True:
+	
+		for numEachSens,eachSens in enumerate(sensFuncs):
+						
+			newList = []
+			for kSensNum, kSens in enumerate(sensFuncs[eachSens]):
+				newValue = kSens.block_variable.tlm_value
+				newList.append(newValue)
+				print(newList)
+				df = pd.DataFrame(newList[:-1])
+				df.to_csv('./dF_'+eachSens+'.csv',header=None,index=False)
+			#np.savetxt('./dF_'+eachSens+'.txt',newList[:-1])
+			#sys.exit()
+	#!#!
+
+	if TAPobject_data.store_flux_data == True or TAPobject_data.store_catalyst_data == True:
+		dumped2 = jsonpickle.encode({1: synthetic_data})
+		with open(TAPobject_data.output_name, 'w', encoding='utf-8') as f:
+			json.dump(dumped2, f, ensure_ascii=False, indent=4)
+		f.close()
+
+		#with open('./synthetic_data.json') as f:
+		#	data = json.loads(f.read())
+		#f.close()
+
+		#sameObject = jsonpickle.decode(data)
+		#sameObject2 = sameObject["1"]
+
+		#fig, ax = plt.subplots()
+		##plt.plot(synthetic_data['time'][0], synthetic_data['CO'][0],label='CO')
+		##plt.plot(synthetic_data['time'][0], synthetic_data['O2'][0],label='O2')
+		##plt.plot(synthetic_data['time'][0], synthetic_data['CO2'][0],label='CO2')
+		#plt.plot(synthetic_data['time'][0], synthetic_data['argon'][0],label='argon')
+		##plt.plot(synthetic_data['time'][0], synthetic_data['helium'][0],label='helium')
+		##plt.plot(synthetic_data['time'][0], synthetic_data['CO-B'][0],label='CO-B')
+		##plt.plot(synthetic_data['time'][0], synthetic_data['O2-B'][0],label='O2-B')
+		##plt.plot(synthetic_data['time'][0], synthetic_data['CO2-B'][0],label='CO2-B')
+		#plt.plot(synthetic_data['time'][0], synthetic_data['argon-B'][0],label='argon-B')
+		##plt.plot(synthetic_data['time'][0], synthetic_data['helium-B'][0],label='helium-B')
+		
+		#plt.legend()
+		#plt.show()

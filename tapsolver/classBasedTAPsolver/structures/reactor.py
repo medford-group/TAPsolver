@@ -50,13 +50,12 @@ class reactor():
 
 	"""
 
-	def __init__(self, zone_lengths = {0: 2.80718, 1: 0.17364, 2: 2.80718}, zone_voids = {0: 0.4, 1: 0.4, 2: 0.4}, reactor_radius = 1.0, temperature = 385.65, total_length = None, catalyst_center_fraction=0):
+	def __init__(self, zone_lengths = {0: 3, 1: 0.06, 2: 3}, zone_voids = {0: 0.4, 1: 0.4, 2: 0.4}, reactor_radius = 1.0, temperature = 385.65, total_length = None, catalyst_center_fraction=0):
 		
 		self.zone_lengths = zone_lengths
 		self.zone_voids = zone_voids
 		self.reactor_radius = reactor_radius
-		self.temperature = temperature
-
+		
 	@property
 	def zone_lengths(self):
 		return self._zone_lengths
@@ -95,10 +94,14 @@ class reactor():
 		return self._reactor_radius
 	@reactor_radius.setter
 	def reactor_radius(self,value):
-		if value <= 0:
-			raise ValueError("Reactor radius must be positive (non-negative ")
-		self._reactor_radius = value
-		self._cross_sectional_radius = (value**2)*3.14159
+		if value == (float or int):
+			if value <= 0:
+				raise ValueError("Reactor radius must be positive (non-negative ")
+			self._reactor_radius = value
+			self._cross_sectional_radius = (value**2)*3.14159
+		else:
+			self._reactor_radius = value
+			self._cross_sectional_radius = (value**2)*3.14159
 
 	@property
 	def cross_sectional_radius(self):
