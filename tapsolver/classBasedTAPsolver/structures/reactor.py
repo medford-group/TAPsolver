@@ -50,7 +50,7 @@ class reactor():
 
 	"""
 
-	def __init__(self, zone_lengths = {0: 3, 1: 0.06, 2: 3}, zone_voids = {0: 0.4, 1: 0.4, 2: 0.4}, reactor_radius = 1.0, temperature = 385.65, total_length = None, catalyst_center_fraction=0):
+	def __init__(self, zone_lengths = {0: 3, 1: 0.06, 2: 3}, zone_voids = {0: 0.4, 1: 0.4, 2: 0.4}, reactor_radius = 1.0, total_length = None, catalyst_center_fraction=0):
 		
 		self.zone_lengths = zone_lengths
 		self.zone_voids = zone_voids

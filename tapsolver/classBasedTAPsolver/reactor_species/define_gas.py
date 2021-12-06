@@ -13,7 +13,7 @@ class define_gas():
 		self.intensity = 0
 		self.delay = 0
 		self.noise = 0 
-		self.std = 0
+		self.sigma = 1
 		self.temperature_used = 0
 
 		self.initial_concentration = 0

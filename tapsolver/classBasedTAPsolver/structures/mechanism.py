@@ -1,4 +1,3 @@
-
 # Copyright 2021, Battelle Energy Alliance, LLC All Rights Reserved
 
 class mechanism():

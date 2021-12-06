@@ -80,8 +80,8 @@ class TAPobject():
 		self.experimental_data = None
 
 		# Simulation precision preferences
-		self.mesh = 200
-		self.catalyst_mesh_density = 4
+		self.mesh = 400
+		self.catalyst_mesh_density = 5
 		
 		# Data storage preferences
 		self.output_name = 'exp_new'
@@ -104,7 +104,7 @@ class TAPobject():
 		# Sensitivity Analysis
 		self.tangent_linear_sensitivity = False
 		self.adjoint_sensitivitiy = False
-		self.optimize = True
+		self.optimize = False
 
 		# Flux graph name
 		self.pulses_graphed = 1

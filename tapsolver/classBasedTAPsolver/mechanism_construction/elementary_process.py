@@ -1,7 +1,7 @@
-
+from .elementary_process_details import elementary_process_details
 # Copyright 2021, Battelle Energy Alliance, LLC All Rights Reserved
 
-class elementary_process():
+class elementary_process(object):
 
 	"""
 	
@@ -19,7 +19,7 @@ class elementary_process():
 
 	"""
 
-	def __init__(self):
-		self.processString = ''
-		self.forward = {}
-		self.backward = {}
+	def __init__(self,processString):
+		self.processString = processString#''
+		self.forward = elementary_process_details()
+		self.backward = elementary_process_details()

@@ -75,35 +75,29 @@ s = define_adspecies()
 s.concentration = 10
 new_reactor_species.add_adspecies('*',s)
 
-new_mechanism.elementary_processes[0] = elementary_process()
-new_mechanism.elementary_processes[0].processString = 'CO + * <-> CO*'
-new_mechanism.elementary_processes[0].forward = elementary_process_details()
-new_mechanism.elementary_processes[0].backward = elementary_process_details()
+new_mechanism.elementary_processes[0] = elementary_process('CO + * <-> CO*')
+new_mechanism.elementary_processes[1] = elementary_process('O2 + 2* <-> 2O*')
+new_mechanism.elementary_processes[2] = elementary_process('CO* + O* <-> 2* + CO2')
 
-new_mechanism.elementary_processes[1] = elementary_process()
-new_mechanism.elementary_processes[1].processString = 'O2 + 2* <-> 2O*'
-new_mechanism.elementary_processes[1].forward = elementary_process_details()
-new_mechanism.elementary_processes[1].backward = elementary_process_details()
+new_mechanism.elementary_processes[0].forward.k = 1
+new_mechanism.elementary_processes[0].backward.k = 1
+new_mechanism.elementary_processes[1].forward.k = 1
+new_mechanism.elementary_processes[1].backward.k = 1
+new_mechanism.elementary_processes[2].forward.k = 1
+new_mechanism.elementary_processes[2].backward.k = 1
 
-new_mechanism.elementary_processes[2] = elementary_process()			
-new_mechanism.elementary_processes[2].processString = 'CO* + O* <-> 2* + CO2'
-new_mechanism.elementary_processes[2].forward = elementary_process_details()
-new_mechanism.elementary_processes[2].backward = elementary_process_details()
 
 mechanism_constructor(new_mechanism)
-
-new_mechanism.elementary_processes[0].forward.k["value"] = 1
-new_mechanism.elementary_processes[0].backward.k["value"] = 1
-new_mechanism.elementary_processes[1].forward.k["value"] = 1
-new_mechanism.elementary_processes[1].backward.k["value"] = 1
-new_mechanism.elementary_processes[2].forward.k["value"] = 1
-new_mechanism.elementary_processes[2].backward.k["value"] = 1
 
 
 TAP_test = TAPobject()
 TAP_test.mechanism = new_mechanism
 TAP_test.reactor_species = new_reactor_species
 TAP_test.reactor = testGen1
+
+save_object(TAP_test,'./TAP_test.json')
+TAP_test = read_TAPobject('./TAP_test.json')
+#sys.exit()
 
 #dumped = jsonpickle.encode({1: testGen1})
 #save_object(testGen1,'./reactor_gen_test.json')
@@ -139,8 +133,8 @@ list_of_variables = ['TAPobject_data.reactor_species.gasses["CO"].mass','TAPobje
 #sys.exit()
 #TAP_test_2.gasses_objective = ['CO','O2','CO2']
 
-for k in range(0,5):
-	TAP_test.parameters_of_interest = ['TAPobject_data.mechanism.elementary_processes[0].forward.k["value"]']
+for k in range(2,5):
+	TAP_test.parameters_of_interest = ['TAPobject_data.mechanism.elementary_processes[0].forward.k']
 	TAP_test.output_name = './exp_new/flux_data_'+str(k)+'.json'
 	TAP_test.reactor_species.temperature = k*365.5#{0:365.5,1:k*365.5}
 	forward_problem(0.02,1,TAP_test)

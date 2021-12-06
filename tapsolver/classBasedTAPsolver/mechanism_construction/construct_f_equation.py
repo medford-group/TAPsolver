@@ -66,16 +66,16 @@ def construct_f_equation(TAPobject_data: TAPobject):
 	def make_g(elementary_process,direction):
 		"""Add free energy reaction term for the elementary process specified"""
 		if direction == 'f':
-			return "standard_parameters['kbt']*TAPobject_data.reactor_species.temperature/standard_parameters['h']*exp(-TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.Ga['value']/(standard_parameters['kbt']*TAPobject_data.reactor_species.temperature))"
+			return "standard_parameters['kbt']*TAPobject_data.reactor_species.temperature/standard_parameters['h']*exp(-TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.Ga/(standard_parameters['kbt']*TAPobject_data.reactor_species.temperature))"
 		else:
-			return "standard_parameters['kbt']*TAPobject_data.reactor_species.temperature/standard_parameters['h']*exp(-(TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.Ga['value'] - TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.dG['value'])/(standard_parameters['kbt']*TAPobject_data.reactor_species.temperature))"
+			return "standard_parameters['kbt']*TAPobject_data.reactor_species.temperature/standard_parameters['h']*exp(-(TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.Ga - TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.dG)/(standard_parameters['kbt']*TAPobject_data.reactor_species.temperature))"
 			
 	def make_arr(elementary_process,direction):
 		"""Add activation/Arrhenius based reaction term for the elementary process specified"""
 		if direction == 'f':
-			return "TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.Ao['value']*exp(-TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.Ea['value']/(standard_parameters['Rgas']*TAPobject_data.reactor_species.temperature))"
+			return "TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.Ao*exp(-TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.Ea/(standard_parameters['Rgas']*TAPobject_data.reactor_species.temperature))"
 		else:
-			return "TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].backward.Ao['value']*exp(-TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].backward.Ea['value']/(standard_parameters['Rgas']*TAPobject_data.reactor_species.temperature))"
+			return "TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].backward.Ao*exp(-TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].backward.Ea/(standard_parameters['Rgas']*TAPobject_data.reactor_species.temperature))"
 		
 	def make_link(elementary_process,direction):
 		"""Add linked based rate constant for the elementary process specified"""
@@ -84,9 +84,9 @@ def construct_f_equation(TAPobject_data: TAPobject):
 	def make_constant(elementary_process,direction):
 		"""Add rate constant for the elementary process specified"""
 		if direction == 'f':
-			return "TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.k['value']"
+			return "TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.k"
 		else:
-			return "TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].backward.k['value']"
+			return "TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].backward.k"
 
 	# Read through the stoichiometric matrix (i.e. rate_array) and define the associated system of odes for the mechanism
 	if TAPobject_data.mechanism.reactants != []:
