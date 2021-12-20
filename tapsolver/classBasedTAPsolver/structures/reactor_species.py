@@ -107,6 +107,7 @@ class reactor_species():
 			if value <= 0:
 				raise ValueError("Reference catalyst diffusion must be positive (non-negative")
 			self._catalyst_diffusion = value
+			
 			for j in self.gasses:
 				try:
 					self.gasses[j].catalyst_diffusion = calculate_diffusion_coefficient(self._catalyst_diffusion, self.reference_mass, self.reference_temperature, self.temperature, self.gasses[j].mass)
@@ -193,22 +194,23 @@ class reactor_species():
 		self._temperature = value
 		
 		for j in self.gasses:
-			if self._temperature != {}:
-				try:
-					self.gasses[j].inert_diffusion = calculate_diffusion_coefficient(self.inert_diffusion, self.reference_mass, self.reference_temperature, self._temperature, self.gasses[j].mass)
-					self.gasses[j].catalyst_diffusion = calculate_diffusion_coefficient(self.catalyst_diffusion, self.reference_mass, self.reference_temperature, self._temperature, self.gasses[j].mass)
-				except:
-					self.gasses[j].inert_diffusion = calculate_diffusion_coefficient(self.inert_diffusion, self.reference_mass, self.reference_temperature, self.temperature[self.gasses[j].temperature_used], self.gasses[j].mass)
-					self.gasses[j].catalyst_diffusion = calculate_diffusion_coefficient(self.catalyst_diffusion, self.reference_mass, self.reference_temperature, self.temperature[self.gasses[j].temperature_used], self.gasses[j].mass)
+			
+			if type(self._temperature) != dict:
+				self.gasses[j].inert_diffusion = calculate_diffusion_coefficient(self.inert_diffusion, self.reference_mass, self.reference_temperature, self._temperature, self.gasses[j].mass)
+				self.gasses[j].catalyst_diffusion = calculate_diffusion_coefficient(self.catalyst_diffusion, self.reference_mass, self.reference_temperature, self._temperature, self.gasses[j].mass)
+			
+			elif type(self._temperature) != {}:
+				self.gasses[j].inert_diffusion = calculate_diffusion_coefficient(self.inert_diffusion, self.reference_mass, self.reference_temperature, self._temperature[self.gasses[j].temperature_used], self.gasses[j].mass)
+				self.gasses[j].catalyst_diffusion = calculate_diffusion_coefficient(self.catalyst_diffusion, self.reference_mass, self.reference_temperature, self._temperature[self.gasses[j].temperature_used], self.gasses[j].mass)
 		
 		for j in self.inert_gasses:
-			if self._temperature != {}:
-				try:
-					self.inert_gasses[j].inert_diffusion = calculate_diffusion_coefficient(self.inert_diffusion, self.reference_mass, self.reference_temperature, self._temperature, self.inert_gasses[j].mass)
-					self.inert_gasses[j].catalyst_diffusion = calculate_diffusion_coefficient(self.catalyst_diffusion, self.reference_mass, self.reference_temperature, self._temperature, self.inert_gasses[j].mass)
-				except:
-					#print(self.inert_gasses[j].temperature_used)
-					self.inert_gasses[j].inert_diffusion = calculate_diffusion_coefficient(self.inert_diffusion, self.reference_mass, self.reference_temperature, self.temperature[self.inert_gasses[j].temperature_used], self.inert_gasses[j].mass)
-					self.inert_gasses[j].catalyst_diffusion = calculate_diffusion_coefficient(self.catalyst_diffusion, self.reference_mass, self.reference_temperature, self.temperature[self.inert_gasses[j].temperature_used], self.inert_gasses[j].mass)
+			
+			if type(self._temperature) != dict:
+				self.inert_gasses[j].inert_diffusion = calculate_diffusion_coefficient(self.inert_diffusion, self.reference_mass, self.reference_temperature, self._temperature, self.inert_gasses[j].mass)
+				self.inert_gasses[j].catalyst_diffusion = calculate_diffusion_coefficient(self.catalyst_diffusion, self.reference_mass, self.reference_temperature, self._temperature, self.inert_gasses[j].mass)
+			
+			elif type(self._temperature) != {}:
+				self.inert_gasses[j].inert_diffusion = calculate_diffusion_coefficient(self.inert_diffusion, self.reference_mass, self.reference_temperature, self._temperature[self.inert_gasses[j].temperature_used], self.inert_gasses[j].mass)
+				self.inert_gasses[j].catalyst_diffusion = calculate_diffusion_coefficient(self.catalyst_diffusion, self.reference_mass, self.reference_temperature, self._temperature[self.inert_gasses[j].temperature_used], self.inert_gasses[j].mass)
 				
-		self._temperature = value
+		

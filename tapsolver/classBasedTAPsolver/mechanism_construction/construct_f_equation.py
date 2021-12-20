@@ -76,10 +76,6 @@ def construct_f_equation(TAPobject_data: TAPobject):
 			return "TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.Ao*exp(-TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.Ea/(standard_parameters['Rgas']*TAPobject_data.reactor_species.temperature))"
 		else:
 			return "TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].backward.Ao*exp(-TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].backward.Ea/(standard_parameters['Rgas']*TAPobject_data.reactor_species.temperature))"
-		
-	def make_link(elementary_process,direction):
-		"""Add linked based rate constant for the elementary process specified"""
-		return 'r_links[kineticLinks["k'+direction+str(parameter_number)+'"]]'
 
 	def make_constant(elementary_process,direction):
 		"""Add rate constant for the elementary process specified"""
@@ -87,6 +83,10 @@ def construct_f_equation(TAPobject_data: TAPobject):
 			return "TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.k"
 		else:
 			return "TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].backward.k"
+
+	def make_link(elementary_process):
+		"""Add rate constant for the elementary process specified"""
+		return "TAPobject_data.mechanism.kinetic_links["+str(elementary_process)+"]"
 
 	# Read through the stoichiometric matrix (i.e. rate_array) and define the associated system of odes for the mechanism
 	if TAPobject_data.mechanism.reactants != []:
@@ -110,11 +110,10 @@ def construct_f_equation(TAPobject_data: TAPobject):
 				new_neg = make_g(k,'f')
 			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'E':
 				new_neg = make_arr(k,'f')
-			#elif TAPobject_data.mechanism.elementary_processes[k].forward.link['variable'] != None:
-			#	#elif k in linkForward:
-			#	new_neg = make_link(k,'f')
 			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'k':
 				new_neg = make_constant(k,'f')
+			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'link':
+				new_neg = make_link(TAPobject_data.mechanism.elementary_processes[k].forward.link)
 				
 			for j,v in enumerate(neg):
 				new_neg = new_neg+"*(u_d['u_"+v+"']**"+str(abs(val_neg[j]))+")"
@@ -123,10 +122,11 @@ def construct_f_equation(TAPobject_data: TAPobject):
 				new_pos = make_g(k,'b')
 			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'E':
 				new_pos = make_arr(k,'b')
-			#elif TAPobject_data.mechanism.elementary_processes[k].backward.link['variable'] != 0:
-			#	new_pos = make_link(k,'b')
 			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'k':
 				new_pos = make_constant(k,'b')
+			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'link':
+				new_pos = make_link(TAPobject_data.mechanism.elementary_processes[k].backward.link)
+
 			else:
 				irr = True
 
@@ -165,10 +165,11 @@ def construct_f_equation(TAPobject_data: TAPobject):
 				new_neg = make_g(k,'f')
 			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'E':
 				new_neg = make_arr(k,'f')
-			#elif TAPobject_data.mechanism.elementary_processes[k].forward.link['variable'] != None:
-			#	new_neg = make_link(k,'f')
 			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'k':
 				new_neg = make_constant(k,'f')
+			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'link':
+				new_neg = make_link(TAPobject_data.mechanism.elementary_processes[k].forward.link)
+
 
 			for j,v in enumerate(neg):
 				new_neg = new_neg+"*(u_nd['u_n"+v+"']**"+str(abs(val_neg[j]))+")"
@@ -177,10 +178,11 @@ def construct_f_equation(TAPobject_data: TAPobject):
 				new_pos = make_g(k,'b')
 			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'E':
 				new_pos = make_arr(k,'b')
-			#elif TAPobject_data.mechanism.elementary_processes[k].backward.link['variable'] != 0:
-			#	new_pos = make_link(k,'b')
 			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'k':
 				new_pos = make_constant(k,'b')
+			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'link':
+				new_pos = make_link(TAPobject_data.mechanism.elementary_processes[k].backward.link)
+
 			else:
 				irr = True
 					

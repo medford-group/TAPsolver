@@ -13,5 +13,6 @@ class elementary_process_details():
 		self.Ea = None
 		self.Ga = None
 		self.dG = None
+		self.link = None
 		#self.link = {'variable':0}
 		self.use = 'k' # or 'E' or 'G' or 'l' or []

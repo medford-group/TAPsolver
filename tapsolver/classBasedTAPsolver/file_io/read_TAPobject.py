@@ -40,6 +40,8 @@ def read_TAPobject(file_name):
 		new_gas.catalyst_diffusion = sameObject2.reactor_species.gasses[j].catalyst_diffusion
 		new_gas.intensity = sameObject2.reactor_species.gasses[j].intensity
 		new_gas.delay = sameObject2.reactor_species.gasses[j].delay
+		new_gas.noise = sameObject2.reactor_species.gasses[j].noise
+		new_gas.sigma = sameObject2.reactor_species.gasses[j].sigma
 		new_gas.initial_concentration = sameObject2.reactor_species.gasses[j].initial_concentration
 		new_gas.inlet_concentration = sameObject2.reactor_species.gasses[j].inlet_concentration
 		new_gas.mass = sameObject2.reactor_species.gasses[j].mass
@@ -53,6 +55,8 @@ def read_TAPobject(file_name):
 		new_gas.catalyst_diffusion = sameObject2.reactor_species.inert_gasses[j].catalyst_diffusion
 		new_gas.intensity = sameObject2.reactor_species.inert_gasses[j].intensity
 		new_gas.delay = sameObject2.reactor_species.inert_gasses[j].delay
+		new_gas.noise = sameObject2.reactor_species.inert_gasses[j].noise
+		new_gas.sigma = sameObject2.reactor_species.inert_gasses[j].sigma
 		new_gas.initial_concentration = sameObject2.reactor_species.inert_gasses[j].initial_concentration
 		new_gas.inlet_concentration = sameObject2.reactor_species.inert_gasses[j].inlet_concentration
 		new_gas.mass = sameObject2.reactor_species.inert_gasses[j].mass
@@ -62,7 +66,8 @@ def read_TAPobject(file_name):
 	for j in sameObject2.reactor_species.adspecies:
 		new_adspecies = define_adspecies()
 		new_adspecies.concentration = sameObject2.reactor_species.adspecies[j].concentration
-
+		new_adspecies.noise = sameObject2.reactor_species.adspecies[j].noise
+		new_adspecies.sigma = sameObject2.reactor_species.adspecies[j].sigma
 		loaded_TAPobject.reactor_species.add_adspecies(j,new_adspecies)
 
 	loaded_TAPobject.reactor_species.inert_diffusion = sameObject2.reactor_species.inert_diffusion

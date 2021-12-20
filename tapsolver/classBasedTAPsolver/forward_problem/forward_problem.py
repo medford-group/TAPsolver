@@ -44,11 +44,9 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 	#print(TAPobject_data.output_name)
 	#sys.exit()
 	if TAPobject_data.data_name != None:
-		with open(TAPobject_data.data_name) as f:
-			data = json.loads(f.read())
-			output_data = jsonpickle.decode(data)['1']
-		f.close()
-	TAPobject_data.experimental_data = output_data
+		
+		TAPobject_data.experimental_data = read_experimental_data_object(TAPobject_data.data_name)#output_data
+		output_data = read_experimental_data_object(TAPobject_data.data_name)
 
 	species_time = []
 	for j in TAPobject_data.reactor_species.gasses:
@@ -80,22 +78,22 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 		TAPobject_data.reactor_species.gasses[k].delay = Constant(TAPobject_data.reactor_species.gasses[k].delay)
 		TAPobject_data.reactor_species.gasses[k].intensity = Constant(TAPobject_data.reactor_species.gasses[k].intensity)
 		total_species += 1
+	for k in TAPobject_data.reactor_species.adspecies:
+		species_order_dictionary[k] = total_species
+		TAPobject_data.reactor_species.adspecies[k].concentration = Constant(TAPobject_data.reactor_species.adspecies[k].concentration)
+		total_species += 1
 	for k in TAPobject_data.reactor_species.inert_gasses:
 		species_order_dictionary[k] = total_species
 		TAPobject_data.reactor_species.inert_gasses[k].mass = Constant(TAPobject_data.reactor_species.inert_gasses[k].mass)
 		TAPobject_data.reactor_species.inert_gasses[k].delay = Constant(TAPobject_data.reactor_species.inert_gasses[k].delay)
 		TAPobject_data.reactor_species.inert_gasses[k].intensity = Constant(TAPobject_data.reactor_species.inert_gasses[k].intensity)	
 		total_species += 1
-	for k in TAPobject_data.reactor_species.adspecies:
-		species_order_dictionary[k] = total_species
-		TAPobject_data.reactor_species.adspecies[k].concentration = Constant(TAPobject_data.reactor_species.adspecies[k].concentration)
-		total_species += 1
 	
 	if TAPobject_data.mechanism.reactants != []:
 		for k,z in enumerate(TAPobject_data.mechanism.rate_array):
 			if TAPobject_data.mechanism.elementary_processes[k].forward.use == 'G':
 				TAPobject_data.mechanism.elementary_processes[k].forward.Ga = Constant(TAPobject_data.mechanism.elementary_processes[k].forward.Ga)
-				TAPobject_data.mechanism.elementary_processes[k].forward.dG = Constant(TAPobject_data.mechanism.elementary_processes[k].forward.dG)				
+				TAPobject_data.mechanism.elementary_processes[k].forward.dG = Constant(TAPobject_data.mechanism.elementary_processes[k].forward.dG)
 			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'E':
 				TAPobject_data.mechanism.elementary_processes[k].forward.Ao = Constant(TAPobject_data.mechanism.elementary_processes[k].forward.Ao)
 				TAPobject_data.mechanism.elementary_processes[k].forward.Ea = Constant(TAPobject_data.mechanism.elementary_processes[k].forward.Ea)
@@ -109,6 +107,10 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 				TAPobject_data.mechanism.elementary_processes[k].backward.Ea = Constant(TAPobject_data.mechanism.elementary_processes[k].backward.Ea)
 			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'k':
 				TAPobject_data.mechanism.elementary_processes[k].backward.k = Constant(TAPobject_data.mechanism.elementary_processes[k].backward.k)
+		
+		if TAPobject_data.mechanism.kinetic_links != {}:
+			for j in TAPobject_data.mechanism.kinetic_links:
+				TAPobject_data.mechanism.kinetic_links[j] = Constant(TAPobject_data.mechanism.kinetic_links[j])
 
 	time_steps = pulse_time*1000
 
@@ -118,11 +120,15 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 	dx_r = TAPobject_data.reactor.total_length/TAPobject_data.mesh
 	point_volume = dx_r*TAPobject_data.reactor.cross_sectional_radius*TAPobject_data.reactor.zone_voids[0]
 	reference_pulse_concentration = TAPobject_data.reactor_species.reference_pulse_size/point_volume
-	
+	##### Making sure that I define the controls
 	controls = []
-	for j in TAPobject_data.parameters_of_interest:
-		#controls.append(Control(TAPobject_data.reactor_species.temperature[j_temp_number]))
-		controls.append(Control(TAPobject_data.mechanism.elementary_processes[0].forward.k))
+	if TAPobject_data.optimize == True or TAPobject_data.tangent_linear_sensitivity == True:
+		for j in TAPobject_data.parameters_of_interest:
+			#controls.append(Control(TAPobject_data.reactor_species.temperature[j_temp_number]))
+			#controls.append(Control(TAPobject_data.mechanism.elementary_processes[0].forward.k))
+			controls.append(Control(eval(j)))
+	#controls = [Control(TAPobject_data.reactor_species.inert_gasses['Ar'].intensity)]
+	#controls = [Control(TAPobject_data.mechanism.elementary_processes[0].forward.k)]
 
 	mesh = UnitIntervalMesh(int(TAPobject_data.mesh))
 
@@ -270,20 +276,20 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 
 	Fpulses = ''
 	for knum,k in enumerate(TAPobject_data.reactor_species.gasses):
-		TAPobject_data.reactor_species.gasses[k].intensity = Constant(TAPobject_data.reactor_species.gasses[k].intensity)
+		##TAPobject_data.reactor_species.gasses[k].intensity = Constant(TAPobject_data.reactor_species.gasses[k].intensity)
 		#Fpulses += "-TAPobject_data.reactor_species.gasses['"+k+"'].intensity*reference_pulse_concentration*b0Test2*exp(-(constantT - round(TAPobject_data.reactor_species.gasses['"+k+"'].delay+0.001,6))*(constantT - round(TAPobject_data.reactor_species.gasses['"+k+"'].delay+0.001,6))/(4*0.00000000001))*v_d['v_"+k+"']*dx"
 		Fpulses += "-TAPobject_data.reactor_species.gasses['"+k+"'].intensity*reference_pulse_concentration*b0Test2*exp(-(constantT - round(TAPobject_data.reactor_species.gasses['"+k+"'].delay,6))*(constantT - round(TAPobject_data.reactor_species.gasses['"+k+"'].delay,6))/(0.00000000001))*v_d['v_"+k+"']*dx"
 		if knum < len(TAPobject_data.reactor_species.gasses)-1:
 			Fpulses += ' + '
 	for knum,k in enumerate(TAPobject_data.reactor_species.inert_gasses):
-		TAPobject_data.reactor_species.inert_gasses[k].intensity = Constant(TAPobject_data.reactor_species.inert_gasses[k].intensity)
+		##TAPobject_data.reactor_species.inert_gasses[k].intensity = Constant(TAPobject_data.reactor_species.inert_gasses[k].intensity)
 		#Fpulses += "-TAPobject_data.reactor_species.inert_gasses['"+k+"'].intensity*reference_pulse_concentration*b0Test2*exp(-(constantT - round(TAPobject_data.reactor_species.inert_gasses['"+k+"'].delay+0.001,6))*(constantT - round(TAPobject_data.reactor_species.inert_gasses['"+k+"'].delay+0.001,6))/(4*0.00000000001))*v_d['v_"+k+"']*dx"
 		Fpulses += "-TAPobject_data.reactor_species.inert_gasses['"+k+"'].intensity*reference_pulse_concentration*b0Test2*exp(-(constantT - round(TAPobject_data.reactor_species.inert_gasses['"+k+"'].delay,6))*(constantT - round(TAPobject_data.reactor_species.inert_gasses['"+k+"'].delay,6))/(0.00000000001))*v_d['v_"+k+"']*dx"
 		if knum < len(TAPobject_data.reactor_species.inert_gasses)-1:
 			Fpulses += ' + '
 
 	for knum,k in enumerate(TAPobject_data.reactor_species.adspecies):
-		TAPobject_data.reactor_species.adspecies[k].concentration = Constant(TAPobject_data.reactor_species.adspecies[k].concentration)
+		##TAPobject_data.reactor_species.adspecies[k].concentration = Constant(TAPobject_data.reactor_species.adspecies[k].concentration)
 		Fpulses += "-TAPobject_data.reactor_species.adspecies['"+k+"'].concentration*exp(-(constantT)*(constantT)/(0.00000000001))*v_d['v_"+k+"']*dx"
 		if knum < len(TAPobject_data.reactor_species.adspecies)-1:
 			Fpulses += ' + '
@@ -387,37 +393,39 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 	#if TAPobject_data.output_name != None:
 	#	path_4 = './'+TAPobject_data.output_name+'/'
 	#	print(path_4)
-	#	try: 
-	#		os.mkdir(path_4)
-	#	except OSError:  
-	#		pass
-	#	else:  
-	#		pass
-
+	try: 
+		os.mkdir('./'+TAPobject_data.output_name)
+	except OSError:  
+		pass
+	
 	#output_data = curveFitting(pulse_time,TAPobject_data)
 	#TAPobject_data.reactor_species.gasses['CO'].sigma = 0.5
 
 	#inverse_results = pd.DataFrame(index=range(1),columns=range(len()))
 	
 	def derivCB(j,dj,m):
-		it_times.append(time.time())
-		j_values.append(j)
-		djv = [v.values()[0] for v in dj]
-		dj_values.append(djv)
-		mv = [v.values()[0] for v in m]
-		x_values.append(mv)
-		print("Derivative Time: "+str(time.time() - start_time))
-		with open('./'+reac_input['Output Folder Name']+'_folder/fitting/optIter.txt', 'w') as f:
-			f.write("Objective Value: "+str(j_values))
-			f.write('\n')
-			f.write("Change: "+str(dj_values))
-			f.write('\n')
-			f.write("Constants: "+str(x_values))
 
-			f.close
-		print(j)
-		print(djv)
-		print(mv)
+		djv = [v.values()[0] for v in dj]
+		mv = [v.values()[0] for v in m]
+		print('Step Time: '+str(time.time()))
+		print('Objective Value: '+str(j))
+		print('Derivative Values '+str(djv))
+		print('Parameter Values: '+str(mv))
+		
+
+	#def derivCB(j,dj,m):
+	#	print("Derivative Time: "+str(time.time() - start_time))
+	#	with open('./'+reac_input['Output Folder Name']+'_folder/fitting/optIter.txt', 'w') as f:
+	#		f.write("Objective Value: "+str(j_values))
+	#		f.write('\n')
+	#		f.write("Change: "+str(dj_values))
+	#		f.write('\n')
+	#		f.write("Constants: "+str(x_values))
+#
+#	#		f.close
+#	#	print(j)
+#	#	print(djv)
+	#	print(mv)
 
 	
 	def hessCB(j,dj,m):
@@ -439,7 +447,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 		print(j)
 		print(djv)
 		print(mv)
-
+	test_tlm_evaluation = []
 
 	for k_pulse in range(0,pulse_number):
 		print('Pulse #: '+str(k_pulse))
@@ -462,16 +470,14 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 
 		while t <= pulse_time:
 
-			synthetic_data['time'][k_pulse].append(t)
+			synthetic_data['time'][k_pulse].append(round(t,6))
 			if TAPobject_data.store_flux_data == True:
 				for knum,k in enumerate(TAPobject_data.reactor_species.gasses):
 					synthetic_data[k][k_pulse].append(2*(float(TAPobject_data.reactor_species.gasses[k].inert_diffusion) /(float(dx_r))) * (float(TAPobject_data.reactor.reactor_radius)**2)*3.14159*( float(u_n.vector().get_local()[(all_species)+knum])))
 				for knum,k in enumerate(TAPobject_data.reactor_species.inert_gasses):
 					synthetic_data[k][k_pulse].append(2*(float(TAPobject_data.reactor_species.inert_gasses[k].inert_diffusion) /(float(dx_r))) * (float(TAPobject_data.reactor.reactor_radius)**2)*3.14159*( float(u_n.vector().get_local()[all_species+len(TAPobject_data.reactor_species.gasses)+len(TAPobject_data.reactor_species.adspecies)+knum])))		
 			if TAPobject_data.store_catalyst_data == True:
-				print()
 				for knum,k in enumerate(TAPobject_data.reactor_species.adspecies):
-					print(float(u_n.vector().get_local()[(catalyst_center_cell*(len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.adspecies) + len(TAPobject_data.reactor_species.inert_gasses)))+all_species+len(TAPobject_data.reactor_species.gasses)+knum]))
 					synthetic_data[k][k_pulse].append(float(u_n.vector().get_local()[(catalyst_center_cell*(len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.adspecies) + len(TAPobject_data.reactor_species.inert_gasses)))+all_species+len(TAPobject_data.reactor_species.gasses)+knum]))
 					
 			if TAPobject_data.store_catalyst_data == True:
@@ -481,23 +487,31 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 
 			if TAPobject_data.optimize == True:
 				for k_fitting in (TAPobject_data.gasses_objective): #  and TAPobject_data.inert_gasses_objective
-					if round(t,6) in output_data[k_fitting]['times']:
-						c_exp = output_data[k_fitting]['values'][output_data[k_fitting]['times'].index(round(t,6))]
+					print(k_fitting)
+					if round(t,6) in output_data['time'][0]:
+						c_exp = output_data[k_fitting][0][output_data['time'][0].index(round(t,6))]
+						#c_exp = output_data[k_fitting]['values'][output_data[k_fitting]['times'].index(round(t,6))]
 						slope = (-c_exp)/(1/TAPobject_data.mesh)
 						intercept = c_exp - ((1-(1/TAPobject_data.mesh))*slope)
 						w_new = Expression('A*x[0]+B',A=Constant(slope),B=Constant(intercept),degree=0)
 						w_new2 = interpolate(w_new,V_du)
 						w3 = project(w_new2,V_du)
-
-						try:
-							jfunc_2 += assemble(inner(u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3,u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3)*dP(1))/((TAPobject_data.reactor_species.gasses[k_fitting].sigma)**2)
 						
+						try:
+							if k_fitting in TAPobject_data.reactor_species.gasses:
+								jfunc_2 += assemble(inner(u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3,u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3)*dP(1))/((TAPobject_data.reactor_species.gasses[k_fitting].sigma)**2)
+							elif k_fitting in TAPobject_data.reactor_species.inert_gasses:
+								jfunc_2 += assemble(inner(u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.inert_gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3,u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.inert_gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3)*dP(1))/((TAPobject_data.reactor_species.inert_gasses[k_fitting].sigma)**2)
+								
 						except UnboundLocalError:
 							w_temp_2 = Expression('1',degree=0) 
 							w_temp2_2 = interpolate(w_temp_2,V_du)
 							w4_2 = project(w_temp2_2,V_du)	
-							jfunc_2 = assemble(inner(u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3,u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3)*dP(1))/((TAPobject_data.reactor_species.gasses[k_fitting].sigma)**2)	
-						
+							if k_fitting in TAPobject_data.reactor_species.gasses:
+								jfunc_2 = assemble(inner(u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3,u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3)*dP(1))/((TAPobject_data.reactor_species.gasses[k_fitting].sigma)**2)	
+							elif k_fitting in TAPobject_data.reactor_species.inert_gasses:
+								jfunc_2 = assemble(inner(u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.inert_gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3,u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.inert_gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3)*dP(1))/((TAPobject_data.reactor_species.inert_gasses[k_fitting].sigma)**2)	
+								
 				if TAPobject_data.thermodynamic_constraints == True and t == 0:
 					w_temp = {}
 					w_temp2 = {}
@@ -583,8 +597,13 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 			#!#! ADDING INVERSE ANALYSIS
 			if TAPobject_data.tangent_linear_sensitivity == True:
 				for knum,k in enumerate(TAPobject_data.reactor_species.gasses):
-					new_val = (2*(TAPobject_data.reactor_species.gasses[k].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159*( u_n.vector().get_local()[(all_species)+knum]))
-					sensFuncs[k].append(assemble( inner( (2*(TAPobject_data.reactor_species.gasses[k].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159*( u_n[knum])), Sw3/Constant(0.00758*2*0.999341) ) * dP(1) ))
+					new_val = 2*(TAPobject_data.reactor_species.gasses[k].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159
+					#print((2*(TAPobject_data.reactor_species.gasses[k].inert_diffusion /(dx_r)) * (float(TAPobject_data.reactor.reactor_radius)**2)*3.14159*( u_n.vector().get_local()[(all_species)+knum])))
+					#print(assemble(inner((new_val*(u_n[knum])), Sw3)*dP(1) )) #/Constant(0.00758*2*0.999341)
+					#sensFuncs[k].append(assemble( inner( (2*(TAPobject_data.reactor_species.gasses[k].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159*( u_n[knum])), Sw3/Constant(0.00758*2*0.999341) ) * dP(1) ))
+					if k == 'CO':
+						test_tlm_evaluation.append(assemble(inner((new_val*(u_n[knum])), Sw3)*dP(1) ))
+					sensFuncs[k].append(assemble(inner((new_val*(u_n[knum])), Sw3)*dP(1) ))
 					#sensFuncs[k].append(assemble( ( inner(u[knum], Sw3/Constant(0.0075000000000000015)) )* dx(1)))
 
 			if TAPobject_data.adjoint_sensitivitiy == True:
@@ -613,7 +632,8 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 		print(processTime(start_time))
 
 	if TAPobject_data.optimize == True:
-		rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2)#,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
+		reference_time = time.time()
+		rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2,derivative_cb_post=derivCB)#,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
 		
 		low_bounds = []
 		up_bounds = []
@@ -625,7 +645,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 		u_opt_2 = minimize(rf_2, bounds = (low_bounds,up_bounds), tol=1e-22, options={"ftol":1e-22,"gtol":1e-22})
 		sys.exit()
 
-	if True == False:#if reac_input['Uncertainty Quantification'].lower() == 'true':
+	if TAPobject_data.uncertainty == True:
 		start_time = time.time()
 		print()
 		print('Calculating hessian. Could take some time.')
@@ -701,37 +721,62 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 			for kSensNum, kSens in enumerate(sensFuncs[eachSens]):
 				newValue = kSens.block_variable.tlm_value
 				newList.append(newValue)
-				print(newList)
 				df = pd.DataFrame(newList[:-1])
 				df.to_csv('./dF_'+eachSens+'.csv',header=None,index=False)
 			#np.savetxt('./dF_'+eachSens+'.txt',newList[:-1])
 			#sys.exit()
+		print(test_tlm_evaluation)
+		return sensFuncs
 	#!#!
 
+	if 	TAPobject_data.gas_noise == True:
+		beta_2 = 0.00270
+		w_2 = 2*3.14159*70
+		for k in synthetic_data:
+			if k != 'time':
+				for j in synthetic_data[k]:
+					for z in range(0,len(synthetic_data[k][j])):
+						try:
+							synthetic_data[k][j][z] += np.random.normal(0,1)*TAPobject_data.reactor_species.gasses[k].noise# +beta_2*np.cos(w_2*(k*dt))
+							
+						except:
+							try:
+								synthetic_data[k][j][z] += np.random.normal(0,1)*TAPobject_data.reactor_species.inert_gasses[k].noise# +beta_2*np.cos(w_2*(k*dt))
+							except:
+								pass
+
+	if	TAPobject_data.surface_noise == True:
+		beta_2 = 0.00270
+		w_2 = 2*3.14159*70
+		for k in synthetic_data:
+			if k != 'time':
+				for j in synthetic_data[k]:
+					for z in range(0,len(synthetic_data[k][j])):
+						try:
+							synthetic_data[k][j][z] += np.random.normal(0,1)*TAPobject_data.reactor_species.adspecies[k].noise# +beta_2*np.cos(w_2*(k*dt))
+						except:
+							pass
 	if TAPobject_data.store_flux_data == True or TAPobject_data.store_catalyst_data == True:
-		dumped2 = jsonpickle.encode({1: synthetic_data})
-		#with open(TAPobject_data.output_name, 'w', encoding='utf-8') as f:
-		#	json.dump(dumped2, f, ensure_ascii=False, indent=4)
-		#f.close()
+		print('storing Data')
+		save_object(synthetic_data,'./'+TAPobject_data.output_name+'/TAP_experimental_data.json')
+		new_data = read_experimental_data_object('./'+TAPobject_data.output_name+'/TAP_experimental_data.json')
 
-		#with open('./synthetic_data.json') as f:
-		#	data = json.loads(f.read())
-		#f.close()
+	if TAPobject_data.show_graph == True:
+		fig, ax = plt.subplots()
+		ax.set_ylabel('Flow (nmol/s)')
+		ax.set_xlabel('Time (s)')
+		for j in TAPobject_data.reactor_species.gasses:
+			for k in synthetic_data[j]:
+				if k == 0:
+					plt.plot(synthetic_data['time'][0], synthetic_data[j][k],label=j)
+				else:
+					plt.plot(synthetic_data['time'][0], synthetic_data[j][k])
 
-		#sameObject = jsonpickle.decode(data)
-		#sameObject2 = sameObject["1"]
-
-		#fig, ax = plt.subplots()
-		plt.plot(synthetic_data['time'][0], synthetic_data['C3H8'][0],color='g',label='C3H8')
-		plt.plot(synthetic_data['time'][0], synthetic_data['C3H6'][0],color='y',label='C3H6')
-		plt.plot(synthetic_data['time'][0], synthetic_data['H2'][0],color='r',label='H2')
-		#plt.plot(synthetic_data['time'][0], synthetic_data['argon'][0],label='argon')
-		#plt.plot(synthetic_data['time'][0], synthetic_data['helium'][0],label='helium')
-		##plt.plot(synthetic_data['time'][0], synthetic_data['CO-B'][0],label='CO-B')
-		##plt.plot(synthetic_data['time'][0], synthetic_data['O2-B'][0],label='O2-B')
-		##plt.plot(synthetic_data['time'][0], synthetic_data['CO2-B'][0],label='CO2-B')
-		#plt.plot(synthetic_data['time'][0], synthetic_data['argon-B'][0],label='argon-B')
-		##plt.plot(synthetic_data['time'][0], synthetic_data['helium-B'][0],label='helium-B')
-		
+		for j in TAPobject_data.reactor_species.inert_gasses:
+			for k in synthetic_data[j]:
+				if k == 0:
+					plt.plot(synthetic_data['time'][0], synthetic_data[j][0],label=j)		
+				else:
+					plt.plot(synthetic_data['time'][0], synthetic_data[j][0])
 		plt.legend()
 		plt.show()

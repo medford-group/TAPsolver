@@ -25,5 +25,6 @@ class mechanism():
 		self.rate_array = None
 		self.reactions = []
 		self.reactants = []
+		self.kinetic_links = {}
 
 	#def add_elementary_process(self, number = 0, ):

@@ -83,6 +83,10 @@ def construct_f_equation_multiple_experiments(TAPobject_data: TAPobject):
 		else:
 			return "TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].backward.k"
 
+	def make_link(elementary_process):
+		"""Add rate constant for the elementary process specified"""
+		return "TAPobject_data.mechanism.kinetic_links["+str(elementary_process)+"]"
+		
 	# Read through the stoichiometric matrix (i.e. rate_array) and define the associated system of odes for the mechanism
 	
 	#if TAPobject_data.mechanism.reactants[temperature_number] != []:
@@ -102,16 +106,15 @@ def construct_f_equation_multiple_experiments(TAPobject_data: TAPobject):
 					val_pos.append(v)
 
 			together = neg+pos
-		
+			
 			if TAPobject_data.mechanism.elementary_processes[k].forward.use == 'G':
 				new_neg = make_g(k,'f')
 			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'E':
 				new_neg = make_arr(k,'f')
-			#elif TAPobject_data.mechanism.elementary_processes[k].forward.link['variable'] != None:
-			#	#elif k in linkForward:
-			#	new_neg = make_link(k,'f')
 			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'k':
 				new_neg = make_constant(k,'f')
+			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'link':
+				new_neg = make_link(TAPobject_data.mechanism.elementary_processes[k].forward.link)
 				
 			for j,v in enumerate(neg):
 				new_neg = new_neg+"*(u_d['u_"+v+"']**"+str(abs(val_neg[j]))+")"
@@ -120,13 +123,12 @@ def construct_f_equation_multiple_experiments(TAPobject_data: TAPobject):
 				new_pos = make_g(k,'b')
 			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'E':
 				new_pos = make_arr(k,'b')
-			#elif TAPobject_data.mechanism.elementary_processes[k].backward.link['variable'] != 0:
-			#	new_pos = make_link(k,'b')
 			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'k':
 				new_pos = make_constant(k,'b')
+			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'link':
+				new_pos = make_link(TAPobject_data.mechanism.elementary_processes[k].backward.link)
 			else:
 				irr = True
-
 			for j,v in enumerate(pos):
 				new_pos = new_pos+"*(u_d['u_"+v+"']**"+str(abs(val_pos[j]))+")"#
 
@@ -166,6 +168,8 @@ def construct_f_equation_multiple_experiments(TAPobject_data: TAPobject):
 				#	new_neg = make_link(k,'f')
 				elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'k':
 					new_neg = make_constant(k,'f')
+				elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'link':
+					new_neg = make_link(TAPobject_data.mechanism.elementary_processes[k].forward.link)
 
 				for j,v in enumerate(neg):
 					new_neg = new_neg+"*(u_nd['u_n"+v+"']**"+str(abs(val_neg[j]))+")"
@@ -178,6 +182,8 @@ def construct_f_equation_multiple_experiments(TAPobject_data: TAPobject):
 				#	new_pos = make_link(k,'b')
 				elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'k':
 					new_pos = make_constant(k,'b')
+				elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'link':
+					new_pos = make_link(TAPobject_data.mechanism.elementary_processes[k].backward.link)
 				else:
 					irr = True
 					

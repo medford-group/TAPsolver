@@ -4,7 +4,7 @@ import jsonpickle
 import json
 import sys
 
-def read_experimental_data_object(file_name):
+def read_transient_sensitivity(file_name):
 
 	with open(file_name) as f:
 		data = json.loads(f.read())
@@ -12,10 +12,14 @@ def read_experimental_data_object(file_name):
 
 	sameObject = jsonpickle.decode(data)
 	sameObject2 = sameObject["1"]
-	new_object = copy.deepcopy(sameObject2)
+
+	new_object = {}
+
 	for k in sameObject2:
+		new_object[k] = {}
 		for j in sameObject2[k]:
-			new_object[k][float(j)] = sameObject2[k][j]
-			new_object[k][j].pop()
+			new_object[k][int(j)] = {}
+			for z in sameObject2[k][j]:
+				new_object[k][int(j)][z] = sameObject2[k][j][z]
 	
 	return new_object
