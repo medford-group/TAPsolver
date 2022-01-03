@@ -7,6 +7,6 @@ setup(name='tapsolver',
       author='Adam Yonge',
       author_email='ayonge3@gatech.edu',
       license='MIT',
-      packages=['tapsolver'],
+      packages=find_packages(),#['tapsolver'],
       install_requires=['fenics','dolfin-adjoint','imageio','pandas','matplotlib'],
       zip_safe=False)
