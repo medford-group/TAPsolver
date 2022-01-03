@@ -10,7 +10,7 @@ from tapsolver.noise import *
 from tapsolver.objective_functions import *
 from tapsolver.optimization import *
 from tapsolver.parralelization import *
-from tapsolver.reactor_species import *
+#from tapsolver.reactor_species import *
 from tapsolver.reference_files import *
 from tapsolver.reference_parameters import *
 from tapsolver.sensitivity_analysis import *
