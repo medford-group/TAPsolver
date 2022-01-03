@@ -1,4 +1,3 @@
-from tapsolver.batch_structures import *
 from tapsolver.structures import *
 from tapsolver.df_flux import *
 from tapsolver.file_io import *
