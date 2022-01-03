@@ -1,5 +1,4 @@
-from structures import reactor_species
-from reactor_species import define_gas, define_adspecies
+from structures import reactor_species, define_gas, define_adspecies
 import jsonpickle
 import json
 import sys

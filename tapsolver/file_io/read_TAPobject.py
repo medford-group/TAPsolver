@@ -1,5 +1,4 @@
-from structures import TAPobject,reactor_species,reactor,mechanism
-from reactor_species import define_gas, define_adspecies
+from structures import TAPobject,reactor_species,reactor,mechanism, define_gas, define_adspecies
 import jsonpickle
 import json
 import sys
