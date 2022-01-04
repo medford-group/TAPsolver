@@ -4,7 +4,7 @@
 import pandas as pd
 import numpy as np
 import math as mp
-from structures import reactor_species
+#from structures import reactor_species
 
 class define_gas():
 	def __init__(self, mass = 0):

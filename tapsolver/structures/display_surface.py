@@ -3,7 +3,7 @@
 
 import pandas as pd
 import numpy as np
-from structures import reactor_species
+from .reactor_species import reactor_species
 
 
 def display_surface(reactor_species_data: reactor_species):
