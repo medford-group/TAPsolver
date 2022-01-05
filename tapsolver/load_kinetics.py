@@ -3,8 +3,8 @@
 
 from fenics import *
 from fenics_adjoint import *
-from mechanism import mechanism
-from mechanism_construction import *
+from .mechanism import mechanism
+from .mechanism_construction import *
 import copy
 
 def load_kinetics(mechanism_data: mechanism):

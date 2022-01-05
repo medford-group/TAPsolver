@@ -3,7 +3,7 @@
 
 import pandas as pd
 import numpy as np
-from mechanism import mechanism
+from .mechanism import mechanism
 import sys
 
 def mechanism_reactants(mechanism_data: mechanism):

@@ -4,7 +4,7 @@
 import pandas as pd
 import numpy as np
 import sys
-from reactor import reactor
+from .reactor import reactor
 #from structures import reactor
 
 def read_CSV_reactor(fileName):

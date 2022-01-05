@@ -5,8 +5,8 @@
 import pandas as pd
 import numpy as np
 import math as mp
-from define_gas import define_gas
-from define_adspecies import define_adspecies
+from .define_gas import define_gas
+from .define_adspecies import define_adspecies
 
 class reactor_species():
 

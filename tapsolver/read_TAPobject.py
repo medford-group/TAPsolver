@@ -1,9 +1,9 @@
-from TAPobject import TAPobject
-from reactor_species import reactor_species
-from reactor import reactor
-from mechanism import mechanism
-from define_gas import define_gas
-from define_adspecies import define_adspecies
+from .TAPobject import TAPobject
+from .reactor_species import reactor_species
+from .reactor import reactor
+from .mechanism import mechanism
+from .define_gas import define_gas
+from .define_adspecies import define_adspecies
 #from structures import TAPobject,reactor_species,reactor,mechanism, define_gas, define_adspecies
 import jsonpickle
 import json

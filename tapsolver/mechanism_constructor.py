@@ -3,8 +3,8 @@
 
 import pandas as pd
 import numpy as np
-from mechanism import mechanism
-from mechanism_reactants import mechanism_reactants
+from .mechanism import mechanism
+from .mechanism_reactants import mechanism_reactants
 import sys
 
 def mechanism_constructor(mechanism_data: mechanism):

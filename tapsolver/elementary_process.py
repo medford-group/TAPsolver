@@ -1,4 +1,4 @@
-from elementary_process_details import elementary_process_details
+from .elementary_process_details import elementary_process_details
 # Copyright 2021, Battelle Energy Alliance, LLC All Rights Reserved
 
 class elementary_process(object):

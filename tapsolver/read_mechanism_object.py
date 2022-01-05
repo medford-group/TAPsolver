@@ -1,4 +1,4 @@
-from mechanism import mechanism
+from .mechanism import mechanism
 #from structures import mechanism
 import jsonpickle
 import json

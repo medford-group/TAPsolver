@@ -1,4 +1,4 @@
-from reactor import reactor
+from .reactor import reactor
 #from structures import reactor
 import jsonpickle
 import json
