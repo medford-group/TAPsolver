@@ -1,10 +1,11 @@
 from fenics import *
 from fenics_adjoint import *
-from structures import *
-from reactor_species import *
-from file_io import *
-from mechanism_construction import *
-from forward_problem import *
+from tapsolver import *
+#from structures import *
+#from reactor_species import *
+#from file_io import *
+#from mechanism_construction import *
+#from forward_problem import *
 import jsonpickle
 import json
 import sys
