@@ -27,14 +27,14 @@ from .experimental_data import experimental_data
 from .mechanism import mechanism
 from .reactor import reactor
 from .reactor_species import reactor_species
-from .read_old_input import read_old_input
+#from .read_old_input import read_old_input
 from .TAPobject import TAPobject
 
 # reference parameters
 from .reference_parameters import load_standard_parameters
 
 # mechanism_construction
-from .construct_batch_equation import make_batch_equation
+#from .construct_batch_equation import make_batch_equation
 from .construct_f_equation import construct_f_equation
 from .construct_f_equation_multiple_experiments import construct_f_equation_multiple_experiments
 from .construct_rate_equations import rateEqs
