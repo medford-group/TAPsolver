@@ -39,7 +39,6 @@ def read_TAPobject(file_name):
 ########################################
 
 	for j in sameObject2.reactor_species.gasses:
-		print(j)
 		new_gas = define_gas()
 		new_gas.inert_diffusion = sameObject2.reactor_species.gasses[j].inert_diffusion
 		new_gas.catalyst_diffusion = sameObject2.reactor_species.gasses[j].catalyst_diffusion
@@ -47,6 +46,7 @@ def read_TAPobject(file_name):
 		new_gas.delay = sameObject2.reactor_species.gasses[j].delay
 		new_gas.noise = sameObject2.reactor_species.gasses[j].noise
 		new_gas.sigma = sameObject2.reactor_species.gasses[j].sigma
+		new_gas.temperature_used = sameObject2.reactor_species.gasses[j].temperature_used
 		new_gas.initial_concentration = sameObject2.reactor_species.gasses[j].initial_concentration
 		new_gas.inlet_concentration = sameObject2.reactor_species.gasses[j].inlet_concentration
 		new_gas.mass = sameObject2.reactor_species.gasses[j].mass
@@ -54,7 +54,6 @@ def read_TAPobject(file_name):
 		loaded_TAPobject.reactor_species.add_gas(j,new_gas)
 
 	for j in sameObject2.reactor_species.inert_gasses:
-		print(j)
 		new_gas = define_gas()
 		new_gas.inert_diffusion = sameObject2.reactor_species.inert_gasses[j].inert_diffusion
 		new_gas.catalyst_diffusion = sameObject2.reactor_species.inert_gasses[j].catalyst_diffusion
@@ -62,6 +61,7 @@ def read_TAPobject(file_name):
 		new_gas.delay = sameObject2.reactor_species.inert_gasses[j].delay
 		new_gas.noise = sameObject2.reactor_species.inert_gasses[j].noise
 		new_gas.sigma = sameObject2.reactor_species.inert_gasses[j].sigma
+		new_gas.temperature_used = sameObject2.reactor_species.inert_gasses[j].temperature_used
 		new_gas.initial_concentration = sameObject2.reactor_species.inert_gasses[j].initial_concentration
 		new_gas.inlet_concentration = sameObject2.reactor_species.inert_gasses[j].inlet_concentration
 		new_gas.mass = sameObject2.reactor_species.inert_gasses[j].mass
@@ -91,13 +91,17 @@ def read_TAPobject(file_name):
 	# Simulation precision preferences
 	loaded_TAPobject.mesh = sameObject2.mesh
 	loaded_TAPobject.catalyst_mesh_density = sameObject2.catalyst_mesh_density
-		
+	
+	loaded_TAPobject.parameter_scale = sameObject2.parameter_scale
+
 	# Data storage preferences
 	loaded_TAPobject.output_name = sameObject2.output_name
 	loaded_TAPobject.derivative_name = sameObject2.derivative_name
 	loaded_TAPobject.data_name = sameObject2.data_name
 	loaded_TAPobject.store_flux_data = sameObject2.store_flux_data
 	loaded_TAPobject.store_catalyst_data = sameObject2.store_catalyst_data
+	loaded_TAPobject.gas_noise = sameObject2.gas_noise
+	loaded_TAPobject.surface_noise = sameObject2.surface_noise
 	loaded_TAPobject.catalyst_data_type = sameObject2.catalyst_data_type
 
 	# Objective function preferences
@@ -112,8 +116,11 @@ def read_TAPobject(file_name):
 
 	# Sensitivity Analysis
 	loaded_TAPobject.tangent_linear_sensitivity = sameObject2.tangent_linear_sensitivity
+	loaded_TAPobject.finite_difference_trans_sensitivty = sameObject2.finite_difference_trans_sensitivty
 	loaded_TAPobject.adjoint_sensitivitiy = sameObject2.adjoint_sensitivitiy
 	loaded_TAPobject.optimize = sameObject2.optimize
+	loaded_TAPobject.uncertainty = sameObject2.uncertainty
+	loaded_TAPobject.objective_return = sameObject2.uncertainty
 
 	# Flux graph name
 	loaded_TAPobject.pulses_graphed = sameObject2.pulses_graphed

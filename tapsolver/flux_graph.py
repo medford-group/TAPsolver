@@ -49,7 +49,6 @@ from .define_fitting_species import curveFitting
 from .std_objective import stdEstablishment
 from .total_objective import curveFitting
 
-
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
@@ -70,9 +69,10 @@ def flux_graph(TAPobject_data: TAPobject):
 	try:
 		#TAPobject_data.experimental_data = #output_data
 		experimental_data = read_experimental_data_object(TAPobject_data.data_name)
+		experimental_data = True
 	except:
 		print('no experimental data')
-		#experimental_data = False
+		experimental_data = False
 	synthetic_data = read_experimental_data_object('./'+TAPobject_data.output_name+'/TAP_experimental_data.json')	
 	
 	legend_label = []
@@ -95,19 +95,20 @@ def flux_graph(TAPobject_data: TAPobject):
 			else:
 				plt.plot(synthetic_data['time'][0], synthetic_data[j][0],color=colors[jnum+len(TAPobject_data.reactor_species.gasses.keys())],linestyle='--')
 	plt.xlim(0,synthetic_data['time'][0][-1])
-	for jnum,j in enumerate(TAPobject_data.reactor_species.gasses):
-		for k in experimental_data[j]:
-			if k == 0:
-				plt.scatter(experimental_data['time'][0][::6], experimental_data[j][0][::6],s=5,label=j+'_exp',color=colors[jnum])
-			else:
-				plt.scatter(experimental_data['time'][0][::6], experimental_data[j][0][::6],s=5,color=colors[jnum])
+	if experimental_data == True:
+		for jnum,j in enumerate(TAPobject_data.reactor_species.gasses):#
+			for k in experimental_data[j]:
+				if k == 0:
+					plt.scatter(experimental_data['time'][0][::6], experimental_data[j][0][::6],s=5,label=j+'_exp',color=colors[jnum])
+				else:
+					plt.scatter(experimental_data['time'][0][::6], experimental_data[j][0][::6],s=5,color=colors[jnum])
 	
-	for jnum,j in enumerate(TAPobject_data.reactor_species.inert_gasses):
-		for k in experimental_data[j]:
-			if k == 0:
-				plt.scatter(experimental_data['time'][0][::6], experimental_data[j][0][::6],s=5,label=j+'_exp',color=colors[jnum+len(TAPobject_data.reactor_species.gasses.keys())])
-			else:
-				plt.scatter(experimental_data['time'][0][::6], experimental_data[j][0][::6],s=5,color=colors[jnum+len(TAPobject_data.reactor_species.gasses.keys())])
+		for jnum,j in enumerate(TAPobject_data.reactor_species.inert_gasses):
+			for k in experimental_data[j]:
+				if k == 0:
+					plt.scatter(experimental_data['time'][0][::6], experimental_data[j][0][::6],s=5,label=j+'_exp',color=colors[jnum+len(TAPobject_data.reactor_species.gasses.keys())])
+				else:
+					plt.scatter(experimental_data['time'][0][::6], experimental_data[j][0][::6],s=5,color=colors[jnum+len(TAPobject_data.reactor_species.gasses.keys())])
 
 	plt.legend()
 	plt.show()

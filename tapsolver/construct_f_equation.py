@@ -64,17 +64,17 @@ def construct_f_equation(TAPobject_data: TAPobject):
 	for k in list(TAPobject_data.reactor_species.adspecies.keys()):
 		F = F + " + ((u_d['u_"+k+"'] - u_nd['u_n"+k+"']))*v_d['v_"+k+"']*dx(0) + ((u_d['u_"+k+"'] - u_nd['u_n"+k+"']) )*v_d['v_"+k+"']*dx(1)"
 		
-	def make_g(elementary_process,direction):
+	def make_g(elementary_process,direction,scale_magnitude):
 		"""Add free energy reaction term for the elementary process specified"""
-		if direction == 'f':
-			return "standard_parameters['kbt']*TAPobject_data.reactor_species.temperature/standard_parameters['h']*exp(-TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.Ga/(standard_parameters['kbt']*TAPobject_data.reactor_species.temperature))"
+		if direction == 'f': # standard_parameters['Av']*
+			return "((standard_parameters['kbt']*TAPobject_data.reactor_species.temperature*(1/TAPobject_data.parameter_scale**("+str(scale_magnitude)+")))/(standard_parameters['h']))*exp(-TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.Ga/(standard_parameters['kbt']*TAPobject_data.reactor_species.temperature))"
 		else:
-			return "standard_parameters['kbt']*TAPobject_data.reactor_species.temperature/standard_parameters['h']*exp(-(TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.Ga - TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.dG)/(standard_parameters['kbt']*TAPobject_data.reactor_species.temperature))"
+			return "((standard_parameters['kbt']*TAPobject_data.reactor_species.temperature*(1/TAPobject_data.parameter_scale**("+str(scale_magnitude)+")))/standard_parameters['h'])*exp(-(TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.Ga - TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.dG)/(standard_parameters['kbt']*TAPobject_data.reactor_species.temperature))"
 			
 	def make_arr(elementary_process,direction):
 		"""Add activation/Arrhenius based reaction term for the elementary process specified"""
 		if direction == 'f':
-			return "TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.Ao*exp(-TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.Ea/(standard_parameters['Rgas']*TAPobject_data.reactor_species.temperature))"
+			return "TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.Ao*exp(-TAPobject_data.mechanism.elementary_processes2["+str(elementary_process)+"].forward.Ea/(standard_parameters['Rgas']*TAPobject_data.reactor_species.temperature))"
 		else:
 			return "TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].backward.Ao*exp(-TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].backward.Ea/(standard_parameters['Rgas']*TAPobject_data.reactor_species.temperature))"
 
@@ -108,26 +108,26 @@ def construct_f_equation(TAPobject_data: TAPobject):
 			together = neg+pos
 		
 			if TAPobject_data.mechanism.elementary_processes[k].forward.use == 'G':
-				new_neg = make_g(k,'f')
+				new_neg = make_g(k,'f',abs(sum(val_neg))-1)
 			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'E':
 				new_neg = make_arr(k,'f')
 			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'k':
 				new_neg = make_constant(k,'f')
 			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'link':
 				new_neg = make_link(TAPobject_data.mechanism.elementary_processes[k].forward.link)
-				
-			for j,v in enumerate(neg):
+			
+			#sys.exit()
+			for j,v in enumerate(neg): # "(parameter_scale**(-1.0))*"+ "(1/120)*"+
 				new_neg = new_neg+"*(u_d['u_"+v+"']**"+str(abs(val_neg[j]))+")"
 
-			if TAPobject_data.mechanism.elementary_processes[k].backward.use == 'G':
-				new_pos = make_g(k,'b')
+			if TAPobject_data.mechanism.elementary_processes[k].forward.use == 'G':
+				new_pos = make_g(k,'b',abs(sum(val_pos))-1)
 			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'E':
 				new_pos = make_arr(k,'b')
 			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'k':
 				new_pos = make_constant(k,'b')
 			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'link':
 				new_pos = make_link(TAPobject_data.mechanism.elementary_processes[k].backward.link)
-
 			else:
 				irr = True
 
@@ -146,7 +146,7 @@ def construct_f_equation(TAPobject_data: TAPobject):
 					else:
 						F = F+"- dk*Constant(theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(1))"
 
-	if TAPobject_data.mechanism.reactants != []:
+	if TAPobject_data.mechanism.reactants != []: # 
 		for k,z in enumerate(TAPobject_data.mechanism.rate_array):
 			neg = []
 			val_neg = []
@@ -163,7 +163,7 @@ def construct_f_equation(TAPobject_data: TAPobject):
 			together = neg+pos
 
 			if TAPobject_data.mechanism.elementary_processes[k].forward.use == 'G':
-				new_neg = make_g(k,'f')
+				new_neg = make_g(k,'f',abs(sum(val_neg))-1)
 			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'E':
 				new_neg = make_arr(k,'f')
 			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'k':
@@ -175,8 +175,8 @@ def construct_f_equation(TAPobject_data: TAPobject):
 			for j,v in enumerate(neg):
 				new_neg = new_neg+"*(u_nd['u_n"+v+"']**"+str(abs(val_neg[j]))+")"
 			
-			if TAPobject_data.mechanism.elementary_processes[k].backward.use == 'G':
-				new_pos = make_g(k,'b')
+			if TAPobject_data.mechanism.elementary_processes[k].forward.use == 'G':
+				new_pos = make_g(k,'b',abs(sum(val_pos))-1)
 			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'E':
 				new_pos = make_arr(k,'b')
 			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'k':

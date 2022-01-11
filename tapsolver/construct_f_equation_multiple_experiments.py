@@ -63,12 +63,12 @@ def construct_f_equation_multiple_experiments(TAPobject_data: TAPobject):
 	for k in list(TAPobject_data.reactor_species.adspecies.keys()):
 		F = F + " + ((u_d['u_"+k+"'] - u_nd['u_n"+k+"']))*v_d['v_"+k+"']*dx(0) + ((u_d['u_"+k+"'] - u_nd['u_n"+k+"']) )*v_d['v_"+k+"']*dx(1)"
 
-	def make_g(elementary_process,direction):
+	def make_g(elementary_process,direction,scale_magnitude):
 		"""Add free energy reaction term for the elementary process specified"""
 		if direction == 'f':
-			return "standard_parameters['kbt']*TAPobject_data.reactor_species.temperature["+str(temperature_number)+"]/standard_parameters['h']*exp(-TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.Ga/(standard_parameters['kbt']*TAPobject_data.reactor_species.temperature["+str(TAPobject_data.reactor_species.gasses[species_name].temperature_used)+"]))"
+			return "((standard_parameters['kbt']*TAPobject_data.reactor_species.temperature["+str(temperature_number)+"]*(1/TAPobject_data.parameter_scale**("+str(scale_magnitude)+")))/(standard_parameters['h']))*exp(-TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.Ga/(standard_parameters['kbt']*TAPobject_data.reactor_species.temperature["+str(TAPobject_data.reactor_species.gasses[species_name].temperature_used)+"]))"
 		else:
-			return "standard_parameters['kbt']*TAPobject_data.reactor_species.temperature["+str(temperature_number)+"]/standard_parameters['h']*exp(-(TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.Ga - TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.dG)/(standard_parameters['kbt']*TAPobject_data.reactor_species.temperature["+str(TAPobject_data.reactor_species.gasses[species_name].temperature_used)+"]))"
+			return "((standard_parameters['kbt']*TAPobject_data.reactor_species.temperature["+str(temperature_number)+"]*(1/TAPobject_data.parameter_scale**("+str(scale_magnitude)+")))/(standard_parameters['h']))*exp(-(TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.Ga - TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.dG)/(standard_parameters['kbt']*TAPobject_data.reactor_species.temperature["+str(TAPobject_data.reactor_species.gasses[species_name].temperature_used)+"]))"
 			
 	def make_arr(elementary_process,direction):
 		"""Add activation/Arrhenius based reaction term for the elementary process specified"""
@@ -109,7 +109,7 @@ def construct_f_equation_multiple_experiments(TAPobject_data: TAPobject):
 			together = neg+pos
 			
 			if TAPobject_data.mechanism.elementary_processes[k].forward.use == 'G':
-				new_neg = make_g(k,'f')
+				new_neg = make_g(k,'f',abs(sum(val_neg))-1)
 			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'E':
 				new_neg = make_arr(k,'f')
 			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'k':
@@ -121,7 +121,7 @@ def construct_f_equation_multiple_experiments(TAPobject_data: TAPobject):
 				new_neg = new_neg+"*(u_d['u_"+v+"']**"+str(abs(val_neg[j]))+")"
 
 			if TAPobject_data.mechanism.elementary_processes[k].backward.use == 'G':
-				new_pos = make_g(k,'b')
+				new_pos = make_g(k,'b',abs(sum(val_pos))-1)
 			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'E':
 				new_pos = make_arr(k,'b')
 			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'k':
@@ -162,7 +162,7 @@ def construct_f_equation_multiple_experiments(TAPobject_data: TAPobject):
 				together = neg+pos
 
 				if TAPobject_data.mechanism.elementary_processes[k].forward.use == 'G':
-					new_neg = make_g(k,'f')
+					new_neg = make_g(k,'f',abs(sum(val_neg))-1)
 				elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'E':
 					new_neg = make_arr(k,'f')
 				#elif TAPobject_data.mechanism.elementary_processes[k].forward.link['variable'] != None:
@@ -176,7 +176,7 @@ def construct_f_equation_multiple_experiments(TAPobject_data: TAPobject):
 					new_neg = new_neg+"*(u_nd['u_n"+v+"']**"+str(abs(val_neg[j]))+")"
 				
 				if TAPobject_data.mechanism.elementary_processes[k].backward.use == 'G':
-					new_pos = make_g(k,'b')
+					new_pos = make_g(k,'b',abs(sum(val_pos))-1)
 				elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'E':
 					new_pos = make_arr(k,'b')
 				#elif TAPobject_data.mechanism.elementary_processes[k].backward.link['variable'] != 0:

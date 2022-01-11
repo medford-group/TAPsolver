@@ -22,7 +22,7 @@ from .experimental_data import experimental_data
 from .mechanism import mechanism
 from .reactor import reactor
 from .reactor_species import reactor_species
-#from read_old_input import read_old_input
+#from .read_old_input import read_old_input
 from .TAPobject import TAPobject
 
 #from file_io import *
@@ -82,7 +82,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 	tape2 = Tape()
 	tape2.clear_tape()
 	set_working_tape(tape2)
-	
+	#parameter_scale = 120#Constant(120)
 	#print(TAPobject_data.data_name)
 	#print(TAPobject_data.output_name)
 	#sys.exit()
@@ -142,10 +142,11 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 				TAPobject_data.mechanism.elementary_processes[k].forward.Ea = Constant(TAPobject_data.mechanism.elementary_processes[k].forward.Ea)
 			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'k':
 				TAPobject_data.mechanism.elementary_processes[k].forward.k = Constant(TAPobject_data.mechanism.elementary_processes[k].forward.k)									
-			if TAPobject_data.mechanism.elementary_processes[k].backward.use == 'G':
-				TAPobject_data.mechanism.elementary_processes[k].backward.Ga = Constant(TAPobject_data.mechanism.elementary_processes[k].backward.Ga)
-				TAPobject_data.mechanism.elementary_processes[k].backward.dG = Constant(TAPobject_data.mechanism.elementary_processes[k].backward.dG)
-			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'E':
+			#if TAPobject_data.mechanism.elementary_processes[k].backward.use == 'G':
+			#	TAPobject_data.mechanism.elementary_processes[k].backward.Ga = Constant(TAPobject_data.mechanism.elementary_processes[k].backward.Ga)
+			#	TAPobject_data.mechanism.elementary_processes[k].backward.dG = Constant(TAPobject_data.mechanism.elementary_processes[k].backward.dG)
+			if TAPobject_data.mechanism.elementary_processes[k].backward.use == 'E':
+			#elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'E':
 				TAPobject_data.mechanism.elementary_processes[k].backward.Ao = Constant(TAPobject_data.mechanism.elementary_processes[k].backward.Ao)
 				TAPobject_data.mechanism.elementary_processes[k].backward.Ea = Constant(TAPobject_data.mechanism.elementary_processes[k].backward.Ea)
 			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'k':
@@ -317,6 +318,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 		F_new = construct_f_equation_multiple_experiments(TAPobject_data)
 
 	constantT = Constant(0)
+	remove_surface = Constant(1)
 	b0Test2 = Expression('x[0] < 0.002500001 ? 0.5 : 0', degree=0)
 
 	Fpulses = ''
@@ -335,7 +337,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 
 	for knum,k in enumerate(TAPobject_data.reactor_species.adspecies):
 		##TAPobject_data.reactor_species.adspecies[k].concentration = Constant(TAPobject_data.reactor_species.adspecies[k].concentration)
-		Fpulses += "-TAPobject_data.reactor_species.adspecies['"+k+"'].concentration*exp(-(constantT)*(constantT)/(0.00000000001))*v_d['v_"+k+"']*dx"
+		Fpulses += "-remove_surface*TAPobject_data.reactor_species.adspecies['"+k+"'].concentration*exp(-(constantT)*(constantT)/(0.00000000001))*v_d['v_"+k+"']*dx"
 		if knum < len(TAPobject_data.reactor_species.adspecies)-1:
 			Fpulses += ' + '
 	
@@ -506,8 +508,8 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 			f.write("Change: "+str(dj_values))
 			f.write('\n')
 			f.write("Constants: "+str(x_values))
-	
 			f.close
+
 		print(j)
 		print(djv)
 		print(mv)
@@ -516,6 +518,10 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 	for k_pulse in range(0,pulse_number):
 		print('Pulse #: '+str(k_pulse))
 		t = 0
+
+		if k_pulse > 0:
+			constantT.assign(0.0)
+			remove_surface.assign(0.0)
 		dt = pulse_time/time_steps
 		start_time = time.time()
 		
@@ -707,10 +713,19 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 		
 		low_bounds = []
 		up_bounds = []
-		
-		for gt in range(0,len(controls)):
-			low_bounds.append(0)
-			up_bounds.append(np.inf)
+
+		for j_limit in TAPobject_data.parameters_of_interest:
+			if 'dG' in j_limit:
+				low_bounds.append(-np.inf)
+				up_bounds.append(np.inf)
+			else:
+				low_bounds.append(0)
+				up_bounds.append(np.inf)
+	
+		#for gt in range(0,len(controls)):
+		#	low_bounds.append(0)
+		#	up_bounds.append(np.inf)
+
 		
 		u_opt_2 = minimize(rf_2, bounds = (low_bounds,up_bounds), tol=1e-22, options={"ftol":1e-22,"gtol":1e-22})
 		sys.exit()
@@ -826,6 +841,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 							synthetic_data[k][j][z] += np.random.normal(0,1)*TAPobject_data.reactor_species.adspecies[k].noise# +beta_2*np.cos(w_2*(k*dt))
 						except:
 							pass
+
 	if TAPobject_data.store_flux_data == True or TAPobject_data.store_catalyst_data == True:
 		print('storing Data')
 		save_object(synthetic_data,'./'+TAPobject_data.output_name+'/TAP_experimental_data.json')
@@ -845,8 +861,8 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 		for j in TAPobject_data.reactor_species.inert_gasses:
 			for k in synthetic_data[j]:
 				if k == 0:
-					plt.plot(synthetic_data['time'][0], synthetic_data[j][0],label=j)		
+					plt.plot(synthetic_data['time'][0], synthetic_data[j][k],label=j)		
 				else:
-					plt.plot(synthetic_data['time'][0], synthetic_data[j][0])
+					plt.plot(synthetic_data['time'][0], synthetic_data[j][k])
 		plt.legend()
 		plt.show()
