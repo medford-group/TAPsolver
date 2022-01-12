@@ -69,10 +69,10 @@ def flux_graph(TAPobject_data: TAPobject):
 	try:
 		#TAPobject_data.experimental_data = #output_data
 		experimental_data = read_experimental_data_object(TAPobject_data.data_name)
-		experimental_data = True
+		experimental_data_exist = True
 	except:
 		print('no experimental data')
-		experimental_data = False
+		experimental_data_exist = False
 	synthetic_data = read_experimental_data_object('./'+TAPobject_data.output_name+'/TAP_experimental_data.json')	
 	
 	legend_label = []
@@ -95,7 +95,7 @@ def flux_graph(TAPobject_data: TAPobject):
 			else:
 				plt.plot(synthetic_data['time'][0], synthetic_data[j][0],color=colors[jnum+len(TAPobject_data.reactor_species.gasses.keys())],linestyle='--')
 	plt.xlim(0,synthetic_data['time'][0][-1])
-	if experimental_data == True:
+	if experimental_data_exist == True:
 		for jnum,j in enumerate(TAPobject_data.reactor_species.gasses):#
 			for k in experimental_data[j]:
 				if k == 0:
