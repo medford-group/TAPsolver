@@ -169,7 +169,11 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 	##### Making sure that I define the controls
 	controls = []
 	if TAPobject_data.optimize == True or TAPobject_data.tangent_linear_sensitivity == True:
-		TAPobject_data.parameters_of_interest = TAPobject_data.parameters_of_interest[0]
+		try:
+			if len(TAPobject_data.parameters_of_interest) > 1:
+				pass
+		except:
+			TAPobject_data.parameters_of_interest = TAPobject_data.parameters_of_interest[0]
 		for j in TAPobject_data.parameters_of_interest:
 			#print(TAPobject_data.parameters_of_interest)
 			#controls.append(Control(TAPobject_data.reactor_species.temperature[j_temp_number]))
