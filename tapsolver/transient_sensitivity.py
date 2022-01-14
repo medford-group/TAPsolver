@@ -92,9 +92,9 @@ def transient_sensitivity(pulse_time, pulse_number, TAPobject_data_original: TAP
 			new_data = forward_problem(pulse_time,pulse_number,TAPobject_data)
 			for k in TAPobject_data.reactor_species.gasses:
 				transient_data[k][0][n] = new_data[k]
-		print(transient_data['CO'][0]['TAPobject_data.mechanism.elementary_processes[0].forward.k'])
+		#print(transient_data['CO'][0]['TAPobject_data.mechanism.elementary_processes[0].forward.k'])
 		save_object(transient_data,'./'+TAPobject_data.output_name+'/TAP_test.json')
-		deriviative_information = read_transient_sensitivity('./'+TAPobject_data.output_name+'/TAP_test.json')	
+		deriviative_information = read_transient_sensitivity('./'+TAPobject_data.output_name+'/TAP_test.json')
 		
 	if TAPobject_data.finite_difference_trans_sensitivty == True:
 		original_name = copy.deepcopy(TAPobject_data.output_name)
@@ -115,7 +115,8 @@ def transient_sensitivity(pulse_time, pulse_number, TAPobject_data_original: TAP
 				new_value = old_value+0.0001*old_value
 			else:
 				new_value = old_value+0.001
-
+			#print(new_value)
+			#sys.exit()
 			if 'elementary_processes' in j:
 				elementary_step = float(re.split(r"[\[\]]",j)[1])
 				if 'forward' in j:
@@ -126,9 +127,11 @@ def transient_sensitivity(pulse_time, pulse_number, TAPobject_data_original: TAP
 					elif 'Ea' in j:
 						TAPobject_data.mechanism.elementary_processes[elementary_step].forward.Ea = new_value
 					elif 'Ga' in j:
+						print('forward ga')
 						TAPobject_data.mechanism.elementary_processes[elementary_step].forward.Ga = new_value
 					elif 'dG' in j:
-						TAPobject_data.mechanism.elementary_processes[elementary_step].forward.k = new_value
+						print('forward dg')
+						TAPobject_data.mechanism.elementary_processes[elementary_step].forward.dG = new_value
 				
 				if 'backward' in j:
 					if 'k' in j:
@@ -137,10 +140,10 @@ def transient_sensitivity(pulse_time, pulse_number, TAPobject_data_original: TAP
 						TAPobject_data.mechanism.elementary_processes[elementary_step].backward.Ao = new_value
 					elif 'Ea' in j:
 						TAPobject_data.mechanism.elementary_processes[elementary_step].backward.Ea = new_value
-					elif 'Ga' in j:
-						TAPobject_data.mechanism.elementary_processes[elementary_step].backward.Ga = new_value
-					elif 'dG' in j:
-						TAPobject_data.mechanism.elementary_processes[elementary_step].backward.k = new_value
+					#elif 'Ga' in j:
+					#	TAPobject_data.mechanism.elementary_processes[elementary_step].backward.Ga = new_value
+					#elif 'dG' in j:
+					#	TAPobject_data.mechanism.elementary_processes[elementary_step].backward.k = new_value
 			elif 'temperature' in j:
 				TAPobject_data.reactor_species.temperature = new_value
 			elif 'delay' in j:
@@ -157,7 +160,9 @@ def transient_sensitivity(pulse_time, pulse_number, TAPobject_data_original: TAP
 			forward_problem(pulse_time,pulse_number,TAPobject_data)
 
 			new_data = read_experimental_data_object('./'+TAPobject_data.output_name+'/TAP_experimental_data.json')
-
+			#print(new_data['C3H6'][0])
+			#print(old_data['C3H6'][0])
+			#sys.exit()
 			for x in TAPobject_data.reactor_species.gasses:
 				for z in new_data[x]:
 					temp_change = [(a_i - b_i)/change_parameter for a_i, b_i in zip(new_data[x][z], old_data[x][z])]
@@ -173,8 +178,10 @@ def transient_sensitivity(pulse_time, pulse_number, TAPobject_data_original: TAP
 					elif 'Ea' in j:
 						TAPobject_data.mechanism.elementary_processes[elementary_step].forward.Ea = old_value
 					elif 'Ga' in j:
+						print('replace ga')
 						TAPobject_data.mechanism.elementary_processes[elementary_step].forward.Ga = old_value
 					elif 'dG' in j:
+						print('replace dg')
 						TAPobject_data.mechanism.elementary_processes[elementary_step].forward.k = old_value
 				
 				if 'backward' in j:
@@ -184,10 +191,10 @@ def transient_sensitivity(pulse_time, pulse_number, TAPobject_data_original: TAP
 						TAPobject_data.mechanism.elementary_processes[elementary_step].backward.Ao = old_value
 					elif 'Ea' in j:
 						TAPobject_data.mechanism.elementary_processes[elementary_step].backward.Ea = old_value
-					elif 'Ga' in j:
-						TAPobject_data.mechanism.elementary_processes[elementary_step].backward.Ga = old_value
-					elif 'dG' in j:
-						TAPobject_data.mechanism.elementary_processes[elementary_step].backward.k = old_value
+					#elif 'Ga' in j:
+					#	TAPobject_data.mechanism.elementary_processes[elementary_step].backward.Ga = old_value
+					#elif 'dG' in j:
+					#	TAPobject_data.mechanism.elementary_processes[elementary_step].backward.k = old_value
 			elif 'temperature' in j:
 				TAPobject_data.reactor_species.temperature = old_value
 			elif 'delay' in j:
@@ -196,15 +203,15 @@ def transient_sensitivity(pulse_time, pulse_number, TAPobject_data_original: TAP
 			elif 'intensity' in j:
 				gas_name = re.split(r'[\"\"]',re.split(r"[\[\]]",j)[1])[1]
 				TAPobject_data.reactor_species.gasses[gas_name].intensity = old_value
-		print(transient_data['CO'][0]['TAPobject_data.mechanism.elementary_processes[0].forward.k'])
-		print(transient_data['O2'][0]['TAPobject_data.mechanism.elementary_processes[0].forward.k'])
-		print(transient_data['O2'][0]['TAPobject_data.mechanism.elementary_processes[0].forward.k'])
+		#print(transient_data['CO'][0]['TAPobject_data.mechanism.elementary_processes[0].forward.k'])
+		#print(transient_data['O2'][0]['TAPobject_data.mechanism.elementary_processes[0].forward.k'])
+		#print(transient_data['O2'][0]['TAPobject_data.mechanism.elementary_processes[0].forward.k'])
 		
 		TAPobject_data.output_name = original_name
 		save_object(transient_data,'./'+original_name+'/TAP_test.json')
 		deriviative_information = read_transient_sensitivity('./'+original_name+'/TAP_test.json')
 
-	if True == False:
+	#if True == False:
 	
 		q_matricies = {}
 	
@@ -233,7 +240,7 @@ def transient_sensitivity(pulse_time, pulse_number, TAPobject_data_original: TAP
 					final_q_array = q_matricies[j].dot(np.transpose(q_matricies[z]))
 				else:
 					final_q_array += q_matricies[j].dot(np.transpose(q_matricies[z]))
- 
+		print(final_q_array)
 		pd.DataFrame(final_q_array).to_csv('./'+original_name+'/covariance_matrix.csv')
 		with open('./'+original_name+'/optimal_criteria.txt', 'w') as f:
 			f.write('Determinant')

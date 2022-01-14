@@ -13,7 +13,8 @@ def new_experiments(original_TAPobject,new_label,original_gasses=None,original_i
 		original_adspecies = original_TAPobject.reactor_species.adspecies
 	if original_reactants == None:
 		original_reactants = original_TAPobject.mechanism.reactants
-	if type(original_TAPobject.reactor_species.temperature) == (float or int):
+	
+	if (type(original_TAPobject.reactor_species.temperature) == int) or (type(original_TAPobject.reactor_species.temperature) == float):
 		new_TAPobject.reactor_species.temperature = {0:copy.deepcopy(original_TAPobject.reactor_species.temperature),1:copy.deepcopy(original_TAPobject.reactor_species.temperature)}
 		newest_temperature = 1
 	else:

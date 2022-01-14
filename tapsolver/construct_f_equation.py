@@ -119,7 +119,7 @@ def construct_f_equation(TAPobject_data: TAPobject):
 			#sys.exit()
 			for j,v in enumerate(neg): # "(parameter_scale**(-1.0))*"+ "(1/120)*"+
 				new_neg = new_neg+"*(u_d['u_"+v+"']**"+str(abs(val_neg[j]))+")"
-
+			
 			if TAPobject_data.mechanism.elementary_processes[k].forward.use == 'G':
 				new_pos = make_g(k,'b',abs(sum(val_pos))-1)
 			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'E':
@@ -133,7 +133,7 @@ def construct_f_equation(TAPobject_data: TAPobject):
 
 			for j,v in enumerate(pos):
 				new_pos = new_pos+"*(u_d['u_"+v+"']**"+str(abs(val_pos[j]))+")"#
-
+			
 			for j,v in enumerate(together):
 				if j < len(neg):
 					if irr == None:
@@ -170,7 +170,6 @@ def construct_f_equation(TAPobject_data: TAPobject):
 				new_neg = make_constant(k,'f')
 			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'link':
 				new_neg = make_link(TAPobject_data.mechanism.elementary_processes[k].forward.link)
-
 
 			for j,v in enumerate(neg):
 				new_neg = new_neg+"*(u_nd['u_n"+v+"']**"+str(abs(val_neg[j]))+")"
@@ -216,5 +215,5 @@ def construct_f_equation(TAPobject_data: TAPobject):
 			F = F+" +  "+add_inert_diffusion(k)			
 			if TAPobject_data.reactor_species.advection != 0:
 				F = F+' + '+add_advection(k)
-	
+	#sys.exit()
 	return F

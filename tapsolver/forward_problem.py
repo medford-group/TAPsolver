@@ -168,8 +168,10 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 	reference_pulse_concentration = TAPobject_data.reactor_species.reference_pulse_size/point_volume
 	##### Making sure that I define the controls
 	controls = []
+	TAPobject_data.parameters_of_interest = TAPobject_data.parameters_of_interest[0]
 	if TAPobject_data.optimize == True or TAPobject_data.tangent_linear_sensitivity == True:
 		for j in TAPobject_data.parameters_of_interest:
+			#print(TAPobject_data.parameters_of_interest)
 			#controls.append(Control(TAPobject_data.reactor_species.temperature[j_temp_number]))
 			#controls.append(Control(TAPobject_data.mechanism.elementary_processes[0].forward.k))
 			controls.append(Control(eval(j)))
@@ -705,36 +707,11 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 		print('test')
 		return jfunc_2
 
-
-	if TAPobject_data.optimize == True:
-		print('test 2')
-		reference_time = time.time()
-		rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2,derivative_cb_post=derivCB)#,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
-		
-		low_bounds = []
-		up_bounds = []
-
-		for j_limit in TAPobject_data.parameters_of_interest:
-			if 'dG' in j_limit:
-				low_bounds.append(-np.inf)
-				up_bounds.append(np.inf)
-			else:
-				low_bounds.append(0)
-				up_bounds.append(np.inf)
-	
-		#for gt in range(0,len(controls)):
-		#	low_bounds.append(0)
-		#	up_bounds.append(np.inf)
-
-		
-		u_opt_2 = minimize(rf_2, bounds = (low_bounds,up_bounds), tol=1e-22, options={"ftol":1e-22,"gtol":1e-22})
-		sys.exit()
-
 	if TAPobject_data.uncertainty == True:
 		start_time = time.time()
 		print()
 		print('Calculating hessian. Could take some time.')
-
+		hessFolder = TAPobject_data.output_name
 		rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2)# ,hessian_cb_post=hessCB
 
 		rf_2.derivative()
@@ -789,6 +766,32 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 			np.savetxt(hessFolder+'/std_2.csv', std_2, delimiter=",")
 		except:
 			print('Failed to calculate confidence interval')
+		TAPobject_data.optimize == False
+		sys.exit()
+
+	if TAPobject_data.optimize == True:
+		print('test 2')
+		reference_time = time.time()
+		rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2,derivative_cb_post=derivCB)#,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
+		
+		low_bounds = []
+		up_bounds = []
+
+		for j_limit in TAPobject_data.parameters_of_interest:
+			if 'dG' in j_limit:
+				low_bounds.append(-np.inf)
+				up_bounds.append(np.inf)
+			else:
+				low_bounds.append(0)
+				up_bounds.append(np.inf)
+	
+		#for gt in range(0,len(controls)):
+		#	low_bounds.append(0)
+		#	up_bounds.append(np.inf)
+
+		
+		u_opt_2 = minimize(rf_2, bounds = (low_bounds,up_bounds), tol=1e-22, options={"ftol":1e-22,"gtol":1e-22})
+		sys.exit()
 
 	#!#! ADDING INVERSE ANALYSIS
 	if TAPobject_data.tangent_linear_sensitivity == True:
@@ -843,7 +846,9 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 							pass
 
 	if TAPobject_data.store_flux_data == True or TAPobject_data.store_catalyst_data == True:
-		print('storing Data')
+		#print('storing Data')
+		#print(synthetic_data['C3H8'][0])
+		#sys.exit()
 		save_object(synthetic_data,'./'+TAPobject_data.output_name+'/TAP_experimental_data.json')
 		new_data = read_experimental_data_object('./'+TAPobject_data.output_name+'/TAP_experimental_data.json')
 
