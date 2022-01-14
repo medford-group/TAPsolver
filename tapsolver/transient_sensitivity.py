@@ -113,7 +113,7 @@ def transient_sensitivity(pulse_time, pulse_number, TAPobject_data_original: TAP
 			
 			if 'delay' in j:
 				new_value = old_value+0.001
-			elif 'dG' in j::
+			elif 'dG' in j:
 				new_value = old_value+0.001
 			else:
 				new_value = old_value+0.0001*old_value
