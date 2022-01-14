@@ -111,10 +111,12 @@ def transient_sensitivity(pulse_time, pulse_number, TAPobject_data_original: TAP
 
 			old_value = copy.deepcopy(eval(j))
 			
-			if 'delay' not in j:
-				new_value = old_value+0.0001*old_value
-			else:
+			if 'delay' in j:
 				new_value = old_value+0.001
+			elif 'dG' in j::
+				new_value = old_value+0.001
+			else:
+				new_value = old_value+0.0001*old_value
 			#print(new_value)
 			#sys.exit()
 			if 'elementary_processes' in j:
