@@ -1,6 +1,6 @@
 
 <p align="center">
-  <img src="https://github.com/medford-group/TAPsolver/blob/tree/experimentalFluidity_condensed/docs/figures/tapsolver_logo.jpg">
+  <img src="https://github.com/medford-group/TAPsolver/blob/experimentalFluidity_condensed/docs/figures/tapsolver_logo.jpg">
 </p>
 
 TAPsolver is an open-source, python program for the analysis of Temporal Analysis of Products (TAP) reactor experiments. The methods of analysis include:
@@ -14,7 +14,7 @@ TAPsolver is an open-source, python program for the analysis of Temporal Analysi
 * *Bayesian parameter estimation (under development)*
 
 <p align="center">
-  <img src="https://github.com/medford-group/TAPsolver/blob/tree/experimentalFluidity_condensed/docs/figures/tapsolver_concept.gif">
+  <img src="https://github.com/medford-group/TAPsolver/blob/experimentalFluidity_condensed/docs/figures/tapsolver_concept.gif">
 </p>
 
 The python packages [FEniCS](https://fenicsproject.org/)  (Finite Element Computational Software) and [Dolfin-Adjoint](http://www.dolfin-adjoint.org/en/latest/) act as the foundation of TAPsolver and allow for the flexible and efficient application of [algorithmic differentiation](https://towardsdatascience.com/automatic-differentiation-explained-b4ba8e60c2ad). TAPsolver was also closely developed alongside [TAPSAP](https://github.com/IdahoLabResearch/tapsap), which is used for processing and statistically analyzing raw TAP experimental data. 
