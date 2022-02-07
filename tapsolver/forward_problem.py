@@ -548,13 +548,12 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 
 		if TAPobject_data.store_thin_data == True:
 			thin_data['time'][k_pulse] =  []
-			if TAPobject_data.store_flux_data == True:
-				for j in TAPobject_data.reactor_species.gasses:
-					thin_data[j][k_pulse] =  []
-				for j in TAPobject_data.reactor_species.adspecies:
-					thin_data[j][k_pulse] =  []
-				for j in TAPobject_data.reactor_species.inert_gasses:
-					thin_data[j][k_pulse] =  []
+			for j in TAPobject_data.reactor_species.gasses:
+				thin_data[j][k_pulse] =  []
+			for j in TAPobject_data.reactor_species.adspecies:
+				thin_data[j][k_pulse] =  []
+			for j in TAPobject_data.reactor_species.inert_gasses:
+				thin_data[j][k_pulse] =  []
 
 		all_species = len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.inert_gasses) + len(TAPobject_data.reactor_species.adspecies)
 		time_step = 0
@@ -568,6 +567,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 				for knum,k in enumerate(TAPobject_data.reactor_species.inert_gasses):
 					synthetic_data[k][k_pulse].append(2*(float(TAPobject_data.reactor_species.inert_gasses[k].inert_diffusion) /(float(dx_r))) * (float(TAPobject_data.reactor.reactor_radius)**2)*3.14159*( float(u_n.vector().get_local()[all_species+len(TAPobject_data.reactor_species.gasses)+len(TAPobject_data.reactor_species.adspecies)+knum])))		
 
+			thin_data['time'][k_pulse].append(round(t,6))
 			if TAPobject_data.store_thin_data == True:
 				for knum,k in enumerate(TAPobject_data.reactor_species.gasses):
 					thin_data[k][k_pulse].append(float(u_n.vector().get_local()[(catalyst_center_cell*(len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.adspecies) + len(TAPobject_data.reactor_species.inert_gasses)))+all_species+knum]))
