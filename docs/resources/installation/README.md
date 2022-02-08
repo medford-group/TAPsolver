@@ -12,7 +12,7 @@ Using [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install)
 
 	conda activate tapsolver-2021
 
-	pip install --upgrade git+https://github.com/medford-group/TAPsolver.git
+	pip install --upgrade git+https://github.com/medford-group/TAPsolver.git@experimentalFluidity_condensed
 
 	pip install --upgrade git+https://github.com/dolfin-adjoint/pyadjoint.git@faster-ufl
 
