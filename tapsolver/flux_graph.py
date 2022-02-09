@@ -106,44 +106,60 @@ def flux_graph(TAPobject_data: TAPobject):
 		for jnum,j in enumerate(TAPobject_data.reactor_species.inert_gasses):
 			for k in experimental_data[j]:
 				if k == 0:
-					plt.scatter(experimental_data['time'][0][::6], experimental_data[j][0][::6],s=5,label=j+'_exp',color=colors[jnum+len(TAPobject_data.reactor_species.gasses.keys())])
+					plt.scatter(experimental_data['time'][0][::6], experimental_data[j][0][::6],s=5,label=j+'_exp',color=colors[jnum+len(TAPobject_data.reactor_species.gasses.keys())])#
 				else:
 					plt.scatter(experimental_data['time'][0][::6], experimental_data[j][0][::6],s=5,color=colors[jnum+len(TAPobject_data.reactor_species.gasses.keys())])
 
 	if TAPobject_data.display_analytical == True:
 		# For reactant / product species
 
-		analyticalTiming = np.arange(0, time_steps*dt, dt).tolist()
+		analyticalTiming = synthetic_data['time'][0]#np.arange(0, time_steps*dt, dt).tolist()
 		for kjc in TAPobject_data.reactor_species.gasses:
 			outlet = []
 		
-			if reac_input['Scale Output'].lower() == 'true':
-				factor = 1
-			else:
-				factor = TAPobject_data.reactor_species.gasses[kjc].intensity*TAPobject_data.reactor_species.reference_pulse_size
+			factor = TAPobject_data.reactor_species.gasses[kjc].intensity*TAPobject_data.reactor_species.reference_pulse_size
 			
-			for k in range(0,time_steps+1):
+			for k in analyticalTiming:
 				analyticalValue = 0
-				if k*dt - TAPobject_data.reactor_species.gasses[kjc].delay > 0:
-					for n in range(0,50):
-						analyticalValue += ((-1)**n)*(2*n+1)*np.exp((-(n+0.5)**2)*(3.14159**2)*((k*dt - species_time[kjc])*(D[kjc][0]/(eb[0]*(np.sum(r_param)**2)))))
+				if k - TAPobject_data.reactor_species.gasses[kjc].delay > 0:
+					for n in range(0,50):### Analytical solution section # gasses[name].catalyst_diffusion
+						analyticalValue += ((-1)**n)*(2*n+1)*np.exp((-(n+0.5)**2)*(3.14159**2)*((k - TAPobject_data.reactor_species.gasses[kjc].delay)*(TAPobject_data.reactor_species.gasses[kjc].inert_diffusion/(TAPobject_data.reactor.zone_voids[0]*(TAPobject_data.reactor.total_length**2)))))
 				else: 
 					analyticalValue = -1
 				if analyticalValue < 0:
 					outlet.append(0)
 				else:
-					outlet.append(factor*(D[kjc][0]*3.14159/(eb[0]*(np.sum(r_param)**2)))*analyticalValue)
+					outlet.append(factor*(TAPobject_data.reactor_species.gasses[kjc].inert_diffusion*3.14159/(TAPobject_data.reactor.zone_voids[0]*(TAPobject_data.reactor.total_length**2)))*analyticalValue)
 			
-			# Store analytical solution data
-			np.savetxt('./analyticalCO19000.csv', outlet, delimiter=",")
 			try:
-				ax2.plot(analyticalTiming,outlet,color=colors[kjc],label='Analytical '+legend_label[kjc], alpha=0.7)
-				#ax2.plot(graph_data['timing'],outlet,color=colors[kjc],label='Analytical '+legend_label[kjc], alpha=0.7)
+				ax2.plot(analyticalTiming,outlet,color='k',label='Analytical '+legend_label[kjc], alpha=0.7)
 			except ValueError:
 				outlet = outlet[:-1]
-				ax2.plot(analyticalTiming,outlet,color=colors[kjc],label='Analytical '+legend_label[kjc], alpha=0.7)
-				#ax2.plot(graph_data['timing'],outlet,color=colors[kjc],label='Analytical '+legend_label[kjc], alpha=0.7)
+				ax2.plot(analyticalTiming,outlet,color='k',label='Analytical '+legend_label[kjc], alpha=0.7)
+
+		analyticalTiming = synthetic_data['time'][0]#np.arange(0, time_steps*dt, dt).tolist()
+		for kjc in TAPobject_data.reactor_species.inert_gasses:
+			outlet = []
 		
+			factor = TAPobject_data.reactor_species.inert_gasses[kjc].intensity*TAPobject_data.reactor_species.reference_pulse_size
+			
+			for k in analyticalTiming:
+				analyticalValue = 0
+				if k - TAPobject_data.reactor_species.inert_gasses[kjc].delay > 0:
+					for n in range(0,50):### Analytical solution section # gasses[name].catalyst_diffusion
+						analyticalValue += ((-1)**n)*(2*n+1)*np.exp((-(n+0.5)**2)*(3.14159**2)*((k - TAPobject_data.reactor_species.inert_gasses[kjc].delay)*(TAPobject_data.reactor_species.inert_gasses[kjc].inert_diffusion/(TAPobject_data.reactor.zone_voids[0]*(TAPobject_data.reactor.total_length**2)))))
+				else: 
+					analyticalValue = -1
+				if analyticalValue < 0:
+					outlet.append(0)
+				else:
+					outlet.append(factor*(TAPobject_data.reactor_species.inert_gasses[kjc].inert_diffusion*3.14159/(TAPobject_data.reactor.zone_voids[0]*(TAPobject_data.reactor.total_length**2)))*analyticalValue)
+			
+			try:
+				ax2.plot(analyticalTiming,outlet,color='k',label='Analytical '+legend_label[kjc], alpha=0.7)
+			except ValueError:
+				outlet = outlet[:-1]
+				ax2.plot(analyticalTiming,outlet,color='k',label='Analytical '+legend_label[kjc], alpha=0.7)
 
 
 	plt.legend()
