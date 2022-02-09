@@ -107,6 +107,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 	TAPobject_data.reactor_species.reference_temperature = Constant(TAPobject_data.reactor_species.reference_temperature)
 	TAPobject_data.reactor.zone_voids[0] = Constant(TAPobject_data.reactor.zone_voids[0])
 	TAPobject_data.reactor_species.catalyst_diffusion = Constant(TAPobject_data.reactor_species.catalyst_diffusion)
+	TAPobject_data.reactor_species.inert_diffusion = Constant(TAPobject_data.reactor_species.inert_diffusion)
 	TAPobject_data.reactor.zone_voids[1] = Constant(TAPobject_data.reactor.zone_voids[1])
 	standard_parameters['kbt'] = Constant(standard_parameters['kbt'])
 	standard_parameters['h'] = Constant(standard_parameters['h'])
