@@ -132,10 +132,10 @@ def flux_graph(TAPobject_data: TAPobject):
 					outlet.append(factor*(TAPobject_data.reactor_species.gasses[kjc].inert_diffusion*3.14159/(TAPobject_data.reactor.zone_voids[0]*(TAPobject_data.reactor.total_length**2)))*analyticalValue)
 			
 			try:
-				ax2.plot(analyticalTiming,outlet,color='k',label='Analytical '+legend_label[kjc], alpha=0.7)
+				ax2.plot(analyticalTiming,outlet,color='k',label='Analytical '+kjc, alpha=0.7)
 			except ValueError:
 				outlet = outlet[:-1]
-				ax2.plot(analyticalTiming,outlet,color='k',label='Analytical '+legend_label[kjc], alpha=0.7)
+				ax2.plot(analyticalTiming,outlet,color='k',label='Analytical '+kjc, alpha=0.7)
 
 		analyticalTiming = synthetic_data['time'][0]#np.arange(0, time_steps*dt, dt).tolist()
 		for kjc in TAPobject_data.reactor_species.inert_gasses:
@@ -156,10 +156,10 @@ def flux_graph(TAPobject_data: TAPobject):
 					outlet.append(factor*(TAPobject_data.reactor_species.inert_gasses[kjc].inert_diffusion*3.14159/(TAPobject_data.reactor.zone_voids[0]*(TAPobject_data.reactor.total_length**2)))*analyticalValue)
 			
 			try:
-				ax2.plot(analyticalTiming,outlet,color='k',label='Analytical '+legend_label[kjc], alpha=0.7)
+				ax2.plot(analyticalTiming,outlet,color='k',label='Analytical '+kjc, alpha=0.7)
 			except ValueError:
 				outlet = outlet[:-1]
-				ax2.plot(analyticalTiming,outlet,color='k',label='Analytical '+legend_label[kjc], alpha=0.7)
+				ax2.plot(analyticalTiming,outlet,color='k',label='Analytical '+kjc, alpha=0.7)
 
 
 	plt.legend()
