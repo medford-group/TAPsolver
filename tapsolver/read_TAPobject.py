@@ -84,7 +84,7 @@ def read_TAPobject(file_name):
 	loaded_TAPobject.reactor_species.reference_pulse_size = sameObject2.reactor_species.reference_pulse_size
 
 	########################################
-		
+
 	# REQUIRED FOR INVERSE ANALYSIS
 	loaded_TAPobject.experimental_data = sameObject2.experimental_data
 
@@ -99,7 +99,7 @@ def read_TAPobject(file_name):
 	loaded_TAPobject.derivative_name = sameObject2.derivative_name
 	loaded_TAPobject.data_name = sameObject2.data_name
 	loaded_TAPobject.store_flux_data = sameObject2.store_flux_data
-	loaded_TAPobject.store_catalyst_data = sameObject2.store_catalyst_data
+	loaded_TAPobject.store_thin_data = sameObject2.store_thin_data
 	loaded_TAPobject.gas_noise = sameObject2.gas_noise
 	loaded_TAPobject.surface_noise = sameObject2.surface_noise
 	loaded_TAPobject.catalyst_data_type = sameObject2.catalyst_data_type
