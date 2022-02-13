@@ -582,6 +582,8 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 				for k_fitting in (TAPobject_data.gasses_objective): #  and TAPobject_data.inert_gasses_objective
 					
 					if round(t,6) in output_data['time'][0]:
+						print(round(t,6))
+						print(output_data['time'][0])
 						c_exp = output_data[k_fitting][0][output_data['time'][0].index(round(t,6))]
 						#c_exp = output_data[k_fitting]['values'][output_data[k_fitting]['times'].index(round(t,6))]
 						slope = (-c_exp)/(1/TAPobject_data.mesh)
