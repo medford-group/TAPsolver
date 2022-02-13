@@ -54,7 +54,13 @@ def update_parameters(TAPobject_data_original: TAPobject):
 					TAPobject_data.mechanism.elementary_processes[elementary_step].forward.k = value_row[jnum]
 				elif direction == 'backward':
 					TAPobject_data.mechanism.elementary_processes[elementary_step].backward.k = value_row[jnum]
-
 		except:
 			pass
+
+		try:
+			kinetic_link = int(j.split('[')[1].split(']')[0])
+			if 'kinetic_links' in j:
+				TAPobject_data.mechanism.kinetic_links[kinetic_lin]  = value_row[jnum]
+
+
 	return TAPobject_data
