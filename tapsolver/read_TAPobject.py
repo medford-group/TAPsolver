@@ -32,7 +32,10 @@ def read_TAPobject(file_name):
 	loaded_TAPobject.mechanism.reactions = sameObject2.mechanism.reactions
 	
 	for jnum,j in enumerate(sameObject2.mechanism.elementary_processes):
-		loaded_TAPobject.mechanism.elementary_processes[jnum] = sameObject2.mechanism.elementary_processes[j] 
+		loaded_TAPobject.mechanism.elementary_processes[jnum] = sameObject2.mechanism.elementary_processes[j]
+
+	for jnum,j in enumerate(sameObject2.mechanism.elementary_processes):
+		loaded_TAPobject.mechanism.kinetic_links[jnum] = sameObject2.mechanism.kinetic_links[j]		
 
 	loaded_TAPobject.reactor_species = sameObject2.reactor_species
 
