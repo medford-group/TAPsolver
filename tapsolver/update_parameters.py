@@ -61,6 +61,7 @@ def update_parameters(TAPobject_data_original: TAPobject):
 			kinetic_link = int(j.split('[')[1].split(']')[0])
 			if 'kinetic_links' in j:
 				TAPobject_data.mechanism.kinetic_links[kinetic_lin]  = value_row[jnum]
-
+		except:
+			pass
 
 	return TAPobject_data
