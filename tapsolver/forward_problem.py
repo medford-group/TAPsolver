@@ -169,6 +169,9 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 	reference_pulse_concentration = TAPobject_data.reactor_species.reference_pulse_size/point_volume
 	##### Making sure that I define the controls
 	controls = []
+	low_bounds = []
+	up_bounds = []
+
 	if TAPobject_data.optimize == True or TAPobject_data.tangent_linear_sensitivity == True:
 		try:
 			if len(TAPobject_data.parameters_of_interest) > 1:
@@ -180,6 +183,45 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 			#controls.append(Control(TAPobject_data.reactor_species.temperature[j_temp_number]))
 			#controls.append(Control(TAPobject_data.mechanism.elementary_processes[0].forward.k))
 			controls.append(Control(eval(j)))
+			
+			w1 = j.split('[')[1]
+			w2 = int(w1.split(']')[0])
+
+			x1 = j.split('].')[1]
+			x2 = x1.split('.')[0]
+
+			if x2 == 'forward':
+				if TAPobject_data.mechanism.elementary_processes[w2].forward.lower_bound != None:
+					low_bounds.append(TAPobject_data.mechanism.elementary_processes[w2].forward.lower_bound)
+				elif 'dG' in j:
+					low_bounds.append(-np.inf)
+				else:
+					low_bounds.append(0)
+			
+				if TAPobject_data.mechanism.elementary_processes[w2].forward.upper_bound != None:
+					up_bounds.append(TAPobject_data.mechanism.elementary_processes[w2].forward.upper_bound)
+				elif 'dG' in j:
+					up_bounds.append(np.inf)			
+				else:
+					up_bounds.append(np.inf)
+
+			if x2 == 'backward':
+				if TAPobject_data.mechanism.elementary_processes[w2].backward.lower_bound != None:
+					low_bounds.append(TAPobject_data.mechanism.elementary_processes[w2].backward.lower_bound)
+				elif 'dG' in j:
+					low_bounds.append(-np.inf)
+				else:
+					low_bounds.append(0)
+			
+				if TAPobject_data.mechanism.elementary_processes[w2].backward.upper_bound != None:
+					up_bounds.append(TAPobject_data.mechanism.elementary_processes[w2].backward.upper_bound)
+				elif 'dG' in j:
+					up_bounds.append(np.inf)			
+				else:
+					up_bounds.append(np.inf)
+
+
+
 	#controls = [Control(TAPobject_data.reactor_species.inert_gasses['Ar'].intensity)]
 	#controls = [Control(TAPobject_data.mechanism.elementary_processes[0].forward.k)]
 
@@ -794,18 +836,10 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 		print('test 2')
 		reference_time = time.time()
 		rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2,derivative_cb_post=derivCB)#,derivative_cb_post=derivCB,hessian_cb_post=hessCB)
-		
-		low_bounds = []
-		up_bounds = []
 
-		for j_limit in TAPobject_data.parameters_of_interest:
-			if 'dG' in j_limit:
-				low_bounds.append(-np.inf)
-				up_bounds.append(np.inf)
-			else:
-				low_bounds.append(0)
-				up_bounds.append(np.inf)
-	
+		#self.lower_bound = None
+		#self.upper_bound = None
+
 		#for gt in range(0,len(controls)):
 		#	low_bounds.append(0)
 		#	up_bounds.append(np.inf)

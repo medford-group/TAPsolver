@@ -16,3 +16,5 @@ class elementary_process_details():
 		self.link = None
 		#self.link = {'variable':0}
 		self.use = None # 'None' or 'k' # or 'E' or 'G' or 'l' or []
+		self.lower_bound = None
+		self.upper_bound = None
