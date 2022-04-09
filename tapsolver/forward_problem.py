@@ -454,8 +454,8 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 		problemtemp = NonlinearVariationalProblem(Ftemp,u,bcs,Jtemp)
 		solvertemp = NonlinearVariationalSolver(problemtemp)
 
-		solver.parameters["newton_solver"]["relative_tolerance"] = 1.0e-7
-		solver.parameters["newton_solver"]["absolute_tolerance"] = 1e-10
+		solver.parameters["newton_solver"]["relative_tolerance"] = 1.0e-8
+		solver.parameters["newton_solver"]["absolute_tolerance"] = 1e-8
 		solver.parameters["newton_solver"]["maximum_iterations"] = 1000
 
 	synthetic_data = {}
