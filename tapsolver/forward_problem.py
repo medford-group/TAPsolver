@@ -70,8 +70,8 @@ import json
 import ufl
 import dijitso
 
-warnings.simplefilter(action='ignore', category=FutureWarning)
-set_log_level(30)
+#warnings.simplefilter(action='ignore', category=FutureWarning)
+set_log_level(20)
 tol = 1E-20
 runge_kutta_approach = False
 standard_parameters = load_standard_parameters()
@@ -432,7 +432,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 	
 	variational_solver = 'newton'
 	if variational_solver == 'constrained':
-		snes_solver_parameters = {"nonlinear_solver": "snes","snes_solver": {"linear_solver": "lu","line_search":'basic',"maximum_iterations": 10,"report": False,"error_on_nonconvergence": False}}
+		snes_solver_parameters = {"nonlinear_solver": "snes","snes_solver": {"linear_solver": "lu","line_search":'basic',"maximum_iterations": 100,"report": False,"error_on_nonconvergence": False}}
 			
 		lower = Function(V)
 		upper = Function(V) 
@@ -454,8 +454,9 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 		problemtemp = NonlinearVariationalProblem(Ftemp,u,bcs,Jtemp)
 		solvertemp = NonlinearVariationalSolver(problemtemp)
 
-		solver.parameters["newton_solver"]["relative_tolerance"] = 1.0e-8
+		solver.parameters["newton_solver"]["relative_tolerance"] = 1.0e-7
 		solver.parameters["newton_solver"]["absolute_tolerance"] = 1e-10
+		solver.parameters["newton_solver"]["maximum_iterations"] = 1000
 
 	synthetic_data = {}
 	synthetic_data['time'] = {}
