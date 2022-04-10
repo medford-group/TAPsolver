@@ -70,8 +70,8 @@ import json
 import ufl
 import dijitso
 
-#warnings.simplefilter(action='ignore', category=FutureWarning)
-set_log_level(20)
+warnings.simplefilter(action='ignore', category=FutureWarning)
+set_log_level(30)
 tol = 1E-20
 runge_kutta_approach = False
 standard_parameters = load_standard_parameters()
