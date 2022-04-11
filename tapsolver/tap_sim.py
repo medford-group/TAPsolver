@@ -717,7 +717,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		reac_input['Variational Solver'] = 'newton'
 	
 		if reac_input['Variational Solver'].lower() == 'constrained':
-			snes_solver_parameters = {"nonlinear_solver": "snes","snes_solver": {"linear_solver": "lu","line_search":'basic',"maximum_iterations": 10,"report": False,"error_on_nonconvergence": False}}
+			snes_solver_parameters = {"nonlinear_solver": "snes","snes_solver": {"linear_solver": "lu","line_search":'basic',"maximum_iterations": 10000,"report": False,"error_on_nonconvergence": False}}
 			
 			lower = Function(V)
 			upper = Function(V) 
@@ -742,7 +742,8 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 			solvertemp = NonlinearVariationalSolver(problemtemp)
 
 			solver.parameters["newton_solver"]["relative_tolerance"] = 1.0e-8
-			solver.parameters["newton_solver"]["absolute_tolerance"] = 1e-10
+			solver.parameters["newton_solver"]["absolute_tolerance"] = 1e-8
+			solver.parameters["newton_solver"]["maximum_iterations"] = 1000
 	
 		#############################################################
 		############# PARSE INLET PULSE COMPOSITION #################
