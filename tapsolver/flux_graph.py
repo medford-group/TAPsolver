@@ -161,7 +161,7 @@ def flux_graph(TAPobject_data: TAPobject):
 				outlet = outlet[:-1]
 				ax2.plot(analyticalTiming,outlet,color='k',label='Analytical '+kjc, alpha=0.7)
 
-
+	plt.savefig('flux_graph.pdf')
 	plt.legend()
 	plt.show()
 	sys.exit()
