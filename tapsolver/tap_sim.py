@@ -39,7 +39,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 	simplifiedTimeStep = False	
 	fit_temperature = False
 
-	#warnings.simplefilter(action='ignore', category=FutureWarning)
+	warnings.simplefilter(action='ignore', category=FutureWarning)
 	
 	#############################################################
 	################ TAPsolver FEniCS Function ##################
@@ -737,17 +737,13 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		elif reac_input['Variational Solver'].lower() == 'newton':
 			problem = NonlinearVariationalProblem(F,u,bcs,J)
 			solver = NonlinearVariationalSolver(problem)
-
-			solver.parameters["newton_solver"]["relative_tolerance"] = 1.0e-8
-			solver.parameters["newton_solver"]["absolute_tolerance"] = 1e-8
-			solver.parameters["newton_solver"]["maximum_iterations"] = 1000
 	
 			problemtemp = NonlinearVariationalProblem(Ftemp,u,bcs,Jtemp)
 			solvertemp = NonlinearVariationalSolver(problemtemp)
 
-			solvertemp.parameters["newton_solver"]["relative_tolerance"] = 1.0e-8
-			solvertemp.parameters["newton_solver"]["absolute_tolerance"] = 1e-8
-			solvertemp.parameters["newton_solver"]["maximum_iterations"] = 1000
+			solver.parameters["newton_solver"]["relative_tolerance"] = 1.0e-8
+			solver.parameters["newton_solver"]["absolute_tolerance"] = 1e-8
+			solver.parameters["newton_solver"]["maximum_iterations"] = 1000
 	
 		#############################################################
 		############# PARSE INLET PULSE COMPOSITION #################
@@ -1144,9 +1140,6 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 									
 								except UnboundLocalError:
 									jfunc_2 = assemble(inner(u_n[necessary_values['surf_num']+k_fitting-2]*to_flux[k_fitting] - w3,u_n[necessary_values['surf_num']+k_fitting-2]*to_flux[k_fitting] - w3)*dP(1))
-				
-				
-				################# Temporary shift in the time step size ####################
 
 				if simplifiedTimeStep == False:
 					if runge_kutta_approach == False:	
@@ -1167,7 +1160,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 											u_n.assign(u)
 											solver.solve()
 								else:
-									if t > 10e50:#0.0011+timeDiff:
+									if t > 0.0011+timeDiff:
 										solver.solve(annotate = False)
 									else:
 										solvertemp.solve(annotate=False)
@@ -1292,153 +1285,6 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 								print('this one')
 								print('Time Step Failure')
 								sys.exit()
-
-				############################################################################
-#
-#				if simplifiedTimeStep == False:
-#					if runge_kutta_approach == False:	
-#						if round(t,6) not in species_time:
-#							#timeDiff = round(t,6)
-#							try:
-#								if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true' or reac_input['Sensitivity Analysis'].lower() == 'true':
-#									# C.N. method
-#									if t > 0.0011+timeDiff:
-#										solver.solve()
-#									# B.E. method
-#									else:
-#										solvertemp.solve()
-#		
-#										if round(t,6) == round(0.001+timeDiff,6):
-#											dt = reac_input['Pulse Duration']/reac_input['Time Steps']
-#											dk.assign(dt)
-#											u_n.assign(u)
-#											solver.solve()
-#								else:
-#									if t > 0.0011+timeDiff:
-#										solver.solve(annotate = False)
-#									else:
-#										solvertemp.solve(annotate=False)
-#		
-#										if round(t,6) == round(0.001+timeDiff,6):
-#											dt = reac_input['Pulse Duration']/reac_input['Time Steps']
-#											dk.assign(dt)
-#											u_n.assign(u)
-#											solver.solve()
-#											
-#								#############################################################
-#								################### STORE THIN-ZONE DATA ####################
-#								#############################################################
-#								
-#								if reac_input['Thin-Zone Analysis'].lower() == 'true':
-#									
-#									arrayNew = np.vstack((cat_data['rawData'],u_n.vector().get_local()))
-#									cat_data['rawData'] = arrayNew
-#	
-#							except RuntimeError:
-#								print('Time Step Failure')
-#								sys.exit()
-#						
-#						else:
-#							if dt == 0.0001:
-#								pass
-#							else:
-#								dt = 0.0001
-#								dk.assign(dt)
-#		
-#							if round(t,6) in species_time:
-#								timeDiff = round(t,6)
-#		
-#							if reac_input['Reactor Type'] == 'tap':
-#							
-#								if reac_input['Fit Parameters'].lower() == 'true':
-#									if t == 0:
-#										for k in range(0,int(reac_input['Number of Reactants'])):
-#											u_n.vector()[int((all_molecules)*((reac_input['Mesh Size']+1)+additionalCells))+k-(all_molecules)] = -1e-10
-#		
-#								if doe_form_pulse == False:
-#									for k in range(0,int(reac_input['Number of Reactants'])):
-#									
-#										if species_time[k] == round(t,6):
-#											u_n.vector()[int((all_molecules)*((reac_input['Mesh Size']+1)+(meshCells*2**(int(reac_input['Catalyst Mesh Density']))-meshCells)))+k-(all_molecules)] = float(species_pulse_list[k])*Inert_pulse_conc#list_species_pulse[k]
-#									# Define: Pulse
-#									for k_step in range(0,int(reac_input['Number of Inerts'])):
-#										if species_time[-1-k_step] == round(t,6):
-#											u_n.vector()[int((all_molecules)*((reac_input['Mesh Size']+1)+(meshCells*2**(int(reac_input['Catalyst Mesh Density']))-meshCells))-1-k_step)] = float(species_pulse_list[-1-k_step])*Inert_pulse_conc###??? Added the porosity contribution
-#								
-#	 							#############################################################
-#								################### STORE THIN-ZONE DATA ####################
-#								#############################################################
-#		
-#								if reac_input['Thin-Zone Analysis'].lower() == 'true':
-#								
-#									if round(t,6) != 0:
-#										arrayNew = np.vstack((cat_data['rawData'],u_n.vector().get_local()))
-#										cat_data['rawData'] = arrayNew
-#									else:
-#										cat_data['rawData'] = u_n.vector().get_local()
-#	
-#							#############################################################
-#							############### DEFINE INITIAL COMPOSITION ##################
-#							#############################################################
-#						
-#							if k_pulse == 0 and round(t,6) == 0:
-#								if doe_form_surf == False:
-#									print('doe_form_surf false')
-#									if additionalCells == 0:
-#			
-#										for z in range(mp.ceil((Mesh122)*reac_input['Mesh Size'])+1,int((Mesh222)*reac_input['Mesh Size'])+2):
-#											if ',' in str(reac_input['Initial Surface Composition']):
-#												for z_num,z_sur in enumerate(reac_input['Initial Surface Composition']):	
-#													if int((Mesh122)*reac_input['Mesh Size'])-1 <= 0:
-#														u_n.vector()[(all_molecules)-(int(reac_input['Number of Inerts'])+z_num+1)] = float(z_sur)
-#													else:
-#														u_n.vector()[z*(all_molecules)-(int(reac_input['Number of Inerts'])+z_num+1)] = float(z_sur)
-#			
-#											else:
-#												if int((Mesh122)*reac_input['Mesh Size'])-1 <= 0:
-#													u_n.vector()[(all_molecules)-(2)] = float(species_pulse_list)
-#												else:
-#													u_n.vector()[z*(all_molecules)-(2)] = float(species_pulse_list)
-#			
-#									else:
-#			
-#										transTest1 = mp.ceil((Mesh122)*reac_input['Mesh Size'])+1
-#										if ',' in str(reac_input['Initial Surface Composition']):
-#											for z_num,z_sur in enumerate(reac_input['Initial Surface Composition']):	
-#												u_n.vector()[transTest1*(all_molecules)-(int(reac_input['Number of Inerts'])+z_num+1)] = float(z_sur)*0.5
-#			
-#										transTest2 = int((Mesh122)*reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))
-#										if ',' in str(reac_input['Initial Surface Composition']):
-#											for z_num,z_sur in enumerate(reac_input['Initial Surface Composition']):	
-#												u_n.vector()[transTest2*(all_molecules)-(int(reac_input['Number of Inerts'])+z_num+1)] = float(z_sur)*0.5
-#			
-#			
-#										for z in range(mp.ceil((Mesh122)*reac_input['Mesh Size'])+2,int((Mesh122)*reac_input['Mesh Size'])+meshCells*2**(int(reac_input['Catalyst Mesh Density']))):
-#											if ',' in str(reac_input['Initial Surface Composition']):
-#												for z_num,z_sur in enumerate(reac_input['Initial Surface Composition']):	
-#													if int((Mesh122)*reac_input['Mesh Size'])-1 <= 0:
-#														u_n.vector()[(all_molecules)-(int(reac_input['Number of Inerts'])+z_num+1)] = float(z_sur)
-#													else:
-#														u_n.vector()[z*(all_molecules)-(int(reac_input['Number of Inerts'])+z_num+1)] = float(z_sur)
-#		
-#											else:
-#												if int((Mesh122)*reac_input['Mesh Size'])-1 <= 0:
-#													u_n.vector()[(all_molecules)-(2)] = float(species_pulse_list)
-#												else:
-#													u_n.vector()[z*(all_molecules)-(2)] = float(species_pulse_list)
-#														
-#							try:
-#								if reac_input['Fit Parameters'].lower() == 'true' or reac_input['Uncertainty Quantification'].lower() == 'true' or reac_input['Fit Inert'].lower() == 'true' or reac_input['Sensitivity Analysis'].lower() == 'true':
-#									solvertemp.solve()
-#		
-#								else:
-#
-#									solvertemp.solve(annotate = False)
-#		
-#							except RuntimeError:
-#								print('this one')
-#								print('Time Step Failure')
-#								sys.exit()
 			
 					elif runge_kutta_approach == True:
 						timeDomain = [0.0, 5.0]
