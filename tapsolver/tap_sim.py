@@ -39,7 +39,7 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 	simplifiedTimeStep = False	
 	fit_temperature = False
 
-	warnings.simplefilter(action='ignore', category=FutureWarning)
+	#warnings.simplefilter(action='ignore', category=FutureWarning)
 	
 	#############################################################
 	################ TAPsolver FEniCS Function ##################
@@ -737,13 +737,13 @@ def general_run(timeFunc,uncertainty_quantificaiton=None,optimization=None,fitti
 		elif reac_input['Variational Solver'].lower() == 'newton':
 			problem = NonlinearVariationalProblem(F,u,bcs,J)
 			solver = NonlinearVariationalSolver(problem)
-	
-			problemtemp = NonlinearVariationalProblem(Ftemp,u,bcs,Jtemp)
-			solvertemp = NonlinearVariationalSolver(problemtemp)
 
 			solver.parameters["newton_solver"]["relative_tolerance"] = 1.0e-8
 			solver.parameters["newton_solver"]["absolute_tolerance"] = 1e-8
 			solver.parameters["newton_solver"]["maximum_iterations"] = 1000
+	
+			problemtemp = NonlinearVariationalProblem(Ftemp,u,bcs,Jtemp)
+			solvertemp = NonlinearVariationalSolver(problemtemp)
 
 			solvertemp.parameters["newton_solver"]["relative_tolerance"] = 1.0e-8
 			solvertemp.parameters["newton_solver"]["absolute_tolerance"] = 1e-8
