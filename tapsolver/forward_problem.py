@@ -190,36 +190,37 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 			x1 = j.split('].')[1]
 			x2 = x1.split('.')[0]
 
-
 			if x2 == 'forward':
-				if (TAPobject_data.mechanism.elementary_processes[w2].forward.lower_bound != None) and ('dG' not in TAPobject_data.mechanism.elementary_processes[w2].forward.lower_bound):
-					low_bounds.append(TAPobject_data.mechanism.elementary_processes[w2].forward.lower_bound)
-				elif 'dG' in j:
+				if 'dG' in j:
 					low_bounds.append(-np.inf)
+				elif TAPobject_data.mechanism.elementary_processes[w2].forward.lower_bound != None:
+					low_bounds.append(TAPobject_data.mechanism.elementary_processes[w2].forward.lower_bound)
 				else:
 					low_bounds.append(0)
 			
-				if (TAPobject_data.mechanism.elementary_processes[w2].forward.upper_bound != None) and ('dG' not in TAPobject_data.mechanism.elementary_processes[w2].forward.lower_bound):
+				if 'dG' in j:
+					up_bounds.append(np.inf)
+				elif TAPobject_data.mechanism.elementary_processes[w2].forward.upper_bound != None:
 					up_bounds.append(TAPobject_data.mechanism.elementary_processes[w2].forward.upper_bound)
-				elif 'dG' in j:
-					up_bounds.append(np.inf)			
 				else:
 					up_bounds.append(np.inf)
 
 			if x2 == 'backward':
-				if (TAPobject_data.mechanism.elementary_processes[w2].backward.lower_bound != None) and ('dG' not in TAPobject_data.mechanism.elementary_processes[w2].forward.lower_bound):
-					low_bounds.append(TAPobject_data.mechanism.elementary_processes[w2].backward.lower_bound)
-				elif 'dG' in j:
+				if 'dG' in j:
 					low_bounds.append(-np.inf)
+				elif TAPobject_data.mechanism.elementary_processes[w2].backward.lower_bound != None:
+					low_bounds.append(TAPobject_data.mechanism.elementary_processes[w2].backward.lower_bound)
 				else:
 					low_bounds.append(0)
 			
-				if (TAPobject_data.mechanism.elementary_processes[w2].backward.upper_bound != None) and ('dG' not in TAPobject_data.mechanism.elementary_processes[w2].forward.lower_bound):
-					up_bounds.append(TAPobject_data.mechanism.elementary_processes[w2].backward.upper_bound)
-				elif 'dG' in j:
+				if 'dG' in j:
 					up_bounds.append(np.inf)			
+				elif TAPobject_data.mechanism.elementary_processes[w2].backward.upper_bound != None:
+					up_bounds.append(TAPobject_data.mechanism.elementary_processes[w2].backward.upper_bound)
 				else:
 					up_bounds.append(np.inf)
+
+
 
 	#controls = [Control(TAPobject_data.reactor_species.inert_gasses['Ar'].intensity)]
 	#controls = [Control(TAPobject_data.mechanism.elementary_processes[0].forward.k)]
