@@ -107,7 +107,8 @@ def transient_sensitivity(pulse_time, pulse_number, TAPobject_data_original: TAP
 		signal_noise_matrix[jnum,jnum] = TAPobject_data.reactor_species.gasses[j].sigma*TAPobject_data.reactor_species.gasses[j].sigma
 
 	inv_signal_matrix = np.linalg.inv(signal_noise_matrix)
-	
+	print(signal_noise_matrix)
+	print(inv_signal_matrix)
 	if TAPobject_data.finite_difference_trans_sensitivty == True:
 		original_name = copy.deepcopy(TAPobject_data.output_name)
 		forward_problem(pulse_time,pulse_number,TAPobject_data)
@@ -253,11 +254,11 @@ def transient_sensitivity(pulse_time, pulse_number, TAPobject_data_original: TAP
 			for znum,z in enumerate(list(q_matricies.keys())):
 				print(jnum)
 				print(znum)
-				print(inv_signal_matrix[jnum,znum]*(np.transpose(q_matricies[j]).dot(q_matricies[z])))
+				print(inv_signal_matrix[jnum,znum]*(q_matricies[j].dot(np.transpose(q_matricies[z]))))
 				if jnum == 0 and znum == 0:
-					final_q_array = inv_signal_matrix[jnum,znum]*(np.transpose(q_matricies[j]).dot(q_matricies[z]))
+					final_q_array = inv_signal_matrix[jnum,znum]*(q_matricies[j].dot(np.transpose(q_matricies[z])))
 				else:
-					final_q_array += inv_signal_matrix[jnum,znum]*(np.transpose(q_matricies[j]).dot(q_matricies[z]))
+					final_q_array += inv_signal_matrix[jnum,znum]*(q_matricies[j].dot(np.transpose(q_matricies[z])))
 				print(final_q_array)
 
 		print(final_q_array)
