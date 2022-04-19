@@ -79,6 +79,7 @@ def transient_sensitivity(pulse_time, pulse_number, TAPobject_data_original: TAP
 	transient_data = {}
 	TAPobject_data = copy.deepcopy(TAPobject_data_original)
 	qoi = copy.deepcopy(TAPobject_data.parameters_of_interest)
+
 	if TAPobject_data.tangent_linear_sensitivity == True:	
 		transient_data = {}
 		for k in TAPobject_data.reactor_species.gasses:
@@ -95,7 +96,18 @@ def transient_sensitivity(pulse_time, pulse_number, TAPobject_data_original: TAP
 		#print(transient_data['CO'][0]['TAPobject_data.mechanism.elementary_processes[0].forward.k'])
 		save_object(transient_data,'./'+TAPobject_data.output_name+'/TAP_test.json')
 		deriviative_information = read_transient_sensitivity('./'+TAPobject_data.output_name+'/TAP_test.json')
-		
+	number_gasses = 0
+	
+	for j in TAPobject_data.reactor_species.gasses:
+		number_gasses += 1
+
+	signal_noise_matrix = np.zeros((number_gasses, number_gasses))
+
+	for jnum, j in enumerate(TAPobject_data.reactor_species.gasses):
+		signal_noise_matrix[jnum,jnum] = TAPobject_data.reactor_species.gasses[j].sigma*TAPobject_data.reactor_species.gasses[j].sigma
+
+	inv_signal_matrix = np.linalg.inv(signal_noise_matrix)
+	
 	if TAPobject_data.finite_difference_trans_sensitivty == True:
 		original_name = copy.deepcopy(TAPobject_data.output_name)
 		forward_problem(pulse_time,pulse_number,TAPobject_data)
@@ -216,7 +228,7 @@ def transient_sensitivity(pulse_time, pulse_number, TAPobject_data_original: TAP
 	#if True == False:
 	
 		q_matricies = {}
-	
+
 		for k in TAPobject_data.reactor_species.gasses:
 			parameter_options = list(deriviative_information[k][0].keys())
 			temp_sensitivity_storage = {}
@@ -234,16 +246,18 @@ def transient_sensitivity(pulse_time, pulse_number, TAPobject_data_original: TAP
 		
 		
 			#for j in deriviative_information[k][0]:
-	
+			
 		for jnum,j in enumerate(list(q_matricies.keys())):
 
 			for znum,z in enumerate(list(q_matricies.keys())):
 				if jnum == 0 and znum == 0:
-					final_q_array = q_matricies[j].dot(np.transpose(q_matricies[z]))
+					final_q_array = inv_signal_matrix[jnum,znum]*q_matricies[j].dot(np.transpose(q_matricies[z]))
 				else:
-					final_q_array += q_matricies[j].dot(np.transpose(q_matricies[z]))
+					final_q_array += inv_signal_matrix[jnum,znum]*q_matricies[j].dot(np.transpose(q_matricies[z]))
+		
 		print(final_q_array)
-		pd.DataFrame(final_q_array).to_csv('./'+original_name+'/covariance_matrix.csv')
+		pd.DataFrame(final_q_array).to_csv('./'+original_name+'/information_matrix.csv')
+		pd.DataFrame(np.linalg.inv(final_q_array)).to_csv('./'+original_name+'/covariance_matrix.csv')
 		with open('./'+original_name+'/optimal_criteria.txt', 'w') as f:
 			f.write('Determinant')
 			f.write('\n')
