@@ -123,14 +123,15 @@ def transient_sensitivity(pulse_time, pulse_number, TAPobject_data_original: TAP
 		for j in qoi:
 
 			old_value = copy.deepcopy(eval(j))
-			
+			print(old_value)
 			if 'delay' in j:
-				new_value = old_value+0.001
+				new_value = old_value+0.00001
 			elif 'dG' in j:
-				new_value = old_value+0.001
+				new_value = old_value+0.00001
 			else:
-				new_value = old_value+0.0001*old_value
+				new_value = old_value+0.00001*old_value
 			#print(new_value)
+			print(new_value)
 			#sys.exit()
 			if 'elementary_processes' in j:
 				elementary_step = float(re.split(r"[\[\]]",j)[1])
@@ -180,7 +181,7 @@ def transient_sensitivity(pulse_time, pulse_number, TAPobject_data_original: TAP
 			#sys.exit()
 			for x in TAPobject_data.reactor_species.gasses:
 				for z in new_data[x]:
-					temp_change = [(a_i - b_i)/change_parameter for a_i, b_i in zip(new_data[x][z], old_data[x][z])]
+					temp_change = [(a_i - b_i)/step_size for a_i, b_i in zip(new_data[x][z], old_data[x][z])]
 					transient_data[x][int(z)][j] = temp_change
 
 			if 'elementary_processes' in j:
