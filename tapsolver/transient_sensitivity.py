@@ -243,6 +243,7 @@ def transient_sensitivity(pulse_time, pulse_number, TAPobject_data_original: TAP
 					q_matricies[k] = np.array([temp_sensitivity_storage[j]])
 				else:
 					q_matricies[k] = np.append(q_matricies[k], np.array([temp_sensitivity_storage[j]]), 0)
+			print(q_matricies[k])
 		
 		
 			#for j in deriviative_information[k][0]:
@@ -250,11 +251,15 @@ def transient_sensitivity(pulse_time, pulse_number, TAPobject_data_original: TAP
 		for jnum,j in enumerate(list(q_matricies.keys())):
 
 			for znum,z in enumerate(list(q_matricies.keys())):
+				print(jnum)
+				print(znum)
+				print(inv_signal_matrix[jnum,znum]*(np.transpose(q_matricies[j]).dot(q_matricies[z])))
 				if jnum == 0 and znum == 0:
-					final_q_array = inv_signal_matrix[jnum,znum]*q_matricies[j].dot(np.transpose(q_matricies[z]))
+					final_q_array = inv_signal_matrix[jnum,znum]*(np.transpose(q_matricies[j]).dot(q_matricies[z]))
 				else:
-					final_q_array += inv_signal_matrix[jnum,znum]*q_matricies[j].dot(np.transpose(q_matricies[z]))
-		
+					final_q_array += inv_signal_matrix[jnum,znum]*(np.transpose(q_matricies[j]).dot(q_matricies[z]))
+				print(final_q_array)
+
 		print(final_q_array)
 		pd.DataFrame(final_q_array).to_csv('./'+original_name+'/information_matrix.csv')
 		pd.DataFrame(np.linalg.inv(final_q_array)).to_csv('./'+original_name+'/covariance_matrix.csv')
