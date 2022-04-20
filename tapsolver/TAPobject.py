@@ -91,6 +91,7 @@ class TAPobject():
 		self.data_name = None
 		self.store_flux_data = True
 		self.store_thin_data = True
+		self.store_cat_flux = False
 		self.gas_noise = True
 		self.surface_noise = True
 		self.catalyst_data_type = 'single_point'
