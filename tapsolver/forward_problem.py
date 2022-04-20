@@ -458,6 +458,10 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 		solver.parameters["newton_solver"]["absolute_tolerance"] = 1e-8
 		solver.parameters["newton_solver"]["maximum_iterations"] = 1000
 
+		solvertemp.parameters["newton_solver"]["relative_tolerance"] = 1.0e-8
+		solvertemp.parameters["newton_solver"]["absolute_tolerance"] = 1e-8
+		solvertemp.parameters["newton_solver"]["maximum_iterations"] = 1000
+
 	synthetic_data = {}
 	synthetic_data['time'] = {}
 	if TAPobject_data.store_flux_data == True:
