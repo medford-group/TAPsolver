@@ -13,6 +13,11 @@ import copy
 import warnings
 import matplotlib.pyplot as plt
 
+
+
+
+
+
 #from structures import *
 from .define_adspecies import define_adspecies
 from .define_gas import define_gas
