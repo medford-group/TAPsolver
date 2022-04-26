@@ -198,7 +198,7 @@ def transient_sensitivity(pulse_time, pulse_number, TAPobject_data_original: TAP
 						TAPobject_data.mechanism.elementary_processes[elementary_step].forward.Ga = old_value
 					elif 'dG' in j:
 						print('replace dg')
-						TAPobject_data.mechanism.elementary_processes[elementary_step].forward.k = old_value
+						TAPobject_data.mechanism.elementary_processes[elementary_step].forward.dG = old_value
 				
 				if 'backward' in j:
 					if 'k' in j:
