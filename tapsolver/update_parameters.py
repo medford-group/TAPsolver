@@ -1,15 +1,15 @@
 # Copyright 2021, Battelle Energy Alliance, LLC All Rights Reserved
 
-from .define_adspecies import define_adspecies
-from .define_gas import define_gas
-from .display_gasses import display_gasses
-from .display_surface import display_surface
-from .experimental_data import experimental_data
-from .mechanism import mechanism
-from .reactor import reactor
-from .reactor_species import reactor_species
+from define_adspecies import define_adspecies
+from define_gas import define_gas
+from display_gasses import display_gasses
+from display_surface import display_surface
+from experimental_data import experimental_data
+from mechanism import mechanism
+from reactor import reactor
+from reactor_species import reactor_species
 #from read_old_input import read_old_input
-from .TAPobject import TAPobject
+from TAPobject import TAPobject
 
 import pandas as pd
 import copy

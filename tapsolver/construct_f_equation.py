@@ -7,8 +7,8 @@ import numpy as np
 
 import sys
 #from structures import TAPobject
-from .TAPobject import TAPobject
-from .mechanism_reactants import mechanism_reactants
+from TAPobject import TAPobject
+from mechanism_reactants import mechanism_reactants
 
 
 def construct_f_equation(TAPobject_data: TAPobject):
@@ -43,7 +43,17 @@ def construct_f_equation(TAPobject_data: TAPobject):
 	
 	def add_diffusion(species_name):
 		"""Add diffusion term for reactive gas species introduced in the reactor"""
-		return "((u_d['u_"+species_name+"'] - u_nd['u_n"+species_name+"']))*v_d['v_"+species_name+"']*dx(0)      + dk*("+"(TAPobject_data.reactor_species.inert_diffusion*sqrt(TAPobject_data.reactor_species.reference_mass*TAPobject_data.reactor_species.temperature)/sqrt(TAPobject_data.reactor_species.reference_temperature*TAPobject_data.reactor_species.gasses['"+species_name+"'].mass))"+"/(TAPobject_data.reactor.zone_voids[0]*(TAPobject_data.reactor.total_length**2)) ) *dot(grad(theta*u_d['u_"+species_name+"']+(1-theta)*u_nd['u_n"+species_name+"']), grad(v_d['v_"+species_name+"']))*dx(0)     + ((u_d['u_"+species_name+"'] - u_nd['u_n"+species_name+"']) )*v_d['v_"+species_name+"']*dx(1)       + dk*("+"(TAPobject_data.reactor_species.catalyst_diffusion*sqrt(TAPobject_data.reactor_species.reference_mass*TAPobject_data.reactor_species.temperature)/sqrt(TAPobject_data.reactor_species.reference_temperature*TAPobject_data.reactor_species.gasses['"+species_name+"'].mass))"+"/(TAPobject_data.reactor.zone_voids[1]*(TAPobject_data.reactor.total_length**2)) )*dot(grad(theta*u_d['u_"+species_name+"'] + (1-theta)*u_nd['u_n"+species_name+"']), grad(v_d['v_"+species_name+"']))*dx(1) " 
+		new_equation = "((u_d['u_"+species_name+"'] - u_nd['u_n"+species_name+"']))*v_d['v_"+species_name+"']*dx(0)      + dk*("+"(TAPobject_data.reactor_species.inert_diffusion*sqrt(TAPobject_data.reactor_species.reference_mass*TAPobject_data.reactor_species.temperature)/sqrt(TAPobject_data.reactor_species.reference_temperature*TAPobject_data.reactor_species.gasses['"+species_name+"'].mass))"+"/(TAPobject_data.reactor.zone_voids[0]*(TAPobject_data.reactor.total_length**2)) ) *dot(grad(theta*u_d['u_"+species_name+"']+(1-theta)*u_nd['u_n"+species_name+"']), grad(v_d['v_"+species_name+"']))*dx(0)     + ((u_d['u_"+species_name+"'] - u_nd['u_n"+species_name+"']) )*v_d['v_"+species_name+"']*dx(1)       + dk*("+"(TAPobject_data.reactor_species.catalyst_diffusion*sqrt(TAPobject_data.reactor_species.reference_mass*TAPobject_data.reactor_species.temperature)/sqrt(TAPobject_data.reactor_species.reference_temperature*TAPobject_data.reactor_species.gasses['"+species_name+"'].mass))"+"/(TAPobject_data.reactor.zone_voids[1]*(TAPobject_data.reactor.total_length**2)) )*dot(grad(theta*u_d['u_"+species_name+"'] + (1-theta)*u_nd['u_n"+species_name+"']), grad(v_d['v_"+species_name+"']))*dx(1) " 
+		if sum(TAPobject_data.reactor.catalyst_locations) >= 2:
+			new_equation +="+ ((u_d['u_"+species_name+"'] - u_nd['u_n"+species_name+"']) )*v_d['v_"+species_name+"']*dx(2)       + dk*("+"(TAPobject_data.reactor_species.catalyst_diffusion*sqrt(TAPobject_data.reactor_species.reference_mass*TAPobject_data.reactor_species.temperature)/sqrt(TAPobject_data.reactor_species.reference_temperature*TAPobject_data.reactor_species.gasses['"+species_name+"'].mass))"+"/(TAPobject_data.reactor.zone_voids[1]*(TAPobject_data.reactor.total_length**2)) )*dot(grad(theta*u_d['u_"+species_name+"'] + (1-theta)*u_nd['u_n"+species_name+"']), grad(v_d['v_"+species_name+"']))*dx(2) "
+		if sum(TAPobject_data.reactor.catalyst_locations) >= 3:
+			new_equation +="+ ((u_d['u_"+species_name+"'] - u_nd['u_n"+species_name+"']) )*v_d['v_"+species_name+"']*dx(3)       + dk*("+"(TAPobject_data.reactor_species.catalyst_diffusion*sqrt(TAPobject_data.reactor_species.reference_mass*TAPobject_data.reactor_species.temperature)/sqrt(TAPobject_data.reactor_species.reference_temperature*TAPobject_data.reactor_species.gasses['"+species_name+"'].mass))"+"/(TAPobject_data.reactor.zone_voids[1]*(TAPobject_data.reactor.total_length**2)) )*dot(grad(theta*u_d['u_"+species_name+"'] + (1-theta)*u_nd['u_n"+species_name+"']), grad(v_d['v_"+species_name+"']))*dx(3) "	
+		if sum(TAPobject_data.reactor.catalyst_locations) >= 4:
+			new_equation +="+ ((u_d['u_"+species_name+"'] - u_nd['u_n"+species_name+"']) )*v_d['v_"+species_name+"']*dx(4)       + dk*("+"(TAPobject_data.reactor_species.catalyst_diffusion*sqrt(TAPobject_data.reactor_species.reference_mass*TAPobject_data.reactor_species.temperature)/sqrt(TAPobject_data.reactor_species.reference_temperature*TAPobject_data.reactor_species.gasses['"+species_name+"'].mass))"+"/(TAPobject_data.reactor.zone_voids[1]*(TAPobject_data.reactor.total_length**2)) )*dot(grad(theta*u_d['u_"+species_name+"'] + (1-theta)*u_nd['u_n"+species_name+"']), grad(v_d['v_"+species_name+"']))*dx(4) "		
+		if sum(TAPobject_data.reactor.catalyst_locations) >= 5:
+			new_equation +="+ ((u_d['u_"+species_name+"'] - u_nd['u_n"+species_name+"']) )*v_d['v_"+species_name+"']*dx(5)       + dk*("+"(TAPobject_data.reactor_species.catalyst_diffusion*sqrt(TAPobject_data.reactor_species.reference_mass*TAPobject_data.reactor_species.temperature)/sqrt(TAPobject_data.reactor_species.reference_temperature*TAPobject_data.reactor_species.gasses['"+species_name+"'].mass))"+"/(TAPobject_data.reactor.zone_voids[1]*(TAPobject_data.reactor.total_length**2)) )*dot(grad(theta*u_d['u_"+species_name+"'] + (1-theta)*u_nd['u_n"+species_name+"']), grad(v_d['v_"+species_name+"']))*dx(5) "	
+
+		return new_equation
 	
 	def add_advection(species_number):
 		"""Add advective term for reactive or inert gas species introduced in the reactor"""
@@ -63,6 +73,14 @@ def construct_f_equation(TAPobject_data: TAPobject):
 	# For each adspecies, define the time variation term 
 	for k in list(TAPobject_data.reactor_species.adspecies.keys()):
 		F = F + " + ((u_d['u_"+k+"'] - u_nd['u_n"+k+"']))*v_d['v_"+k+"']*dx(0) + ((u_d['u_"+k+"'] - u_nd['u_n"+k+"']) )*v_d['v_"+k+"']*dx(1)"
+		if sum(TAPobject_data.reactor.catalyst_locations) >= 2:
+			F = F + " + ((u_d['u_"+k+"'] - u_nd['u_n"+k+"']) )*v_d['v_"+k+"']*dx(2)"
+		if sum(TAPobject_data.reactor.catalyst_locations) >= 3:
+			F = F + " + ((u_d['u_"+k+"'] - u_nd['u_n"+k+"']) )*v_d['v_"+k+"']*dx(3)"
+		if sum(TAPobject_data.reactor.catalyst_locations) >= 4:
+			F = F + " + ((u_d['u_"+k+"'] - u_nd['u_n"+k+"']) )*v_d['v_"+k+"']*dx(4)"
+		if sum(TAPobject_data.reactor.catalyst_locations) >= 5:
+			F = F + " + ((u_d['u_"+k+"'] - u_nd['u_n"+k+"']) )*v_d['v_"+k+"']*dx(5)"
 		
 	def make_g(elementary_process,direction,scale_magnitude):
 		"""Add free energy reaction term for the elementary process specified"""
@@ -138,13 +156,46 @@ def construct_f_equation(TAPobject_data: TAPobject):
 				if j < len(neg):
 					if irr == None:
 						F = F+"- dk*Constant(theta)*("+str(abs(val_neg[j]))+"* "+new_pos+"*v_d['v_"+v+"']*dx(1))"+"+ dk*Constant(theta)*("+str(abs(val_neg[j]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(1))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 2:
+							F = F+"- dk*Constant(theta)*("+str(abs(val_neg[j]))+"* "+new_pos+"*v_d['v_"+v+"']*dx(2))"+"+ dk*Constant(theta)*("+str(abs(val_neg[j]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(2))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 3:
+							F = F+"- dk*Constant(theta)*("+str(abs(val_neg[j]))+"* "+new_pos+"*v_d['v_"+v+"']*dx(3))"+"+ dk*Constant(theta)*("+str(abs(val_neg[j]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(3))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 4:
+							F = F+"- dk*Constant(theta)*("+str(abs(val_neg[j]))+"* "+new_pos+"*v_d['v_"+v+"']*dx(4))"+"+ dk*Constant(theta)*("+str(abs(val_neg[j]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(4))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 5:
+							F = F+"- dk*Constant(theta)*("+str(abs(val_neg[j]))+"* "+new_pos+"*v_d['v_"+v+"']*dx(5))"+"+ dk*Constant(theta)*("+str(abs(val_neg[j]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(5))"
 					else:
 						F = F+"+ dk*Constant(theta)*("+str(abs(val_neg[j]))+"* "+new_neg+"*v_d['v_"+str(v+1)+"']*dx(1))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 2:
+							F = F+"+ dk*Constant(theta)*("+str(abs(val_neg[j]))+"* "+new_neg+"*v_d['v_"+str(v+1)+"']*dx(2))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 3:
+							F = F+"+ dk*Constant(theta)*("+str(abs(val_neg[j]))+"* "+new_neg+"*v_d['v_"+str(v+1)+"']*dx(3))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 4:
+							F = F+"+ dk*Constant(theta)*("+str(abs(val_neg[j]))+"* "+new_neg+"*v_d['v_"+str(v+1)+"']*dx(4))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 5:
+							F = F+"+ dk*Constant(theta)*("+str(abs(val_neg[j]))+"* "+new_neg+"*v_d['v_"+str(v+1)+"']*dx(5))"
+
 				else:
 					if irr == None:
 						F = F+"+ dk*Constant(theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_pos+"*v_d['v_"+v+"']*dx(1))"+"- dk*Constant(theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(1))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 2:
+							F = F+"+ dk*Constant(theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_pos+"*v_d['v_"+v+"']*dx(2))"+"- dk*Constant(theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(2))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 3:
+							F = F+"+ dk*Constant(theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_pos+"*v_d['v_"+v+"']*dx(3))"+"- dk*Constant(theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(3))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 4:
+							F = F+"+ dk*Constant(theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_pos+"*v_d['v_"+v+"']*dx(4))"+"- dk*Constant(theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(4))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 5:
+							F = F+"+ dk*Constant(theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_pos+"*v_d['v_"+v+"']*dx(5))"+"- dk*Constant(theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(5))"
 					else:
 						F = F+"- dk*Constant(theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(1))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 2:
+							F = F+"- dk*Constant(theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(2))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 3:
+							F = F+"- dk*Constant(theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(3))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 4:
+							F = F+"- dk*Constant(theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(4))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 5:
+							F = F+"- dk*Constant(theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(5))"
 
 	if TAPobject_data.mechanism.reactants != []: # 
 		for k,z in enumerate(TAPobject_data.mechanism.rate_array):
@@ -193,17 +244,62 @@ def construct_f_equation(TAPobject_data: TAPobject):
 				if j < len(neg):
 					if irr == None:
 						F = F+"- dk*Constant(1-theta)*("+str(abs(val_neg[j]))+"* "+new_pos+"*v_d['v_"+v+"']*dx(1))"+"+ dk*Constant(1-theta)*("+str(abs(val_neg[j]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(1))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 2:
+							F = F+"- dk*Constant(1-theta)*("+str(abs(val_neg[j]))+"* "+new_pos+"*v_d['v_"+v+"']*dx(2))"+"+ dk*Constant(1-theta)*("+str(abs(val_neg[j]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(2))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 3:
+							F = F+"- dk*Constant(1-theta)*("+str(abs(val_neg[j]))+"* "+new_pos+"*v_d['v_"+v+"']*dx(3))"+"+ dk*Constant(1-theta)*("+str(abs(val_neg[j]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(3))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 4:
+							F = F+"- dk*Constant(1-theta)*("+str(abs(val_neg[j]))+"* "+new_pos+"*v_d['v_"+v+"']*dx(4))"+"+ dk*Constant(1-theta)*("+str(abs(val_neg[j]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(4))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 5:
+							F = F+"- dk*Constant(1-theta)*("+str(abs(val_neg[j]))+"* "+new_pos+"*v_d['v_"+v+"']*dx(5))"+"+ dk*Constant(1-theta)*("+str(abs(val_neg[j]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(5))"
 					else:
-						F = F+"+ dk*Constant(1-theta)*("+str(abs(val_neg[j]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(1))"
+						F = F+"+ dk*Constant(1-theta)*("+str(abs(val_neg[j]))+"* "+new_neg+"*v_d['v_"+str(v+1)+"']*dx(1))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 2:
+							F = F+"+ dk*Constant(1-theta)*("+str(abs(val_neg[j]))+"* "+new_neg+"*v_d['v_"+str(v+1)+"']*dx(2))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 3:
+							F = F+"+ dk*Constant(1-theta)*("+str(abs(val_neg[j]))+"* "+new_neg+"*v_d['v_"+str(v+1)+"']*dx(3))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 4:
+							F = F+"+ dk*Constant(1-theta)*("+str(abs(val_neg[j]))+"* "+new_neg+"*v_d['v_"+str(v+1)+"']*dx(4))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 5:
+							F = F+"+ dk*Constant(1-theta)*("+str(abs(val_neg[j]))+"* "+new_neg+"*v_d['v_"+str(v+1)+"']*dx(5))"
+
 				else:
 					if irr == None:
 						F = F+"+ dk*Constant(1-theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_pos+"*v_d['v_"+v+"']*dx(1))"+"- dk*Constant(1-theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(1))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 2:
+							F = F+"+ dk*Constant(1-theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_pos+"*v_d['v_"+v+"']*dx(2))"+"- dk*Constant(1-theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(2))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 3:
+							F = F+"+ dk*Constant(1-theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_pos+"*v_d['v_"+v+"']*dx(3))"+"- dk*Constant(1-theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(3))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 4:
+							F = F+"+ dk*Constant(1-theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_pos+"*v_d['v_"+v+"']*dx(4))"+"- dk*Constant(1-theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(4))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 5:
+							F = F+"+ dk*Constant(1-theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_pos+"*v_d['v_"+v+"']*dx(5))"+"- dk*Constant(1-theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(5))"
+					
 					else:
 						F = F+"- dk*Constant(1-theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(1))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 2:
+							F = F+"- dk*Constant(1-theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(2))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 3:
+							F = F+"- dk*Constant(1-theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(3))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 4:
+							F = F+"- dk*Constant(1-theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(4))"
+						if sum(TAPobject_data.reactor.catalyst_locations) >= 5:
+							F = F+"- dk*Constant(1-theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(5))"
+						
 		
 	def add_inert_diffusion(species_name):
 		"""Add diffusion term for inert gas species introduced in the reactor"""		
-		return "((u_d['u_"+species_name+"'] - u_nd['u_n"+species_name+"']))*v_d['v_"+species_name+"']*dx(0)      + dk*("+"(TAPobject_data.reactor_species.inert_diffusion*sqrt(TAPobject_data.reactor_species.reference_mass*TAPobject_data.reactor_species.temperature)/sqrt(TAPobject_data.reactor_species.reference_temperature*TAPobject_data.reactor_species.inert_gasses['"+species_name+"'].mass))"+"/(TAPobject_data.reactor.zone_voids[0]*TAPobject_data.reactor.total_length**2) ) *dot(grad(theta*u_d['u_"+species_name+"']+(1-theta)*u_nd['u_n"+species_name+"']), grad(v_d['v_"+species_name+"']))*dx(0)     + ((u_d['u_"+species_name+"'] - u_nd['u_n"+species_name+"']) )*v_d['v_"+species_name+"']*dx(1)       + dk*("+"(TAPobject_data.reactor_species.catalyst_diffusion*sqrt(TAPobject_data.reactor_species.reference_mass*TAPobject_data.reactor_species.temperature)/sqrt(TAPobject_data.reactor_species.reference_temperature*TAPobject_data.reactor_species.inert_gasses['"+species_name+"'].mass))"+"/(TAPobject_data.reactor.zone_voids[1]*TAPobject_data.reactor.total_length**2) )*dot(grad(theta*u_d['u_"+species_name+"'] + (1-theta)*u_nd['u_n"+species_name+"']), grad(v_d['v_"+species_name+"']))*dx(1) " 
+		new_equation = "((u_d['u_"+species_name+"'] - u_nd['u_n"+species_name+"']))*v_d['v_"+species_name+"']*dx(0)      + dk*("+"(TAPobject_data.reactor_species.inert_diffusion*sqrt(TAPobject_data.reactor_species.reference_mass*TAPobject_data.reactor_species.temperature)/sqrt(TAPobject_data.reactor_species.reference_temperature*TAPobject_data.reactor_species.inert_gasses['"+species_name+"'].mass))"+"/(TAPobject_data.reactor.zone_voids[0]*TAPobject_data.reactor.total_length**2) ) *dot(grad(theta*u_d['u_"+species_name+"']+(1-theta)*u_nd['u_n"+species_name+"']), grad(v_d['v_"+species_name+"']))*dx(0)     + ((u_d['u_"+species_name+"'] - u_nd['u_n"+species_name+"']) )*v_d['v_"+species_name+"']*dx(1)       + dk*("+"(TAPobject_data.reactor_species.catalyst_diffusion*sqrt(TAPobject_data.reactor_species.reference_mass*TAPobject_data.reactor_species.temperature)/sqrt(TAPobject_data.reactor_species.reference_temperature*TAPobject_data.reactor_species.inert_gasses['"+species_name+"'].mass))"+"/(TAPobject_data.reactor.zone_voids[1]*TAPobject_data.reactor.total_length**2) )*dot(grad(theta*u_d['u_"+species_name+"'] + (1-theta)*u_nd['u_n"+species_name+"']), grad(v_d['v_"+species_name+"']))*dx(1) " 
+		if sum(TAPobject_data.reactor.catalyst_locations) >= 2:
+			new_equation += "+ ((u_d['u_"+species_name+"'] - u_nd['u_n"+species_name+"']) )*v_d['v_"+species_name+"']*dx(2)       + dk*("+"(TAPobject_data.reactor_species.catalyst_diffusion*sqrt(TAPobject_data.reactor_species.reference_mass*TAPobject_data.reactor_species.temperature)/sqrt(TAPobject_data.reactor_species.reference_temperature*TAPobject_data.reactor_species.inert_gasses['"+species_name+"'].mass))"+"/(TAPobject_data.reactor.zone_voids[1]*TAPobject_data.reactor.total_length**2) )*dot(grad(theta*u_d['u_"+species_name+"'] + (1-theta)*u_nd['u_n"+species_name+"']), grad(v_d['v_"+species_name+"']))*dx(2)"
+		if sum(TAPobject_data.reactor.catalyst_locations) >= 3:
+			new_equation +="+ ((u_d['u_"+species_name+"'] - u_nd['u_n"+species_name+"']) )*v_d['v_"+species_name+"']*dx(3)       + dk*("+"(TAPobject_data.reactor_species.catalyst_diffusion*sqrt(TAPobject_data.reactor_species.reference_mass*TAPobject_data.reactor_species.temperature)/sqrt(TAPobject_data.reactor_species.reference_temperature*TAPobject_data.reactor_species.inert_gasses['"+species_name+"'].mass))"+"/(TAPobject_data.reactor.zone_voids[1]*TAPobject_data.reactor.total_length**2) )*dot(grad(theta*u_d['u_"+species_name+"'] + (1-theta)*u_nd['u_n"+species_name+"']), grad(v_d['v_"+species_name+"']))*dx(3)"	
+		if sum(TAPobject_data.reactor.catalyst_locations) >= 4:
+			new_equation +="+ ((u_d['u_"+species_name+"'] - u_nd['u_n"+species_name+"']) )*v_d['v_"+species_name+"']*dx(4)       + dk*("+"(TAPobject_data.reactor_species.catalyst_diffusion*sqrt(TAPobject_data.reactor_species.reference_mass*TAPobject_data.reactor_species.temperature)/sqrt(TAPobject_data.reactor_species.reference_temperature*TAPobject_data.reactor_species.inert_gasses['"+species_name+"'].mass))"+"/(TAPobject_data.reactor.zone_voids[1]*TAPobject_data.reactor.total_length**2) )*dot(grad(theta*u_d['u_"+species_name+"'] + (1-theta)*u_nd['u_n"+species_name+"']), grad(v_d['v_"+species_name+"']))*dx(4)"	
+		if sum(TAPobject_data.reactor.catalyst_locations) >= 5:
+			new_equation +="+ ((u_d['u_"+species_name+"'] - u_nd['u_n"+species_name+"']) )*v_d['v_"+species_name+"']*dx(5)     + dk*("+"(TAPobject_data.reactor_species.catalyst_diffusion*sqrt(TAPobject_data.reactor_species.reference_mass*TAPobject_data.reactor_species.temperature)/sqrt(TAPobject_data.reactor_species.reference_temperature*TAPobject_data.reactor_species.inert_gasses['"+species_name+"'].mass))"+"/(TAPobject_data.reactor.zone_voids[1]*TAPobject_data.reactor.total_length**2) )*dot(grad(theta*u_d['u_"+species_name+"'] + (1-theta)*u_nd['u_n"+species_name+"']), grad(v_d['v_"+species_name+"']))*dx(5)"
+
+		return new_equation#"((u_d['u_"+species_name+"'] - u_nd['u_n"+species_name+"']))*v_d['v_"+species_name+"']*dx(0)      + dk*("+"(TAPobject_data.reactor_species.inert_diffusion*sqrt(TAPobject_data.reactor_species.reference_mass*TAPobject_data.reactor_species.temperature)/sqrt(TAPobject_data.reactor_species.reference_temperature*TAPobject_data.reactor_species.inert_gasses['"+species_name+"'].mass))"+"/(TAPobject_data.reactor.zone_voids[0]*TAPobject_data.reactor.total_length**2) ) *dot(grad(theta*u_d['u_"+species_name+"']+(1-theta)*u_nd['u_n"+species_name+"']), grad(v_d['v_"+species_name+"']))*dx(0)     + ((u_d['u_"+species_name+"'] - u_nd['u_n"+species_name+"']) )*v_d['v_"+species_name+"']*dx(1)       + dk*("+"(TAPobject_data.reactor_species.catalyst_diffusion*sqrt(TAPobject_data.reactor_species.reference_mass*TAPobject_data.reactor_species.temperature)/sqrt(TAPobject_data.reactor_species.reference_temperature*TAPobject_data.reactor_species.inert_gasses['"+species_name+"'].mass))"+"/(TAPobject_data.reactor.zone_voids[1]*TAPobject_data.reactor.total_length**2) )*dot(grad(theta*u_d['u_"+species_name+"'] + (1-theta)*u_nd['u_n"+species_name+"']), grad(v_d['v_"+species_name+"']))*dx(1) " 
 	
 	# For each inert gas species, add the diffusion and advection terms (when appropriate)
 	for knum, k in enumerate(list(TAPobject_data.reactor_species.inert_gasses.keys())):

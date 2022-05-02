@@ -14,56 +14,56 @@ import warnings
 import matplotlib.pyplot as plt
 
 #from structures import *
-from .define_adspecies import define_adspecies
-from .define_gas import define_gas
-from .display_gasses import display_gasses
-from .display_surface import display_surface
-from .experimental_data import experimental_data
-from .mechanism import mechanism
-from .reactor import reactor
-from .reactor_species import reactor_species
+from define_adspecies import define_adspecies
+from define_gas import define_gas
+from display_gasses import display_gasses
+from display_surface import display_surface
+from experimental_data import experimental_data
+from mechanism import mechanism
+from reactor import reactor
+from reactor_species import reactor_species
 #from .read_old_input import read_old_input
-from .TAPobject import TAPobject
+from TAPobject import TAPobject
 
 #from file_io import *
-from .new_experiments import new_experiments
-from .read_CSV_mechanism import read_CSV_mechanism
-from .read_CSV_reactor import read_CSV_reactor
-from .read_CSV_reactor_species import read_CSV_reactor_species
-from .read_experimental_data_object import read_experimental_data_object
-from .read_mechanism_object import read_mechanism_object
-from .read_reactor_object import read_reactor_object
-from .read_reactor_species_object import read_reactor_species_object 
-from .read_TAPobject import read_TAPobject 
-from .read_transient_sensitivity import read_transient_sensitivity 
-from .save_object import save_object
+from new_experiments import new_experiments
+from read_CSV_mechanism import read_CSV_mechanism
+from read_CSV_reactor import read_CSV_reactor
+from read_CSV_reactor_species import read_CSV_reactor_species
+from read_experimental_data_object import read_experimental_data_object
+from read_mechanism_object import read_mechanism_object
+from read_reactor_object import read_reactor_object
+from read_reactor_species_object import read_reactor_species_object 
+from read_TAPobject import read_TAPobject 
+from read_transient_sensitivity import read_transient_sensitivity 
+from save_object import save_object
 #from vary_input_file import vary_input_file
 
 #from mechanism_construction import *
 #from construct_batch_equation import make_batch_equation
-from .construct_f_equation import construct_f_equation
-from .construct_f_equation_multiple_experiments import construct_f_equation_multiple_experiments
-from .construct_rate_equations import rateEqs
-from .display_elementary_processes import display_elementary_processes
-from .elementary_process import elementary_process
-from .elementary_process_details import elementary_process_details
-from .mechanism_constructor import mechanism_constructor
-from .mechanism_reactants import mechanism_reactants
+from construct_f_equation import construct_f_equation
+from construct_f_equation_multiple_experiments import construct_f_equation_multiple_experiments
+from construct_rate_equations import rateEqs
+from display_elementary_processes import display_elementary_processes
+from elementary_process import elementary_process
+from elementary_process_details import elementary_process_details
+from mechanism_constructor import mechanism_constructor
+from mechanism_reactants import mechanism_reactants
 
 #from reactor_species import *
 #from reference_parameters import *
-from .reference_parameters import load_standard_parameters
+from reference_parameters import load_standard_parameters
 
 #from simulation_notes import *
-from .timing_details import *
-from .error_details import *
-from .generate_folders import *
+from timing_details import *
+from error_details import *
+from generate_folders import *
 
 #from inverse_problem import *
-from .define_fitting_species import curveFitting
+from define_fitting_species import curveFitting
 #from point_objective import point_objective
-from .std_objective import stdEstablishment
-from .total_objective import curveFitting
+from std_objective import stdEstablishment
+from total_objective import curveFitting
 
 import jsonpickle
 import json
@@ -162,7 +162,13 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 	time_steps = pulse_time*1000
 
 	dk = Constant(pulse_time/time_steps)
-	cat_location = 1 - TAPobject_data.reactor.catalyst_center_fraction
+	cat_locations = []
+	for jnum,j in enumerate(TAPobject_data.reactor.catalyst_locations):
+		if j == 1:
+			cat_locations.append(1 - TAPobject_data.reactor.catalyst_center_fraction[jnum])
+		else:
+			cat_locations.append('nan')
+	#cat_location = 1 - TAPobject_data.reactor.catalyst_center_fraction
 
 	dx_r = TAPobject_data.reactor.total_length/TAPobject_data.mesh
 	point_volume = dx_r*TAPobject_data.reactor.cross_sectional_radius*TAPobject_data.reactor.zone_voids[0]
@@ -224,55 +230,65 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 
 	#controls = [Control(TAPobject_data.reactor_species.inert_gasses['Ar'].intensity)]
 	#controls = [Control(TAPobject_data.mechanism.elementary_processes[0].forward.k)]
-
+	# Chunck #1
 	mesh = UnitIntervalMesh(int(TAPobject_data.mesh))
+	catalyst_center_cells = []
+	Mesh22_list = []
+	Mesh12_list = []
 
-	cfDict = {}
-	roundedMesh2 = ((1-cat_location) + 0.5*TAPobject_data.reactor.length_fractions[1])*TAPobject_data.mesh
-	Mesh2 = round(((1-cat_location) + 0.5*TAPobject_data.reactor.length_fractions[1])*TAPobject_data.mesh)
-	Mesh22 = round(((1-cat_location) + 0.5*TAPobject_data.reactor.length_fractions[1])*TAPobject_data.mesh)/TAPobject_data.mesh
-	Mesh222 = round(((cat_location) + 0.5*TAPobject_data.reactor.length_fractions[1])*TAPobject_data.mesh)/TAPobject_data.mesh
-
-	roundedMesh1 = ((1-cat_location) - 0.5*TAPobject_data.reactor.length_fractions[1])*TAPobject_data.mesh
-	Mesh1 = round(((1-cat_location) - 0.5*TAPobject_data.reactor.length_fractions[1])*TAPobject_data.mesh)
-	Mesh12 = round(((1-cat_location) - 0.5*TAPobject_data.reactor.length_fractions[1])*TAPobject_data.mesh)/TAPobject_data.mesh
-	Mesh122 = round(((cat_location) - 0.5*TAPobject_data.reactor.length_fractions[1])*TAPobject_data.mesh)/TAPobject_data.mesh
-	
-	if Mesh2 != roundedMesh2 or Mesh1 != roundedMesh1:
-		print('Warning: Catalyst zone will be refined and rounded to the nearest whole mesh point!')
-		trueMesh = (roundedMesh2 - roundedMesh1)/TAPobject_data.mesh
-		newMesh = (Mesh2 - Mesh1)/TAPobject_data.mesh
-		print()
-		print('New Catalyst Fraction = '+str(newMesh))
-		print('Old Catalyst Fraction = '+str(trueMesh))
-		percentChange = abs(round(100*(trueMesh - newMesh)/trueMesh,2))
-		print('Change = '+str(percentChange)+'%')
-		print()
-		if percentChange > 4:
-			print('Consider refining the mesh to improve the accuracy of the simulation!')
-			sys.exit()
+	for jnum,j in enumerate(TAPobject_data.reactor.catalyst_locations):
+		if j == 1:
+			cat_location = cat_locations[jnum]	
+			print(cat_location)
+			cfDict = {}
+			roundedMesh2 = ((1-cat_location) + 0.5*TAPobject_data.reactor.length_fractions[jnum])*TAPobject_data.mesh
+			Mesh2 = round(((1-cat_location) + 0.5*TAPobject_data.reactor.length_fractions[jnum])*TAPobject_data.mesh)
+			Mesh22 = round(((1-cat_location) + 0.5*TAPobject_data.reactor.length_fractions[jnum])*TAPobject_data.mesh)/TAPobject_data.mesh
+			Mesh222 = round(((cat_location) + 0.5*TAPobject_data.reactor.length_fractions[jnum])*TAPobject_data.mesh)/TAPobject_data.mesh
+			Mesh22_list.append(Mesh22)
+			print(Mesh2)
+			roundedMesh1 = ((1-cat_location) - 0.5*TAPobject_data.reactor.length_fractions[jnum])*TAPobject_data.mesh
+			Mesh1 = round(((1-cat_location) - 0.5*TAPobject_data.reactor.length_fractions[jnum])*TAPobject_data.mesh)
+			Mesh12 = round(((1-cat_location) - 0.5*TAPobject_data.reactor.length_fractions[jnum])*TAPobject_data.mesh)/TAPobject_data.mesh
+			Mesh12_list.append(Mesh12)
+			Mesh122 = round(((cat_location) - 0.5*TAPobject_data.reactor.length_fractions[jnum])*TAPobject_data.mesh)/TAPobject_data.mesh
+			print(Mesh1)
+			if Mesh2 != roundedMesh2 or Mesh1 != roundedMesh1:
+				print('Warning: Catalyst zone will be refined and rounded to the nearest whole mesh point!')
+				trueMesh = (roundedMesh2 - roundedMesh1)/TAPobject_data.mesh
+				newMesh = (Mesh2 - Mesh1)/TAPobject_data.mesh
+				print()
+				print('New Catalyst Fraction = '+str(newMesh))
+				print('Old Catalyst Fraction = '+str(trueMesh))
+				percentChange = abs(round(100*(trueMesh - newMesh)/trueMesh,2))
+				print('Change = '+str(percentChange)+'%')
+				print()
+				if percentChange > 4:
+					print('Consider refining the mesh to improve the accuracy of the simulation!')
+					sys.exit()
 		
-	for jayz in range(0,TAPobject_data.catalyst_mesh_density+1):
-		class thin_zoneTest(SubDomain):
-			def inside(self, x, on_boundary):
-				return between(x[0], ((Mesh12), (Mesh22)))
-		
-		thin_zoneTest = thin_zoneTest()
-		cfDict[jayz] = MeshFunction("bool",mesh,1)
-		
-		thin_zoneTest.mark(cfDict[jayz],jayz)
-		mesh = refine(mesh,cfDict[jayz],True)
+			for jayz in range(0,TAPobject_data.catalyst_mesh_density+1):
+				class thin_zoneTest(SubDomain):
+					def inside(self, x, on_boundary):
+						return between(x[0], ((Mesh12), (Mesh22)))
+			
+				thin_zoneTest = thin_zoneTest()
+				cfDict[jayz] = MeshFunction("bool",mesh,1)
+				
+				thin_zoneTest.mark(cfDict[jayz],jayz)
+				mesh = refine(mesh,cfDict[jayz],True)
 
-	meshCells = int((Mesh22)*TAPobject_data.mesh) - mp.ceil((Mesh12)*TAPobject_data.mesh)
-	totalNumCells = TAPobject_data.mesh+meshCells*2**(TAPobject_data.catalyst_mesh_density)-meshCells
+			meshCells = int((Mesh22)*TAPobject_data.mesh) - mp.ceil((Mesh12)*TAPobject_data.mesh)
+			totalNumCells = TAPobject_data.mesh+meshCells*2**(TAPobject_data.catalyst_mesh_density)-meshCells
+			print(totalNumCells)
+			top = mp.ceil((Mesh122)*TAPobject_data.mesh)+1 
+			bottom = int((Mesh122)*TAPobject_data.mesh)+meshCells*2**(TAPobject_data.catalyst_mesh_density)-1
+			catalyst_center_cells.append(int((top+bottom)/2))
 
-	top = mp.ceil((Mesh122)*TAPobject_data.mesh)+1 
-	bottom = int((Mesh122)*TAPobject_data.mesh)+meshCells*2**(TAPobject_data.catalyst_mesh_density)-1
-	catalyst_center_cell = int((top+bottom)/2)
-	
 	P1 = FiniteElement('CG',mesh.ufl_cell(),1)
 
 	elements = []
+
 	for k in range(0,len(TAPobject_data.reactor_species.gasses)+len(TAPobject_data.reactor_species.adspecies)+len(TAPobject_data.reactor_species.inert_gasses)):
 		elements.append(P1)
 
@@ -314,30 +330,87 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 		advTerm.vector()[:] = advValue
 
 		advTerm.vector()[totalNumCells-0] = 0
-
+	# Chunck #2
 	class thin_zone(SubDomain):
 		def inside(self, x, on_boundary):
-			return between(x[0], ((Mesh12)-1/TAPobject_data.mesh, (Mesh22)+1/TAPobject_data.mesh))
-				
+			return between(x[0], ((Mesh12_list[0])-1/TAPobject_data.mesh, (Mesh22_list[0])+1/TAPobject_data.mesh))
+
+	print(sum(TAPobject_data.reactor.catalyst_locations))
+	if sum(TAPobject_data.reactor.catalyst_locations) >= 2:
+		class thin_zone_2(SubDomain):
+			def inside(self, x, on_boundary):
+				return between(x[0], ((Mesh12_list[1])-1/TAPobject_data.mesh, (Mesh22_list[1])+1/TAPobject_data.mesh))
+	
+	if sum(TAPobject_data.reactor.catalyst_locations) >= 3:
+		class thin_zone_3(SubDomain):
+			def inside(self, x, on_boundary):
+				return between(x[0], ((Mesh12_list[2])-1/TAPobject_data.mesh, (Mesh22_list[2])+1/TAPobject_data.mesh))
+	if sum(TAPobject_data.reactor.catalyst_locations) >= 4:
+		class thin_zone_4(SubDomain):
+			def inside(self, x, on_boundary):
+				return between(x[0], ((Mesh12_list[3])-1/TAPobject_data.mesh, (Mesh22_list[3])+1/TAPobject_data.mesh))
+	if sum(TAPobject_data.reactor.catalyst_locations) >= 5:
+		class thin_zone_5(SubDomain):
+			def inside(self, x, on_boundary):
+				return between(x[0], ((Mesh12_list[4])-1/TAPobject_data.mesh, (Mesh22_list[4])+1/TAPobject_data.mesh))
+
 	class singlePoint(SubDomain):
 		def inside(self,x,on_boundary):
 			return between(x[0], (((1-cat_location) - 1/totalNumCells), ((1-cat_location) + 1/totalNumCells)))
 	
-	thin_zone = thin_zone()
+	if sum(TAPobject_data.reactor.catalyst_locations) >= 2:
+		class singlePoint(SubDomain):
+			def inside(self,x,on_boundary):
+				return between(x[0], (((1-cat_location) - 1/totalNumCells), ((1-cat_location) + 1/totalNumCells)))
+	
+	if sum(TAPobject_data.reactor.catalyst_locations) >= 3:
+		class singlePoint(SubDomain):
+			def inside(self,x,on_boundary):
+				return between(x[0], (((1-cat_location) - 1/totalNumCells), ((1-cat_location) + 1/totalNumCells)))
+	
+	if sum(TAPobject_data.reactor.catalyst_locations) >= 4:
+		class singlePoint(SubDomain):
+			def inside(self,x,on_boundary):
+				return between(x[0], (((1-cat_location) - 1/totalNumCells), ((1-cat_location) + 1/totalNumCells)))
+	
+	if sum(TAPobject_data.reactor.catalyst_locations) >= 5:
+		class singlePoint(SubDomain):
+			def inside(self,x,on_boundary):
+				return between(x[0], (((1-cat_location) - 1/totalNumCells), ((1-cat_location) + 1/totalNumCells)))
+
 	domains = MeshFunction("size_t", mesh,1)
+	thin_zone = thin_zone()
 	thin_zone.mark(domains,1)
+	
+	if sum(TAPobject_data.reactor.catalyst_locations) >= 2:
+		thin_zone_2 = thin_zone_2()
+		thin_zone_2.mark(domains,2)
+
+	if sum(TAPobject_data.reactor.catalyst_locations) >= 3:
+		thin_zone_3 = thin_zone_3()
+		thin_zone_3.mark(domains,2)
+
+	if sum(TAPobject_data.reactor.catalyst_locations) >= 4:
+		thin_zone_4 = thin_zone_4()
+		thin_zone_4.mark(domains,4)
+
+	if sum(TAPobject_data.reactor.catalyst_locations) >= 5:
+		thin_zone_5 = thin_zone_5()
+		thin_zone_5.mark(domains,5)
 	
 	newBoundaries = domains.mesh().coordinates().transpose().tolist()[0]
 	additionalCells = len(newBoundaries[int(TAPobject_data.mesh+1):])
+
 	
 	centralPoint = singlePoint()
 	boundary_parts0 = MeshFunction("size_t", mesh,0)
 	boundary_parts0.set_all(0)
 	centralPoint.mark(boundary_parts0, 1)
 	
+	#dx = Measure("dx",subdomain_data=[domains,domains_2])
 	dx = Measure("dx",subdomain_data=domains)
 	dT = Measure("dx",subdomain_data=boundary_parts0)
-		
+	
 	def boundary_L(x, on_boundary):
 		return on_boundary and near(x[0],0,tol)
 	
@@ -368,8 +441,11 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 
 	constantT = Constant(0)
 	remove_surface = Constant(1)
+	#if TAPobject_data.mesh < 600:
 	b0Test2 = Expression('x[0] < 0.002500001 ? 0.5 : 0', degree=0)
-
+	#else:
+	#	b0Test2 = Expression('x[0] < 0.002500001 ? 0.5 : 0', degree=0)
+	
 	Fpulses = ''
 	for knum,k in enumerate(TAPobject_data.reactor_species.gasses):
 		##TAPobject_data.reactor_species.gasses[k].intensity = Constant(TAPobject_data.reactor_species.gasses[k].intensity)
@@ -384,6 +460,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 		if knum < len(TAPobject_data.reactor_species.inert_gasses)-1:
 			Fpulses += ' + '
 
+	# Chunck #3
 	for knum,k in enumerate(TAPobject_data.reactor_species.adspecies):
 		##TAPobject_data.reactor_species.adspecies[k].concentration = Constant(TAPobject_data.reactor_species.adspecies[k].concentration)
 		Fpulses += "-remove_surface*TAPobject_data.reactor_species.adspecies['"+k+"'].concentration*exp(-(constantT)*(constantT)/(0.00000000001))*v_d['v_"+k+"']*dx"
@@ -469,7 +546,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 			synthetic_data[j] =  {}
 		for j in TAPobject_data.reactor_species.inert_gasses:
 			synthetic_data[j] =  {}
-
+	# Chunck #4
 	if TAPobject_data.store_thin_data == True:
 		thin_data = {}
 		thin_data['time'] = {}
@@ -480,6 +557,50 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 				thin_data[j] =  {}
 			for j in TAPobject_data.reactor_species.inert_gasses:
 				thin_data[j] =  {}
+
+		if sum(TAPobject_data.reactor.catalyst_locations) >= 2:
+			thin_data_2 = {}
+			thin_data_2['time'] = {}
+			if TAPobject_data.store_thin_data == True:
+				for j in TAPobject_data.reactor_species.gasses:
+					thin_data_2[j] =  {}
+				for j in TAPobject_data.reactor_species.adspecies:
+					thin_data_2[j] =  {}
+				for j in TAPobject_data.reactor_species.inert_gasses:
+					thin_data_2[j] =  {}
+
+		if sum(TAPobject_data.reactor.catalyst_locations) >= 3: 
+			thin_data_3 = {}
+			thin_data_3['time'] = {}
+			if TAPobject_data.store_thin_data == True:
+				for j in TAPobject_data.reactor_species.gasses:
+					thin_data_3[j] =  {}
+				for j in TAPobject_data.reactor_species.adspecies:
+					thin_data_3[j] =  {}
+				for j in TAPobject_data.reactor_species.inert_gasses:
+					thin_data_3[j] =  {}
+
+		if sum(TAPobject_data.reactor.catalyst_locations) >= 4:
+			thin_data_4 = {}
+			thin_data_4['time'] = {}
+			if TAPobject_data.store_thin_data == True:
+				for j in TAPobject_data.reactor_species.gasses:
+					thin_data_4[j] =  {}
+				for j in TAPobject_data.reactor_species.adspecies:
+					thin_data_4[j] =  {}
+				for j in TAPobject_data.reactor_species.inert_gasses:
+					thin_data_4[j] =  {}
+
+		if sum(TAPobject_data.reactor.catalyst_locations) >= 5:
+			thin_data_5 = {}
+			thin_data_5['time'] = {}
+			if TAPobject_data.store_thin_data == True:
+				for j in TAPobject_data.reactor_species.gasses:
+					thin_data_5[j] =  {}
+				for j in TAPobject_data.reactor_species.adspecies:
+					thin_data_5[j] =  {}
+				for j in TAPobject_data.reactor_species.inert_gasses:
+					thin_data_5[j] =  {}
 
 	if TAPobject_data.tangent_linear_sensitivity == True:
 		sensitivity_output = {}
@@ -593,7 +714,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 				synthetic_data[j][k_pulse] =  []
 			for j in TAPobject_data.reactor_species.inert_gasses:
 				synthetic_data[j][k_pulse] =  []
-
+		# Chunck #5
 		if TAPobject_data.store_thin_data == True:
 			thin_data['time'][k_pulse] =  []
 			for j in TAPobject_data.reactor_species.gasses:
@@ -602,6 +723,46 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 				thin_data[j][k_pulse] =  []
 			for j in TAPobject_data.reactor_species.inert_gasses:
 				thin_data[j][k_pulse] =  []
+
+		if sum(TAPobject_data.reactor.catalyst_locations) >= 2:
+			thin_data_2['time'][k_pulse] =  []
+			if TAPobject_data.store_thin_data == True:
+				for j in TAPobject_data.reactor_species.gasses:
+					thin_data_2[j][k_pulse] =  []
+				for j in TAPobject_data.reactor_species.adspecies:
+					thin_data_2[j][k_pulse] =  []
+				for j in TAPobject_data.reactor_species.inert_gasses:
+					thin_data_2[j][k_pulse] =  []
+
+		if sum(TAPobject_data.reactor.catalyst_locations) >= 3: 
+			thin_data_3['time'][k_pulse] =  []
+			if TAPobject_data.store_thin_data == True:
+				for j in TAPobject_data.reactor_species.gasses:
+					thin_data_3[j][k_pulse] =  []
+				for j in TAPobject_data.reactor_species.adspecies:
+					thin_data_3[j][k_pulse] =  []
+				for j in TAPobject_data.reactor_species.inert_gasses:
+					thin_data_3[j][k_pulse] =  []
+
+		if sum(TAPobject_data.reactor.catalyst_locations) >= 4:
+			thin_data_4['time'][k_pulse] =  []
+			if TAPobject_data.store_thin_data == True:
+				for j in TAPobject_data.reactor_species.gasses:
+					thin_data_4[j][k_pulse] =  []
+				for j in TAPobject_data.reactor_species.adspecies:
+					thin_data_4[j][k_pulse] =  []
+				for j in TAPobject_data.reactor_species.inert_gasses:
+					thin_data_4[j][k_pulse] =  []
+
+		if sum(TAPobject_data.reactor.catalyst_locations) >= 5:
+			thin_data_5['time'][k_pulse] =  []
+			if TAPobject_data.store_thin_data == True:
+				for j in TAPobject_data.reactor_species.gasses:
+					thin_data_5[j][k_pulse] =  []
+				for j in TAPobject_data.reactor_species.adspecies:
+					thin_data_5[j][k_pulse] =  []
+				for j in TAPobject_data.reactor_species.inert_gasses:
+					thin_data_5[j][k_pulse] =  []
 
 		all_species = len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.inert_gasses) + len(TAPobject_data.reactor_species.adspecies)
 		time_step = 0
@@ -615,16 +776,25 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 				for knum,k in enumerate(TAPobject_data.reactor_species.inert_gasses):
 					synthetic_data[k][k_pulse].append(2*(float(TAPobject_data.reactor_species.inert_gasses[k].inert_diffusion) /(float(dx_r))) * (float(TAPobject_data.reactor.reactor_radius)**2)*3.14159*( float(u_n.vector().get_local()[all_species+len(TAPobject_data.reactor_species.gasses)+len(TAPobject_data.reactor_species.adspecies)+knum])))		
 
+			# Chunck #6
 			thin_data['time'][k_pulse].append(round(t,6))
 			if TAPobject_data.store_thin_data == True:
 				for knum,k in enumerate(TAPobject_data.reactor_species.gasses):
-					thin_data[k][k_pulse].append(float(u_n.vector().get_local()[(catalyst_center_cell*(len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.adspecies) + len(TAPobject_data.reactor_species.inert_gasses)))+all_species+knum]))
+					thin_data[k][k_pulse].append(float(u_n.vector().get_local()[(catalyst_center_cells[0]*(len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.adspecies) + len(TAPobject_data.reactor_species.inert_gasses)))+all_species+knum]))
 				for knum,k in enumerate(TAPobject_data.reactor_species.adspecies):
-					thin_data[k][k_pulse].append(float(u_n.vector().get_local()[(catalyst_center_cell*(len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.adspecies) + len(TAPobject_data.reactor_species.inert_gasses)))+all_species+len(TAPobject_data.reactor_species.gasses)+knum]))
+					thin_data[k][k_pulse].append(float(u_n.vector().get_local()[(catalyst_center_cells[0]*(len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.adspecies) + len(TAPobject_data.reactor_species.inert_gasses)))+all_species+len(TAPobject_data.reactor_species.gasses)+knum]))
 				for knum,k in enumerate(TAPobject_data.reactor_species.inert_gasses):
-					thin_data[k][k_pulse].append(float(u_n.vector().get_local()[(catalyst_center_cell*(len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.adspecies) + len(TAPobject_data.reactor_species.inert_gasses)))+all_species+len(TAPobject_data.reactor_species.gasses)+len(TAPobject_data.reactor_species.adspecies)+knum]))
+					thin_data[k][k_pulse].append(float(u_n.vector().get_local()[(catalyst_center_cells[0]*(len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.adspecies) + len(TAPobject_data.reactor_species.inert_gasses)))+all_species+len(TAPobject_data.reactor_species.gasses)+len(TAPobject_data.reactor_species.adspecies)+knum]))
 
-
+					if sum(TAPobject_data.reactor.catalyst_locations) >= 2:
+						thin_data_2[k][k_pulse].append(float(u_n.vector().get_local()[(catalyst_center_cells[0]*(len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.adspecies) + len(TAPobject_data.reactor_species.inert_gasses)))+all_species+len(TAPobject_data.reactor_species.gasses)+len(TAPobject_data.reactor_species.adspecies)+knum]))
+					if sum(TAPobject_data.reactor.catalyst_locations) >= 3:
+						thin_data_3[k][k_pulse].append(float(u_n.vector().get_local()[(catalyst_center_cells[0]*(len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.adspecies) + len(TAPobject_data.reactor_species.inert_gasses)))+all_species+len(TAPobject_data.reactor_species.gasses)+len(TAPobject_data.reactor_species.adspecies)+knum]))
+					if sum(TAPobject_data.reactor.catalyst_locations) >= 4:
+						thin_data_4[k][k_pulse].append(float(u_n.vector().get_local()[(catalyst_center_cells[0]*(len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.adspecies) + len(TAPobject_data.reactor_species.inert_gasses)))+all_species+len(TAPobject_data.reactor_species.gasses)+len(TAPobject_data.reactor_species.adspecies)+knum]))
+					if sum(TAPobject_data.reactor.catalyst_locations) >= 5:
+						thin_data_5[k][k_pulse].append(float(u_n.vector().get_local()[(catalyst_center_cells[0]*(len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.adspecies) + len(TAPobject_data.reactor_species.inert_gasses)))+all_species+len(TAPobject_data.reactor_species.gasses)+len(TAPobject_data.reactor_species.adspecies)+knum]))
+			
 			if TAPobject_data.optimize == True:
 				for k_fitting in (TAPobject_data.gasses_objective): #  and TAPobject_data.inert_gasses_objective
 					
@@ -896,6 +1066,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 							except:
 								pass
 	# Edit more
+	# Chunck #7
 	if TAPobject_data.store_thin_data == True and TAPobject_data.surface_noise == True:
 		beta_2 = 0.00270
 		w_2 = 2*3.14159*70
@@ -927,6 +1098,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 		save_object(synthetic_data,'./'+TAPobject_data.output_name+'/TAP_experimental_data.json')
 		new_data = read_experimental_data_object('./'+TAPobject_data.output_name+'/TAP_experimental_data.json')
 
+	#Chunck #8
 	if TAPobject_data.store_thin_data == True:
 		save_object(thin_data,'./'+TAPobject_data.output_name+'/TAP_thin_data.json')
 		new_data = read_experimental_data_object('./'+TAPobject_data.output_name+'/TAP_thin_data.json')		

@@ -3,11 +3,11 @@
 
 import pandas as pd
 import numpy as np
-from .mechanism import mechanism
+from mechanism import mechanism
 #from structures import mechanism
 #from mechanism_constructor import elementary_process, elementary_process_details
-from .elementary_process import elementary_process
-from .elementary_process_details import elementary_process_details
+from elementary_process import elementary_process
+from elementary_process_details import elementary_process_details
 
 def read_CSV_mechanism(fileName):
 

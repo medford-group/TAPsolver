@@ -3,7 +3,7 @@
 
 import pandas as pd
 import numpy as np
-from .mechanism import mechanism
+from mechanism import mechanism
 #from structures import mechanism
 
 def display_elementary_processes(mechanism_data: mechanism):

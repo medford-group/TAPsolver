@@ -3,9 +3,9 @@
 
 import pandas as pd
 import numpy as np
-from .reactor_species import reactor_species 
-from .define_gas import define_gas
-from .define_adspecies import define_adspecies
+from reactor_species import reactor_species 
+from define_gas import define_gas
+from define_adspecies import define_adspecies
 #from structures import reactor_species, define_gas, define_adspecies
 def read_CSV_reactor_species(fileName):
 

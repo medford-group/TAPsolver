@@ -50,30 +50,44 @@ class reactor():
 
 	"""
 
-	def __init__(self, zone_lengths = {0: 3, 1: 0.06, 2: 3}, zone_voids = {0: 0.4, 1: 0.4, 2: 0.4}, reactor_radius = 1.0, total_length = None, catalyst_center_fraction=0):
+	def __init__(self, zone_lengths = {0: 3, 1: 0.06, 2: 3}, zone_voids = {0: 0.4, 1: 0.4, 2: 0.4}, reactor_radius = 1.0, total_length = None,catalyst_locations=[0,1,0], catalyst_center_fraction=0):
 		
 		self.zone_lengths = zone_lengths
 		self.zone_voids = zone_voids
 		self.reactor_radius = reactor_radius
+		self.catalyst_locations = catalyst_locations
 		
 	@property
 	def zone_lengths(self):
 		return self._zone_lengths
 	@zone_lengths.setter
 	def zone_lengths(self,value):
-		if value[0] <= 0 or value[1] < 0 or value[2] <= 0:
-			raise ValueError("Zone length dimensions must all be positive (non-negative ")
+		for j in value.keys():
+			if value[j] < 0:#if value[0] <= 0 or value[1] < 0 or value[2] <= 0:
+				raise ValueError("Zone length dimensions must all be positive (non-negative ")
 		self._zone_lengths = {0: value[0], 1: value[1], 2: value[2]}
-		self._total_length = value[0] + value[1] + value[2]
-		self._length_fractions = [value[0]/self.total_length,value[1]/self.total_length,value[2]/self.total_length]
-		self.catalyst_center_fraction = (value[0] + value[1]/2)/self.total_length
+		new_value = 0
+		for j in value.keys():
+			new_value += value[j]
+		self._total_length = new_value
+		self._length_fractions = []
+		for j in value.keys():
+			self._length_fractions.append(value[j]/self.total_length)
+		self._catalyst_center_fraction = []
+		temp_current_length = 0
+		for j in value.keys():
+			self._catalyst_center_fraction.append((temp_current_length + value[j]/2)/self.total_length)
+			temp_current_length += value[j]
 
 	@property
 	def total_length(self):
 		return self._total_length
 	@total_length.setter
 	def total_length(self, value):
-		self._total_length = self.zone_lengths[0] + self.zone_lengths[1] + self.zone_lengths[2]
+		for j in value.keys():
+			print(j)
+			print(self._total_length)
+			self._total_length += self.zone_lengths[j]# + self.zone_lengths[1] + self.zone_lengths[2]
 
 	@property
 	def length_fractions(self):

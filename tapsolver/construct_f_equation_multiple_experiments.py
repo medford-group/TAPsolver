@@ -7,8 +7,8 @@ import numpy as np
 
 import sys
 #from structures import TAPobject
-from .TAPobject import TAPobject 
-from .mechanism_reactants import mechanism_reactants
+from TAPobject import TAPobject 
+from mechanism_reactants import mechanism_reactants
 
 
 def construct_f_equation_multiple_experiments(TAPobject_data: TAPobject):

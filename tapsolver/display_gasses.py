@@ -3,7 +3,7 @@
 
 import pandas as pd
 import numpy as np
-from .reactor_species import reactor_species
+from reactor_species import reactor_species
 
 def display_gasses(reactor_species_data: reactor_species):
 
