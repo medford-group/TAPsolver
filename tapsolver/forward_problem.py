@@ -605,24 +605,26 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 
 		all_species = len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.inert_gasses) + len(TAPobject_data.reactor_species.adspecies)
 		time_step = 0
-
+		step_number = 0
 		while t <= pulse_time:
 
 			synthetic_data['time'][k_pulse].append(round(t,6))
-			if TAPobject_data.store_flux_data == True:
-				for knum,k in enumerate(TAPobject_data.reactor_species.gasses):
-					synthetic_data[k][k_pulse].append(2*(float(TAPobject_data.reactor_species.gasses[k].inert_diffusion) /(float(dx_r))) * (float(TAPobject_data.reactor.reactor_radius)**2)*3.14159*( float(u_n.vector().get_local()[(all_species)+knum])))
-				for knum,k in enumerate(TAPobject_data.reactor_species.inert_gasses):
-					synthetic_data[k][k_pulse].append(2*(float(TAPobject_data.reactor_species.inert_gasses[k].inert_diffusion) /(float(dx_r))) * (float(TAPobject_data.reactor.reactor_radius)**2)*3.14159*( float(u_n.vector().get_local()[all_species+len(TAPobject_data.reactor_species.gasses)+len(TAPobject_data.reactor_species.adspecies)+knum])))		
+			if step_number%TAPobject_data.data_storage_frequency == 0:
+				if TAPobject_data.store_flux_data == True:
+					for knum,k in enumerate(TAPobject_data.reactor_species.gasses):
+						synthetic_data[k][k_pulse].append(2*(float(TAPobject_data.reactor_species.gasses[k].inert_diffusion) /(float(dx_r))) * (float(TAPobject_data.reactor.reactor_radius)**2)*3.14159*( float(u_n.vector().get_local()[(all_species)+knum])))
+					for knum,k in enumerate(TAPobject_data.reactor_species.inert_gasses):
+						synthetic_data[k][k_pulse].append(2*(float(TAPobject_data.reactor_species.inert_gasses[k].inert_diffusion) /(float(dx_r))) * (float(TAPobject_data.reactor.reactor_radius)**2)*3.14159*( float(u_n.vector().get_local()[all_species+len(TAPobject_data.reactor_species.gasses)+len(TAPobject_data.reactor_species.adspecies)+knum])))		
 
 			thin_data['time'][k_pulse].append(round(t,6))
-			if TAPobject_data.store_thin_data == True:
-				for knum,k in enumerate(TAPobject_data.reactor_species.gasses):
-					thin_data[k][k_pulse].append(float(u_n.vector().get_local()[(catalyst_center_cell*(len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.adspecies) + len(TAPobject_data.reactor_species.inert_gasses)))+all_species+knum]))
-				for knum,k in enumerate(TAPobject_data.reactor_species.adspecies):
-					thin_data[k][k_pulse].append(float(u_n.vector().get_local()[(catalyst_center_cell*(len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.adspecies) + len(TAPobject_data.reactor_species.inert_gasses)))+all_species+len(TAPobject_data.reactor_species.gasses)+knum]))
-				for knum,k in enumerate(TAPobject_data.reactor_species.inert_gasses):
-					thin_data[k][k_pulse].append(float(u_n.vector().get_local()[(catalyst_center_cell*(len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.adspecies) + len(TAPobject_data.reactor_species.inert_gasses)))+all_species+len(TAPobject_data.reactor_species.gasses)+len(TAPobject_data.reactor_species.adspecies)+knum]))
+			if step_number%TAPobject_data.data_storage_frequency == 0:
+				if TAPobject_data.store_thin_data == True:
+					for knum,k in enumerate(TAPobject_data.reactor_species.gasses):
+						thin_data[k][k_pulse].append(float(u_n.vector().get_local()[(catalyst_center_cell*(len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.adspecies) + len(TAPobject_data.reactor_species.inert_gasses)))+all_species+knum]))
+					for knum,k in enumerate(TAPobject_data.reactor_species.adspecies):
+						thin_data[k][k_pulse].append(float(u_n.vector().get_local()[(catalyst_center_cell*(len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.adspecies) + len(TAPobject_data.reactor_species.inert_gasses)))+all_species+len(TAPobject_data.reactor_species.gasses)+knum]))
+					for knum,k in enumerate(TAPobject_data.reactor_species.inert_gasses):
+						thin_data[k][k_pulse].append(float(u_n.vector().get_local()[(catalyst_center_cell*(len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.adspecies) + len(TAPobject_data.reactor_species.inert_gasses)))+all_species+len(TAPobject_data.reactor_species.gasses)+len(TAPobject_data.reactor_species.adspecies)+knum]))
 
 
 			if TAPobject_data.optimize == True:
@@ -769,6 +771,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 			t += dt
 			constantT.assign(round(t,6))
 			time_step += 1
+			step_number += 1
 		print(processTime(start_time))
 
 	if TAPobject_data.objective_return == True:

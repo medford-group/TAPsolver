@@ -93,6 +93,7 @@ def read_TAPobject(file_name):
 
 	# Simulation precision preferences
 	loaded_TAPobject.mesh = sameObject2.mesh
+	loaded_TAPobject.data_storage_frequency = sameObject2.data_storage_frequency
 	loaded_TAPobject.catalyst_mesh_density = sameObject2.catalyst_mesh_density
 	
 	loaded_TAPobject.parameter_scale = sameObject2.parameter_scale

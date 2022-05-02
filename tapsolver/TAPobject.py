@@ -120,3 +120,5 @@ class TAPobject():
 		self.display_objective = False
 		self.show_graph = False
 		self.store_graph = False
+
+		self.data_storage_frequency = 1
