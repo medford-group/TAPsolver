@@ -77,11 +77,12 @@ runge_kutta_approach = False
 standard_parameters = load_standard_parameters()
 
 def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject):
-		
+	#if TAPobject_data.tangent_linear_sensitivity != True and TAPobject_data.adjoint_sensitivitiy != True  and TAPobject_data.optimize != True:	
 	TAPobject_data = copy.deepcopy(TAPobject_data_original)
 	tape2 = Tape()
 	tape2.clear_tape()
-	set_working_tape(tape2)
+	if TAPobject_data.tangent_linear_sensitivity != True and TAPobject_data.adjoint_sensitivitiy != True  and TAPobject_data.optimize != True:	
+		set_working_tape(tape2)
 	#parameter_scale = 120#Constant(120)
 	#print(TAPobject_data.data_name)
 	#print(TAPobject_data.output_name)
@@ -772,6 +773,11 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 			constantT.assign(round(t,6))
 			time_step += 1
 			step_number += 1
+		if TAPobject_data.tangent_linear_sensitivity != True and TAPobject_data.adjoint_sensitivitiy != True  and TAPobject_data.optimize != True:
+			print('Ensure Dolfin Tape Cleared for Forward Pass Multipulse Simulation')
+			tape2.clear_tape()
+
+
 		print(processTime(start_time))
 
 	if TAPobject_data.objective_return == True:
