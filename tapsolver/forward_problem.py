@@ -369,8 +369,15 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 
 	constantT = Constant(0)
 	remove_surface = Constant(1)
-	b0Test2 = Expression('x[0] < 0.002500001 ? 0.5 : 0', degree=0)
-
+	if TAPobject_data.mesh < 600:
+		b0Test2 = Expression('x[0] < 0.002500001 ? 0.5 : 0', degree=0)
+	elif TAPobject_data.mesh < 1200:
+		b0Test2 = Expression('x[0] < 0.0012500005 ? 0.5 : 0', degree=0)
+	elif TAPobject_data.mesh < 1800:
+		b0Test2 = Expression('x[0] < 0.00062500025 ? 0.5 : 0', degree=0)
+	elif TAPobject_data.mesh < 2400:
+		b0Test2 = Expression('x[0] < 0.00031250012 ? 0.5 : 0', degree=0)
+		
 	Fpulses = ''
 	for knum,k in enumerate(TAPobject_data.reactor_species.gasses):
 		##TAPobject_data.reactor_species.gasses[k].intensity = Constant(TAPobject_data.reactor_species.gasses[k].intensity)

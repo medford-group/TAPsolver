@@ -22,7 +22,7 @@ The python packages [FEniCS](https://fenicsproject.org/)  (Finite Element Comput
 
 A primary goal of TAPsolver is to make new methods of TAP analysis easily accesable upon publication, leading to community driven development and the unification of workflows. If you have a new approach for processing TAP data and would like to implement it in TAPsolver, please read the [Questions & Development section](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/questionsDiscussion).
 
-* [Installation](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/installation)
+* [Installation](https://github.com/medford-group/TAPsolver/tree/experimentalFluidity_condensed/docs/resources/installation)
 * [Documentation](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/Documentation)
 * [Examples](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/examples)
 * [Questions & Development](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/questionsDiscussion)
