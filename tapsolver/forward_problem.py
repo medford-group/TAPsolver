@@ -81,7 +81,9 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 	TAPobject_data = copy.deepcopy(TAPobject_data_original)
 	tape2 = Tape()
 	tape2.clear_tape()
-	if TAPobject_data.tangent_linear_sensitivity != True and TAPobject_data.adjoint_sensitivitiy != True  and TAPobject_data.optimize != True:	
+	if TAPobject_data.tangent_linear_sensitivity == True or TAPobject_data.adjoint_sensitivitiy == True  or TAPobject_data.optimize == True:	
+		print('')
+		print('working tape set')
 		set_working_tape(tape2)
 	#parameter_scale = 120#Constant(120)
 	#print(TAPobject_data.data_name)
@@ -780,7 +782,10 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 			constantT.assign(round(t,6))
 			time_step += 1
 			step_number += 1
-		if TAPobject_data.tangent_linear_sensitivity != True and TAPobject_data.adjoint_sensitivitiy != True  and TAPobject_data.optimize != True:
+		if TAPobject_data.tangent_linear_sensitivity == True or TAPobject_data.adjoint_sensitivitiy == True  or TAPobject_data.optimize == True:
+			pass
+		else:
+			print('')
 			print('Ensure Dolfin Tape Cleared for Forward Pass Multipulse Simulation')
 			tape2.clear_tape()
 
