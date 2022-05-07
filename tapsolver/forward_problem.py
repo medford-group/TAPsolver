@@ -868,8 +868,11 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 		print(low_bounds)
 		print('Upper parameter bounds are:')
 		print(up_bounds)
-		
-		u_opt_2 = minimize(rf_2, bounds = (low_bounds,up_bounds), tol=1e-22, options={"ftol":1e-22,"gtol":1e-22})
+		if TAPobject_data.optimization_method == 'L-BFGS-B':
+			u_opt_2 = minimize(rf_2, bounds = (low_bounds,up_bounds), tol=1e-22, options={"ftol":1e-22,"gtol":1e-22})
+		else:
+			u_opt_2 = minimize(rf_2, method = TAPobject_data.optimization_method, tol=1e-22, options={"ftol":1e-22,"gtol":1e-22})
+
 		sys.exit()
 
 	#!#! ADDING INVERSE ANALYSIS

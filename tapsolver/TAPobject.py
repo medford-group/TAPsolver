@@ -122,3 +122,5 @@ class TAPobject():
 		self.store_graph = False
 
 		self.data_storage_frequency = 1
+
+		self.optimization_method = 'L-BFGS-B'
