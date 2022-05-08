@@ -3,7 +3,7 @@
   <img src="https://github.com/medford-group/TAPsolver/blob/experimentalFluidity_condensed/docs/figures/tapsolver_logo.jpg">
 </p>
 
-TAPsolver is an open-source, python program for the analysis of Temporal Analysis of Products (TAP) reactor experiments. The methods of analysis include:
+TAPsolver is an open-source, python program for the analysis of Temporal Analysis of Products (TAP) reactor experiments. The methods of analysis available (as well as the ones we're working on and the ones we'd love to see) include:
 
 * *PDE-based simulations, including state-altering, state-defining and pump-probe operating conditions*
 * *PDE-constrained optimization of kinetic parameters*
@@ -11,7 +11,8 @@ TAPsolver is an open-source, python program for the analysis of Temporal Analysi
 * *Ensemble-based evaluation of initial state/reactor configuration uncertainties*
 * *Model-based design of experiments and model discrimination (under development)*
 * *Efficient kinetic parameter uncertainty propagation to TAP experiments (under development)*
-* *Bayesian parameter estimation (under development)*
+* *Bayesian parameter estimation (future work)*
+* *TAP Kinetic informed neural networks (under development)*
 
 <p align="center">
   <img src="https://github.com/medford-group/TAPsolver/blob/experimentalFluidity_condensed/docs/figures/tapsolver_concept.gif">
@@ -23,9 +24,9 @@ The python packages [FEniCS](https://fenicsproject.org/)  (Finite Element Comput
 A primary goal of TAPsolver is to make new methods of TAP analysis easily accesable upon publication, leading to community driven development and the unification of workflows. If you have a new approach for processing TAP data and would like to implement it in TAPsolver, please read the [Questions & Development section](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/questionsDiscussion).
 
 * [Installation](https://github.com/medford-group/TAPsolver/tree/experimentalFluidity_condensed/docs/resources/installation)
-* [Documentation](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/Documentation)
-* [Examples](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/examples)
+* [Examples](https://github.com/medford-group/TAPsolver/tree/experimentalFluidity_condensed/docs/resources/examples)
 * [Questions & Development](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/questionsDiscussion)
+* [General Updates](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/generalUpdates)
 
 ### Collaborators and Funding
 
