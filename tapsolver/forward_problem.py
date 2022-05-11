@@ -597,8 +597,9 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 		dt = pulse_time/time_steps
 		start_time = time.time()
 		
-		synthetic_data['time'][k_pulse] =  []
+		
 		if TAPobject_data.store_flux_data == True:
+			synthetic_data['time'][k_pulse] =  []
 			for j in TAPobject_data.reactor_species.gasses:
 				synthetic_data[j][k_pulse] =  []
 			for j in TAPobject_data.reactor_species.inert_gasses:
@@ -617,18 +618,19 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 		time_step = 0
 		step_number = 0
 		while t <= pulse_time:
-
-			synthetic_data['time'][k_pulse].append(round(t,6))
+			
 			if step_number%TAPobject_data.data_storage_frequency == 0:
 				if TAPobject_data.store_flux_data == True:
+					synthetic_data['time'][k_pulse].append(round(t,6))
 					for knum,k in enumerate(TAPobject_data.reactor_species.gasses):
 						synthetic_data[k][k_pulse].append(2*(float(TAPobject_data.reactor_species.gasses[k].inert_diffusion) /(float(dx_r))) * (float(TAPobject_data.reactor.reactor_radius)**2)*3.14159*( float(u_n.vector().get_local()[(all_species)+knum])))
 					for knum,k in enumerate(TAPobject_data.reactor_species.inert_gasses):
 						synthetic_data[k][k_pulse].append(2*(float(TAPobject_data.reactor_species.inert_gasses[k].inert_diffusion) /(float(dx_r))) * (float(TAPobject_data.reactor.reactor_radius)**2)*3.14159*( float(u_n.vector().get_local()[all_species+len(TAPobject_data.reactor_species.gasses)+len(TAPobject_data.reactor_species.adspecies)+knum])))		
 
-			thin_data['time'][k_pulse].append(round(t,6))
+			
 			if step_number%TAPobject_data.data_storage_frequency == 0:
 				if TAPobject_data.store_thin_data == True:
+					thin_data['time'][k_pulse].append(round(t,6))
 					for knum,k in enumerate(TAPobject_data.reactor_species.gasses):
 						thin_data[k][k_pulse].append(float(u_n.vector().get_local()[(catalyst_center_cell*(len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.adspecies) + len(TAPobject_data.reactor_species.inert_gasses)))+all_species+knum]))
 					for knum,k in enumerate(TAPobject_data.reactor_species.adspecies):
@@ -787,7 +789,31 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 		else:
 			print('')
 			print('Ensure Dolfin Tape Cleared for Forward Pass Multipulse Simulation')
+			print('Memory use of u')
+			try:
+				print(sys.getsizeof(u_n))
+				print(sys.getsizeof(u))
+				print(sys.getsizeof(Uvector))
+			except:
+				pass
+			print('Memory use of tape')
+			try:
+				print(sys.getsizeof(tape2))
+			except:
+				pass
 			tape2.clear_tape()
+			print(sys.getsizeof(tape2))
+			try:
+				tape.clear_tape()
+				print(sys.getsizeof(tape2))
+			except:
+				print('no other tape')
+			try:
+				print(sys.getsizeof(solver))
+				print(sys.getsizeof(solvertemp))
+				print(sys.getsizeof(dk))
+			except:
+				print('doesn"t display solver')
 
 
 		print(processTime(start_time))
