@@ -772,7 +772,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 				#print(sensFuncs['CO'][-1])
 			#!#!
 
-			progressBar(t, pulse_time)
+			#progressBar(t, pulse_time)
 
 			Uvector = as_backend_type(u.vector()).get_local()
 			Uvector[Uvector <= DOLFIN_EPS] = DOLFIN_EPS
@@ -814,8 +814,30 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 				print(sys.getsizeof(dk))
 			except:
 				print('doesn"t display solver')
-
-
+			try:
+				print(sys.getsizeof(solver))
+			except:
+				pass
+			try:
+				print(sys.getsizeof(TAPobject_data))
+			except:
+				pass
+			try:
+				print(sys.getsizeof())
+			except:
+				pass
+			try:
+				print(sys.getsizeof(jfunc_2))
+			except:
+				pass
+			try:
+				print(sys.getsizeof(synthetic_data))
+			except:
+				pass
+			try:
+				print(sys.getsizeof(thin_data))
+			except:
+				pass			
 		print(processTime(start_time))
 
 	if TAPobject_data.objective_return == True:
