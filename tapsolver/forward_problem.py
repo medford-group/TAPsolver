@@ -787,57 +787,58 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 		if TAPobject_data.tangent_linear_sensitivity == True or TAPobject_data.adjoint_sensitivitiy == True  or TAPobject_data.optimize == True:
 			pass
 		else:
-			print('')
-			print('Ensure Dolfin Tape Cleared for Forward Pass Multipulse Simulation')
-			print('Memory use of u')
-			try:
-				print(sys.getsizeof(u_n))
-				print(sys.getsizeof(u))
-				print(sys.getsizeof(Uvector))
-			except:
-				pass
-			print('Memory use of tape')
-			try:
-				print(sys.getsizeof(tape2))
-			except:
-				pass
 			tape2.clear_tape()
-			print(sys.getsizeof(tape2))
-			try:
-				tape.clear_tape()
-				print(sys.getsizeof(tape2))
-			except:
-				print('no other tape')
-			try:
-				print(sys.getsizeof(solver))
-				print(sys.getsizeof(solvertemp))
-				print(sys.getsizeof(dk))
-			except:
-				print('doesn"t display solver')
-			try:
-				print(sys.getsizeof(solver))
-			except:
-				pass
-			try:
-				print(sys.getsizeof(TAPobject_data))
-			except:
-				pass
-			try:
-				print(sys.getsizeof())
-			except:
-				pass
-			try:
-				print(sys.getsizeof(jfunc_2))
-			except:
-				pass
-			try:
-				print(sys.getsizeof(synthetic_data))
-			except:
-				pass
-			try:
-				print(sys.getsizeof(thin_data))
-			except:
-				pass			
+		#	print('')
+		#	print('Ensure Dolfin Tape Cleared for Forward Pass Multipulse Simulation')
+		#	print('Memory use of u')
+		#	try:
+		#		print(sys.getsizeof(u_n))
+		#		print(sys.getsizeof(u))
+		#		print(sys.getsizeof(Uvector))
+		#	except:
+		#		pass
+		#	print('Memory use of tape')
+		#	try:
+		#		print(sys.getsizeof(tape2))
+		#	except:
+		#		pass
+		#	tape2.clear_tape()
+		#	print(sys.getsizeof(tape2))
+		#	try:
+		#		tape.clear_tape()
+		#		print(sys.getsizeof(tape2))
+		#	except:
+		#		print('no other tape')
+		#	try:
+		#		print(sys.getsizeof(solver))
+		#		print(sys.getsizeof(solvertemp))
+		#		print(sys.getsizeof(dk))
+		#	except:
+		#		print('doesn"t display solver')
+		#	try:
+		#		print(sys.getsizeof(solver))
+		#	except:
+		#		pass
+		#	try:
+		#		print(sys.getsizeof(TAPobject_data))
+		#	except:
+		#		pass
+		#	try:
+		#		print(sys.getsizeof())
+		#	except:
+		#		pass
+		#	try:
+		#		print(sys.getsizeof(jfunc_2))
+		#	except:
+		#		pass
+		#	try:
+		#		print(sys.getsizeof(synthetic_data))
+		#	except:
+		#		pass
+		#	try:
+		#		print(sys.getsizeof(thin_data))
+		#	except:
+		#		pass			
 		print(processTime(start_time))
 
 	if TAPobject_data.objective_return == True:
