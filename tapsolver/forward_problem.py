@@ -772,7 +772,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 				#print(sensFuncs['CO'][-1])
 			#!#!
 
-			#progressBar(t, pulse_time)
+			progressBar(t, pulse_time)
 
 			Uvector = as_backend_type(u.vector()).get_local()
 			Uvector[Uvector <= DOLFIN_EPS] = DOLFIN_EPS
@@ -784,10 +784,10 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 			constantT.assign(round(t,6))
 			time_step += 1
 			step_number += 1
-		if TAPobject_data.tangent_linear_sensitivity == True or TAPobject_data.adjoint_sensitivitiy == True  or TAPobject_data.optimize == True:
-			pass
-		else:
-			tape2.clear_tape()
+		#if TAPobject_data.tangent_linear_sensitivity == True or TAPobject_data.adjoint_sensitivitiy == True  or TAPobject_data.optimize == True:
+		#	pass
+		#else:
+		#	tape2.clear_tape()
 		#	print('')
 		#	print('Ensure Dolfin Tape Cleared for Forward Pass Multipulse Simulation')
 		#	print('Memory use of u')
