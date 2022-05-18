@@ -45,7 +45,8 @@ class reactor_species():
 				self.gasses[name].catalyst_diffusion = calculate_diffusion_coefficient(self.catalyst_diffusion, self.reference_mass, self.reference_temperature, self.temperature[self.gasses[name].temperature_used], self.gasses[name].mass)
 				self.gasses[name].inert_diffusion = calculate_diffusion_coefficient(self.inert_diffusion, self.reference_mass, self.reference_temperature, self.temperature[self.gasses[name].temperature_used], self.gasses[name].mass)
 		else:
-			print('Gas already defined in dictionary.')
+			pass
+			#print('Gas already defined in dictionary.')
 
 	def add_inert_gas(self,name='', define_gas_data = define_gas):
 		def calculate_diffusion_coefficient(reference_diffusion, reference_mass, reference_temperature, temperature, mass):
