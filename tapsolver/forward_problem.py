@@ -676,7 +676,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 						w_temp[kip] = Expression(str(reactor_kinetics_input['thermo values'][kip]),degree=0) # deltaG = sum(-R*T*ln(kf/kb))
 						w_temp2[kip] = interpolate(w_temp[kip],V_du)
 						w4[kip] = project(w_temp2[kip],V_du)		
-						thermoWeight = 1e-2	
+						thermoWeight = TAPobject_data.thermodynamic_alpha
 
 						for jnum,jval in enumerate(thermoReactions[kip]):
 																				

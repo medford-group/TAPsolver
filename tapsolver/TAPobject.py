@@ -101,6 +101,7 @@ class TAPobject():
 		self.inert_gasses_objective = []
 		self.adspecies_objective = []
 		self.thermodynamic_constraints = False
+		self.thermodynamic_alpha = False
 
 		# Objective function preferences
 		self.parameters_of_interest = []
