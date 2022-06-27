@@ -83,6 +83,7 @@ def read_TAPobject(file_name):
 	loaded_TAPobject.reactor_species.reference_temperature = sameObject2.reactor_species.reference_temperature
 	loaded_TAPobject.reactor_species.reference_mass = sameObject2.reactor_species.reference_mass
 	print('read temperature')
+	print(type(sameObject2.reactor_species.temperature))
 	print(sameObject2.reactor_species.temperature)
 	loaded_TAPobject.reactor_species.temperature = sameObject2.reactor_species.temperature
 	loaded_TAPobject.reactor_species.advection = sameObject2.reactor_species.advection
