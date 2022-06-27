@@ -42,6 +42,10 @@ class reactor_species():
 				self.gasses[name].catalyst_diffusion = calculate_diffusion_coefficient(self.catalyst_diffusion, self.reference_mass, self.reference_temperature, self.temperature, self.gasses[name].mass)
 				self.gasses[name].inert_diffusion = calculate_diffusion_coefficient(self.inert_diffusion, self.reference_mass, self.reference_temperature, self.temperature, self.gasses[name].mass)
 			except:
+				print(self.temperature)
+				print(self.gasses[name].temperature_used)
+				print(self.temperature[self.gasses[name].temperature_used])
+				print(self.gasses[name].temperature_used)
 				self.gasses[name].catalyst_diffusion = calculate_diffusion_coefficient(self.catalyst_diffusion, self.reference_mass, self.reference_temperature, self.temperature[self.gasses[name].temperature_used], self.gasses[name].mass)
 				self.gasses[name].inert_diffusion = calculate_diffusion_coefficient(self.inert_diffusion, self.reference_mass, self.reference_temperature, self.temperature[self.gasses[name].temperature_used], self.gasses[name].mass)
 		else:
@@ -52,12 +56,16 @@ class reactor_species():
 		def calculate_diffusion_coefficient(reference_diffusion, reference_mass, reference_temperature, temperature, mass):
 			return reference_diffusion*(mp.sqrt(reference_mass*temperature)/mp.sqrt(reference_temperature*mass))
 
-		if name not in self.gasses:
+		if name not in self.inert_gasses:
 			self.inert_gasses[name] = define_gas_data
 			try:
 				self.inert_gasses[name].catalyst_diffusion = calculate_diffusion_coefficient(self.catalyst_diffusion, self.reference_mass, self.reference_temperature, self.temperature, self.inert_gasses[name].mass)
 				self.inert_gasses[name].inert_diffusion = calculate_diffusion_coefficient(self.inert_diffusion, self.reference_mass, self.reference_temperature, self.temperature, self.inert_gasses[name].mass)
 			except:
+				print(self.temperature)
+				print(self.inert_gasses[name].temperature_used)
+				print(self.temperature[self.inert_gasses[name].temperature_used])
+				print(self.inert_gasses[name].temperature_used)
 				self.inert_gasses[name].catalyst_diffusion = calculate_diffusion_coefficient(self.catalyst_diffusion, self.reference_mass, self.reference_temperature, self.temperature[self.inert_gasses[name].temperature_used], self.inert_gasses[name].mass)
 				self.inert_gasses[name].inert_diffusion = calculate_diffusion_coefficient(self.inert_diffusion, self.reference_mass, self.reference_temperature, self.temperature[self.inert_gasses[name].temperature_used], self.inert_gasses[name].mass)
 			
