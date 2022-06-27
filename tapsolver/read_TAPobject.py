@@ -85,7 +85,13 @@ def read_TAPobject(file_name):
 	print('read temperature')
 	print(type(sameObject2.reactor_species.temperature))
 	print(sameObject2.reactor_species.temperature)
-	loaded_TAPobject.reactor_species.temperature = sameObject2.reactor_species.temperature
+	if type(sameObject2.reactor_species.temperature) == dict:
+		temp_temp_dictionary = {}
+		for j in sameObject2.reactor_species.temperature.keys():
+			temp_temp_dictionary[int(j)] = sameObject2.reactor_species.temperature[j]
+		loaded_TAPobject.reactor_species.temperature = temp_temp_dictionary
+	else:
+		loaded_TAPobject.reactor_species.temperature = sameObject2.reactor_species.temperature
 	loaded_TAPobject.reactor_species.advection = sameObject2.reactor_species.advection
 	loaded_TAPobject.reactor_species.reference_pulse_size = sameObject2.reactor_species.reference_pulse_size
 
