@@ -82,6 +82,8 @@ def read_TAPobject(file_name):
 	loaded_TAPobject.reactor_species.catalyst_diffusion = sameObject2.reactor_species.catalyst_diffusion
 	loaded_TAPobject.reactor_species.reference_temperature = sameObject2.reactor_species.reference_temperature
 	loaded_TAPobject.reactor_species.reference_mass = sameObject2.reactor_species.reference_mass
+	print('read temperature')
+	print(sameObject2.reactor_species.temperature)
 	loaded_TAPobject.reactor_species.temperature = sameObject2.reactor_species.temperature
 	loaded_TAPobject.reactor_species.advection = sameObject2.reactor_species.advection
 	loaded_TAPobject.reactor_species.reference_pulse_size = sameObject2.reactor_species.reference_pulse_size
