@@ -1,4 +1,6 @@
 
+NOTE TO ACS WORKSHOP ATTENDEES: Please download the examples folder above which will be used throughout the workshop 
+
 * [Overview](https://github.com/medford-group/TAPsolver/tree/master)
 * [Documentation](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/Documentation)
 * [Examples](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/examples)
