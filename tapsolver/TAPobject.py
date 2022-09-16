@@ -5,7 +5,7 @@ class TAPobject():
 
 	"""
 	
-	This class acts as a container for the three necessary components 
+	Description: This class acts as a container for the three necessary components 
 	to run a TAP simulation: the reactor, mechanism and reactor_species 
 	objects. It also lets the user specify the experimental data set, 
 	which can be used for the inverse problem or simple data visualization.
@@ -42,12 +42,20 @@ class TAPobject():
 		output_name (str): The name of the directory you want to generate
 		for storing any generated information.
 
-		store_flux_data (boolean): Store the outlet flux data or not.
+		data_name (str): the file location of the experimental data. 
+
+		store_flux_data (boolean): Store the outlet flux data or not. 
 
 		store_catalyst_data (boolean): Store the catalyst zone data or not 
 		(i.e. gas and adspecies concentrations).
 
 		catalyst_data_type (str): The type of catalyst zone data to be stored. 
+
+		gas_noise (boolean): Specify if noise should be included during a simulation.
+
+		surface_noise (boolean): Specify if noise should be included in surface data during a simulation. 
+
+		catalyst_data_type (boolean): define the way in which catalyst data is stored. 
 
 		objective (str): The objective function to be used during the inverse
 		problem.
@@ -61,11 +69,17 @@ class TAPobject():
 		adspecies_objective (list): The adspecies that should be included 
 		in the objective function.
 
-		fit_initial_conditions (list): The initial conditions to be analyzed 
-		during the inverse process.
+		parameters_of_interest (list): specify the list of parameters to be optimized.
 
-		fit_kinetics (list): The kinetic parameters to be analyzed 
-		during the inverse process.
+		finite_difference_trans_sensitivity (boolean): Calculate the dynamic sensitivity matrix.
+
+		optimize (boolean): Fit the parameters_of_interest to the objective_function.
+
+		uncertainty (boolean): Calculate the uncertainty around the local minimum.
+
+		objective_return (boolean): Print the value of the objective function.
+
+		  
 
 	"""
 
@@ -97,11 +111,12 @@ class TAPobject():
 
 		# Objective function preferences
 		self.objective = ''
-		self.gasses_objective = [] # Provide the names of the gasses to include in these objectives
+		self.gasses_objective = []
 		self.inert_gasses_objective = []
 		self.adspecies_objective = []
 		self.thermodynamic_constraints = False
 		self.thermodynamic_alpha = False
+		self.thermodynamic_free_energy = 0
 
 		# Objective function preferences
 		self.parameters_of_interest = []
@@ -113,6 +128,8 @@ class TAPobject():
 		self.optimize = False
 		self.uncertainty = False
 		self.objective_return = False 
+		self.ftol = 1e-22
+		self.gtol = 1e-22
 
 		# Flux graph name
 		self.pulses_graphed = 1
