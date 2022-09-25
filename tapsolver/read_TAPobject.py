@@ -93,8 +93,8 @@ def read_TAPobject(file_name):
 	else:
 		loaded_TAPobject.reactor_species.temperature = sameObject2.reactor_species.temperature
 	loaded_TAPobject.reactor_species.advection = sameObject2.reactor_species.advection
-	loaded_TAPobject.reactor_species.ftol = sameObject2.reactor_species.ftol
-	loaded_TAPobject.reactor_species.gtol = sameObject2.reactor_species.gtol
+	loaded_TAPobject.ftol = sameObject2.ftol
+	loaded_TAPobject.gtol = sameObject2.gtol
 	loaded_TAPobject.reactor_species.reference_pulse_size = sameObject2.reactor_species.reference_pulse_size
 
 	########################################
