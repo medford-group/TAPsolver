@@ -125,7 +125,11 @@ def read_TAPobject(file_name):
 	loaded_TAPobject.gasses_objective = sameObject2.gasses_objective # Provide the names of the gasses to include in these objectives
 	loaded_TAPobject.inert_gasses_objective = sameObject2.inert_gasses_objective
 	loaded_TAPobject.adspecies_objective = sameObject2.adspecies_objective
+
 	loaded_TAPobject.thermodynamic_constraints = sameObject2.thermodynamic_constraints
+	loaded_TAPobject.thermodynamic_alpha = sameObject2.thermodynamic_alpha
+	loaded_TAPobject.thermodynamic_free_energy = sameObject2.thermodynamic_free_energy
+	loaded_TAPobject.thermo_equations = sameObject2.thermo_equations
 
 	# Objective function preferences
 	loaded_TAPobject.parameters_of_interest = sameObject2.parameters_of_interest
