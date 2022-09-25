@@ -684,7 +684,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 					tempFunc = {}
 					
 					def step_stoichiometry(kinetic_step):
-						z = TAPobject_data.mechanism.rate_array[kinetic_step]:
+						z = TAPobject_data.mechanism.rate_array[kinetic_step]
 						neg = []
 						val_neg = []
 						pos = []
