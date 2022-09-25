@@ -96,7 +96,6 @@ class TAPobject():
 		# Simulation precision preferences
 		self.mesh = 400
 		self.catalyst_mesh_density = 3
-		
 		self.parameter_scale = 0
 
 		# Data storage preferences
@@ -117,6 +116,7 @@ class TAPobject():
 		self.thermodynamic_constraints = False
 		self.thermodynamic_alpha = False
 		self.thermodynamic_free_energy = 0
+		self.thermo_equations = ['']
 
 		# Objective function preferences
 		self.parameters_of_interest = []

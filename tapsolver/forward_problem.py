@@ -657,24 +657,71 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 							elif k_fitting in TAPobject_data.reactor_species.inert_gasses:
 								jfunc_2 = assemble(inner(u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.inert_gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3,u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.inert_gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3)*dP(1))/((TAPobject_data.reactor_species.inert_gasses[k_fitting].sigma)**2)	
 								
-				if TAPobject_data.thermodynamic_constraints == True and t == 0:
+
+				if thermoConstraints == True and t == 0:
+					thermoReactions = {}
+					thermoStoich = {}
+					for znum,z in enumerate(TAPobject_data.thermo_equations):
+						thermoReactions[znum] = []
+						thermoStoich[znum] = []
+						tempValue = z.split('+')
+						for j in tempValue:
+							if j.find('*') != -1:
+								thermoSplit = j.split('*')
+								thermoSplit[1] = thermoSplit[1].replace('r','')
+								thermoReactions[znum].append(int(thermoSplit[1]))
+								thermoSplit[0] = thermoSplit[0].replace('(','')
+								thermoSplit[0] = thermoSplit[0].replace(')','')
+								thermoStoich[znum].append(float(thermoSplit[0]))
+							else:
+								j = j.replace('r','')
+								thermoReactions[znum].append(int(j))
+								thermoStoich[znum].append(1)
+
 					w_temp = {}
 					w_temp2 = {}
 					w4 = {}
 					tempFunc = {}
+					
+					def step_stoichiometry(kinetic_step):
+						z = TAPobject_data.mechanism.rate_array[kinetic_step]:
+						neg = []
+						val_neg = []
+						pos = []
+						val_pos = []
+						for j,v in enumerate(z):
+							if v < 0:
+								neg.append(TAPobject_data.mechanism.reactants[j])
+								val_neg.append(v)
+							elif v > 0:
+								pos.append(TAPobject_data.mechanism.reactants[j])
+								val_pos.append(v)
+						return val_neg, val_pos
 
 					for kip in thermoReactions.keys():
+
 						w_temp[kip] = Expression(str(reactor_kinetics_input['thermo values'][kip]),degree=0) # deltaG = sum(-R*T*ln(kf/kb))
 						w_temp2[kip] = interpolate(w_temp[kip],V_du)
 						w4[kip] = project(w_temp2[kip],V_du)		
 						thermoWeight = TAPobject_data.thermodynamic_alpha
 
 						for jnum,jval in enumerate(thermoReactions[kip]):
-																				
+							# TAPobject_data.parameter_scale**("+str(scale_magnitude)+"
+							new_neg, new_pos = step_stoichiometry(jval)
+							scale_magnitude_1 = sum(new_neg)-1 
+							scale_magnitude_2 = sum(new_pos)-1
 							if jnum == 0:
-								tempFunc[kip] = thermoStoich[kip][jnum]*(-0.008314*reac_input['Reactor Temperature'])*ln(r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
+								tempFunc[kip] = thermoStoich[kip][jnum]*(-0.008314*reac_input['Reactor Temperature'])*ln( (TAPobject_data.parameter_scale**(scale_magnitude_1 - scale_magnitude_2)) *r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
 							else:
-								tempFunc[kip] += thermoStoich[kip][jnum]*(-0.008314*reac_input['Reactor Temperature'])*ln(r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
+								tempFunc[kip] += thermoStoich[kip][jnum]*(-0.008314*reac_input['Reactor Temperature'])*ln((TAPobject_data.parameter_scale**(scale_magnitude_1 - scale_magnitude_2)) * r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
+
+						for jnum,jval in enumerate(thermoReactions[kip]):
+							# TAPobject_data.parameter_scale**("+str(scale_magnitude)+"		
+							if jnum == 0:
+								tempFunc[kip] = thermoStoich[kip][jnum]*r_const["dG"+str(jval-1)]#*ln(r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
+							else:
+								tempFunc[kip] += thermoStoich[kip][jnum]*r_const["dG"+str(jval-1)]#*ln(r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
+
 
 						tempFunc[kip] = (tempFunc[kip]-w4[kip])*thermoWeight
 						jfunc_2 += assemble(inner(tempFunc[kip],tempFunc[kip])*dx())
