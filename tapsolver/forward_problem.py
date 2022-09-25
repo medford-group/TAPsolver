@@ -658,7 +658,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 								jfunc_2 = assemble(inner(u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.inert_gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3,u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.inert_gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3)*dP(1))/((TAPobject_data.reactor_species.inert_gasses[k_fitting].sigma)**2)	
 								
 
-				if thermoConstraints == True and t == 0:
+				if TAPobject_data.thermodynamic_constraints == True and t == 0:
 					thermoReactions = {}
 					thermoStoich = {}
 					for znum,z in enumerate(TAPobject_data.thermo_equations):
