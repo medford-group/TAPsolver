@@ -540,22 +540,6 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 				value_row.append(mv[jz_num])
 			percentile_list = pd.DataFrame([value_row],columns=name_columns)
 			percentile_list.to_csv('./'+TAPobject_data.output_name+'/optimization_results.csv',index=False)
-		
-
-	#def derivCB(j,dj,m):
-	#	print("Derivative Time: "+str(time.time() - start_time))
-	#	with open('./'+reac_input['Output Folder Name']+'_folder/fitting/optIter.txt', 'w') as f:
-	#		f.write("Objective Value: "+str(j_values))
-	#		f.write('\n')
-	#		f.write("Change: "+str(dj_values))
-	#		f.write('\n')
-	#		f.write("Constants: "+str(x_values))
-#
-#	#		f.close
-#	#	print(j)
-#	#	print(djv)
-	#	print(mv)
-
 	
 	def hessCB(j,dj,m):
 		it_times.append(time.time())
@@ -616,8 +600,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 					for knum,k in enumerate(TAPobject_data.reactor_species.gasses):
 						synthetic_data[k][k_pulse].append(2*(float(TAPobject_data.reactor_species.gasses[k].inert_diffusion) /(float(dx_r))) * (float(TAPobject_data.reactor.reactor_radius)**2)*3.14159*( float(u_n.vector().get_local()[(all_species)+knum])))
 					for knum,k in enumerate(TAPobject_data.reactor_species.inert_gasses):
-						synthetic_data[k][k_pulse].append(2*(float(TAPobject_data.reactor_species.inert_gasses[k].inert_diffusion) /(float(dx_r))) * (float(TAPobject_data.reactor.reactor_radius)**2)*3.14159*( float(u_n.vector().get_local()[all_species+len(TAPobject_data.reactor_species.gasses)+len(TAPobject_data.reactor_species.adspecies)+knum])))		
-
+						synthetic_data[k][k_pulse].append(2*(float(TAPobject_data.reactor_species.inert_gasses[k].inert_diffusion) /(float(dx_r))) * (float(TAPobject_data.reactor.reactor_radius)**2)*3.14159*( float(u_n.vector().get_local()[all_species+len(TAPobject_data.reactor_species.gasses)+len(TAPobject_data.reactor_species.adspecies)+knum])))
 			
 			if step_number%TAPobject_data.data_storage_frequency == 0:
 				if TAPobject_data.store_thin_data == True:
@@ -628,7 +611,6 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 						thin_data[k][k_pulse].append(float(u_n.vector().get_local()[(catalyst_center_cell*(len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.adspecies) + len(TAPobject_data.reactor_species.inert_gasses)))+all_species+len(TAPobject_data.reactor_species.gasses)+knum]))
 					for knum,k in enumerate(TAPobject_data.reactor_species.inert_gasses):
 						thin_data[k][k_pulse].append(float(u_n.vector().get_local()[(catalyst_center_cell*(len(TAPobject_data.reactor_species.gasses) + len(TAPobject_data.reactor_species.adspecies) + len(TAPobject_data.reactor_species.inert_gasses)))+all_species+len(TAPobject_data.reactor_species.gasses)+len(TAPobject_data.reactor_species.adspecies)+knum]))
-
 
 			if TAPobject_data.optimize == True:
 				for k_fitting in (TAPobject_data.gasses_objective): #  and TAPobject_data.inert_gasses_objective
@@ -700,34 +682,34 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 
 					for kip in thermoReactions.keys():
 
-						w_temp[kip] = Expression(str(reactor_kinetics_input['thermo values'][kip]),degree=0) # deltaG = sum(-R*T*ln(kf/kb))
+						w_temp[kip] = Expression(str(TAPobject.thermodynamic_free_energy[kip]),degree=0) # deltaG = sum(-R*T*ln(kf/kb))
 						w_temp2[kip] = interpolate(w_temp[kip],V_du)
-						w4[kip] = project(w_temp2[kip],V_du)		
-						thermoWeight = TAPobject_data.thermodynamic_alpha
+						w4[kip] = project(w_temp2[kip],V_du)
+						thermoWeight = TAPobject_data.thermodynamic_alpha[kip]
 
-						for jnum,jval in enumerate(thermoReactions[kip]):
-							# TAPobject_data.parameter_scale**("+str(scale_magnitude)+"
-							new_neg, new_pos = step_stoichiometry(jval)
-							scale_magnitude_1 = sum(new_neg)-1 
-							scale_magnitude_2 = sum(new_pos)-1
-							if jnum == 0:
-								tempFunc[kip] = thermoStoich[kip][jnum]*(-0.008314*reac_input['Reactor Temperature'])*ln( (TAPobject_data.parameter_scale**(scale_magnitude_1 - scale_magnitude_2)) *r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
-							else:
-								tempFunc[kip] += thermoStoich[kip][jnum]*(-0.008314*reac_input['Reactor Temperature'])*ln((TAPobject_data.parameter_scale**(scale_magnitude_1 - scale_magnitude_2)) * r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
+						if TAPobject_data.mechanism.elementary_processes[0].forward.use = 'k':
+							for jnum,jval in enumerate(thermoReactions[kip]):
+								# TAPobject_data.parameter_scale**("+str(scale_magnitude)+"
+								new_neg, new_pos = step_stoichiometry(jval)
+								scale_magnitude_1 = sum(new_neg)-1 
+								scale_magnitude_2 = sum(new_pos)-1
+								if jnum == 0:
+									tempFunc[kip] = thermoStoich[kip][jnum]*(-0.008314*TAPobject_data.reactor_species.temperature)*ln( (TAPobject_data.parameter_scale**(scale_magnitude_1 - scale_magnitude_2)) *r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
+								else:
+									tempFunc[kip] += thermoStoich[kip][jnum]*(-0.008314*TAPobject_data.reactor_species.temperature)*ln((TAPobject_data.parameter_scale**(scale_magnitude_1 - scale_magnitude_2)) * r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
 
-						for jnum,jval in enumerate(thermoReactions[kip]):
-							# TAPobject_data.parameter_scale**("+str(scale_magnitude)+"		
-							if jnum == 0:
-								tempFunc[kip] = thermoStoich[kip][jnum]*r_const["dG"+str(jval-1)]#*ln(r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
-							else:
-								tempFunc[kip] += thermoStoich[kip][jnum]*r_const["dG"+str(jval-1)]#*ln(r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
-
+						if TAPobject_data.mechanism.elementary_processes[0].forward.use = 'G':
+							for jnum,jval in enumerate(thermoReactions[kip]):
+								# TAPobject_data.parameter_scale**("+str(scale_magnitude)+"		
+								if jnum == 0:
+									tempFunc[kip] = thermoStoich[kip][jnum]*r_const["dG"+str(jval-1)]#*ln(r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
+								else:
+									tempFunc[kip] += thermoStoich[kip][jnum]*r_const["dG"+str(jval-1)]#*ln(r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
 
 						tempFunc[kip] = (tempFunc[kip]-w4[kip])*thermoWeight
 						jfunc_2 += assemble(inner(tempFunc[kip],tempFunc[kip])*dx())
 						print('Simulated Thermo Value')
 						print(jfunc_2)
-
 
 			#flux_data[pulse_number]['time'].append(t)
 			#for knum,k in enumerate(list(TAPobject_data.reactor_species.gasses.keys())):
