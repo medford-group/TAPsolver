@@ -694,14 +694,14 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 								scale_magnitude_1 = sum(new_neg)-1 
 								scale_magnitude_2 = sum(new_pos)-1
 								if jnum == 0:
-									tempFunc[kip] = thermoStoich[kip][jnum]*(-0.008314*TAPobject_data.reactor_species.temperature)*ln( (TAPobject_data.parameter_scale**(scale_magnitude_1 - scale_magnitude_2)) *r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
+									tempFunc[kip] = thermoStoich[kip][jnum]*(-0.008314*TAPobject_data.reactor_species.temperature)*ln( (TAPobject_data.parameter_scale**(scale_magnitude_1 - scale_magnitude_2))*(TAPobject_data.mechanism.elementary_processes[jval-1].forward.k/TAPobject_data.mechanism.elementary_processes[jval-1].backward.k))
 								else:
-									tempFunc[kip] += thermoStoich[kip][jnum]*(-0.008314*TAPobject_data.reactor_species.temperature)*ln((TAPobject_data.parameter_scale**(scale_magnitude_1 - scale_magnitude_2)) * r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
+									tempFunc[kip] += thermoStoich[kip][jnum]*(-0.008314*TAPobject_data.reactor_species.temperature)*ln((TAPobject_data.parameter_scale**(scale_magnitude_1 - scale_magnitude_2))*(TAPobject_data.mechanism.elementary_processes[jval-1].forward.k/TAPobject_data.mechanism.elementary_processes[jval-1].backward.k))
 
 						if TAPobject_data.mechanism.elementary_processes[0].forward.use == 'G':
 							for jnum,jval in enumerate(thermoReactions[kip]):
 								if jnum == 0:
-									tempFunc[kip] = thermoStoich[kip][jnum]*r_const["dG"+str(jval-1)]#*ln(r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
+									tempFunc[kip] = thermoStoich[kip][jnum]*mechanism.elementary_processes[jval-1].forward.dG#*ln(r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
 								else:
 									tempFunc[kip] += thermoStoich[kip][jnum]*r_const["dG"+str(jval-1)]#*ln(r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
 
