@@ -682,7 +682,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 
 					for kip in thermoReactions.keys():
 
-						w_temp[kip] = Expression(str(TAPobject.thermodynamic_free_energy[kip]),degree=0) # deltaG = sum(-R*T*ln(kf/kb))
+						w_temp[kip] = Expression(str(TAPobject_data.thermodynamic_free_energy[kip]),degree=0) # deltaG = sum(-R*T*ln(kf/kb))
 						w_temp2[kip] = interpolate(w_temp[kip],V_du)
 						w4[kip] = project(w_temp2[kip],V_du)
 						thermoWeight = TAPobject_data.thermodynamic_alpha[kip]
@@ -700,7 +700,6 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 
 						if TAPobject_data.mechanism.elementary_processes[0].forward.use == 'G':
 							for jnum,jval in enumerate(thermoReactions[kip]):
-								# TAPobject_data.parameter_scale**("+str(scale_magnitude)+"		
 								if jnum == 0:
 									tempFunc[kip] = thermoStoich[kip][jnum]*r_const["dG"+str(jval-1)]#*ln(r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
 								else:
