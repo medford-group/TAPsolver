@@ -687,7 +687,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 						w4[kip] = project(w_temp2[kip],V_du)
 						thermoWeight = TAPobject_data.thermodynamic_alpha[kip]
 
-						if TAPobject_data.mechanism.elementary_processes[0].forward.use = 'k':
+						if TAPobject_data.mechanism.elementary_processes[0].forward.use == 'k':
 							for jnum,jval in enumerate(thermoReactions[kip]):
 								# TAPobject_data.parameter_scale**("+str(scale_magnitude)+"
 								new_neg, new_pos = step_stoichiometry(jval)
@@ -698,7 +698,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 								else:
 									tempFunc[kip] += thermoStoich[kip][jnum]*(-0.008314*TAPobject_data.reactor_species.temperature)*ln((TAPobject_data.parameter_scale**(scale_magnitude_1 - scale_magnitude_2)) * r_const["kf"+str(jval-1)]/r_const["kb"+str(jval-1)])
 
-						if TAPobject_data.mechanism.elementary_processes[0].forward.use = 'G':
+						if TAPobject_data.mechanism.elementary_processes[0].forward.use == 'G':
 							for jnum,jval in enumerate(thermoReactions[kip]):
 								# TAPobject_data.parameter_scale**("+str(scale_magnitude)+"		
 								if jnum == 0:
