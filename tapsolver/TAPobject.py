@@ -107,6 +107,7 @@ class TAPobject():
 		self.gas_noise = True
 		self.surface_noise = True
 		self.catalyst_data_type = 'single_point'
+		self.diffusion_inclusion = 1
 
 		# Objective function preferences
 		self.objective = ''
