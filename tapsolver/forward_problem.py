@@ -11,7 +11,7 @@ import scipy
 import copy
 import warnings
 import matplotlib.pyplot as plt
-from etc import *
+from .etc import *
 import jsonpickle
 import json
 import ufl
@@ -19,19 +19,19 @@ import dijitso
 
 ### From folders
 
-from data import *
+from .data import *
 #from experimental_data import experimental_data
-from mechanism import *#mechanism
-from reactor import *
-from species import *
-from TAPobject import *#TAPobject
-from read_files import *
-from construct_f_equation import *
-from new_construct_f_equation import *
-from construct_f_equation_multiple_experiments import *
-from etc import *
+from .mechanism import *#mechanism
+from .reactor import *
+from .species import *
+from .TAPobject import *#TAPobject
+from .read_files import *
+from .construct_f_equation import *
+from .new_construct_f_equation import *
+from .construct_f_equation_multiple_experiments import *
+from .etc import *
 
-from flux_graph import *
+from .flux_graph import *
 
 from fenics import *
 from fenics_adjoint import *

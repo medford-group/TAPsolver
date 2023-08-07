@@ -9,6 +9,7 @@ from .TAPobject import *#TAPobject
 from .read_files import *
 from .etc import *
 from .flux_graph import *
+from .forward_problem import *
 from .moment_graph import *
 
 from .new_construct_f_equation import *

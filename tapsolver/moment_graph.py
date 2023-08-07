@@ -14,7 +14,7 @@ import imageio
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 
-from forward_problem import *
+from .forward_problem import *
 def moment_graph(TAPobject_data: TAPobject):
 
 	fig2, ax2 = plt.subplots()
