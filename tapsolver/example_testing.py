@@ -1,6 +1,6 @@
 from data import *
 #from experimental_data import experimental_data
-from mechanism import *#mechanism
+from .mechanism import *#mechanism
 from reactor import *
 from species import *
 from TAPobject import *#TAPobject
