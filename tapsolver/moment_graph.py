@@ -1,8 +1,8 @@
 #from structures import *
-from TAPobject import TAPobject
+from .TAPobject import TAPobject
 
 #from file_io import *
-from read_files import read_experimental_data_object
+from .read_files import read_experimental_data_object
 
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
