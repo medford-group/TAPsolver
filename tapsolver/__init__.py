@@ -1,3 +1,19 @@
+# new files
+
+from .data import *
+#from experimental_data import experimental_data
+from .mechanism import *#mechanism
+from .reactor import *
+from .species import *
+from .TAPobject import *#TAPobject
+from .read_files import *
+from .etc import *
+from .flux_graph import *
+from .moment_graph import *
+
+from .new_construct_f_equation import *
+
+"""
 # file_io
 from .new_experiments import new_experiments
 from .read_CSV_mechanism import read_CSV_mechanism
@@ -89,3 +105,5 @@ from .initialize_flux_graph import establishOutletGraph
 #from tapsolver.time_steppers import *
 #from tapsolver.uncertainty_quantification import *
 #from tapsolver.visualization import *
+
+"""
