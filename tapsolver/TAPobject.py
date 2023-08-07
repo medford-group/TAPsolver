@@ -1,6 +1,10 @@
 
 # Copyright 2021, Battelle Energy Alliance, LLC All Rights Reserved
 
+from .reactor import *
+from .species import *
+from .mechanism import *
+
 class TAPobject():
 
 	"""
@@ -86,15 +90,15 @@ class TAPobject():
 	def __init__(self):
 		
 		# REQUIRED FOR FORWARD AND INVERSE ANALYSIS
-		self.reactor = None
-		self.mechanism = None
-		self.reactor_species = None
+		self.reactor = reactor() # None # Set default
+		self.mechanism = mechanism() # Set default
+		self.species = species()	  # Set default
 		
 		# REQUIRED FOR INVERSE ANALYSIS
 		self.experimental_data = None
 
 		# Simulation precision preferences
-		self.mesh = 400
+		self.mesh = 200
 		self.catalyst_mesh_density = 3
 		self.parameter_scale = 0
 
@@ -103,7 +107,7 @@ class TAPobject():
 		self.derivative_name = 'exp_new'
 		self.data_name = None
 		self.store_flux_data = True
-		self.store_thin_data = True
+		self.store_thin_data = False
 		self.gas_noise = True
 		self.surface_noise = True
 		self.catalyst_data_type = 'single_point'
@@ -120,9 +124,11 @@ class TAPobject():
 		self.thermo_equations = ['']
 
 		# Objective function preferences
-		self.parameters_of_interest = []
+		self.poi = []
 
 		# Sensitivity Analysis
+		self.refine = {}
+		self.view_mesh = False
 		self.tangent_linear_sensitivity = False
 		self.finite_difference_trans_sensitivty = False
 		self.adjoint_sensitivitiy = False
@@ -133,8 +139,10 @@ class TAPobject():
 		self.gtol = 1e-22
 
 		# Flux graph name
-		self.pulses_graphed = 1
+		self.pulses_graphed = []
+		self.conc_profiles = []
 		self.display_analytical = False
+		#self.display_pulses = 
 		self.scaled_graph = False
 		self.display_objective = False
 		self.show_graph = False
