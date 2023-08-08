@@ -11,7 +11,7 @@ import scipy
 import copy
 import warnings
 import matplotlib.pyplot as plt
-from .etc import *
+from .etc import * ##SWAP
 import jsonpickle
 import json
 import ufl
@@ -19,22 +19,22 @@ import dijitso
 
 ### From folders
 
-from .data import *
+from .data import *  ##SWAP
 #from experimental_data import experimental_data
-from .mechanism import *#mechanism
-from .reactor import *
-from .species import *
-from .TAPobject import *#TAPobject
-from .read_files import *
-from .construct_f_equation import *
-from .new_construct_f_equation import *
-from .construct_f_equation_multiple_experiments import *
-from .etc import *
+from .mechanism import *#mechanism ##SWAP
+from .reactor import *  ##SWAP
+from .species import * ##SWAP
+from .TAPobject import *#TAPobject ##SWAP
+from .read_files import * ##SWAP
+from .construct_f_equation import * ##SWAP
+from .new_construct_f_equation import * ##SWAP
+from .construct_f_equation_multiple_experiments import * ##SWAP
+from .etc import * ##SWAP
 
-from .flux_graph import *
+from flux_graph import * ##SWAP
 
-from fenics import *
-from fenics_adjoint import *
+from fenics import * 
+from fenics_adjoint import * 
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 set_log_level(30)
@@ -54,8 +54,8 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 		derivative_eval = True
 
 	if derivative_eval == True:	
-		print('')
-		print('working tape set')
+		#print('')
+		#print('working tape set')
 		set_working_tape(tape2)
 
 	if TAPobject_data.data_name != None:	
@@ -336,7 +336,11 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 	constantT = Constant(0)
 	remove_surface = Constant(1)
 	
-	if TAPobject_data.mesh < 600:
+	if TAPobject_data.mesh < 100:
+		b0Test1 = Expression('x[0] < 0.0100005 ? 0.5 : 0', degree=0)
+	elif TAPobject_data.mesh < 200:
+		b0Test1 = Expression('x[0] < 0.00500005 ? 0.5 : 0', degree=0)
+	elif TAPobject_data.mesh < 600:
 		b0Test1 = Expression('x[0] < 0.002500001 ? 0.5 : 0', degree=0)
 	elif TAPobject_data.mesh < 1200:
 		b0Test1 = Expression('x[0] < 0.0012500005 ? 0.5 : 0', degree=0)
@@ -595,8 +599,8 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 			name_columns = ['objective']
 			value_row = [j]
 			for jz_num,jz in enumerate(TAPobject_data.poi):
-				print(jz)
-				print(jz)
+				#print(jz)
+				#print(jz)
 				name_columns.append(jz)
 				value_row.append(mv[jz_num])
 			new_addition.loc[len(new_addition)] = value_row
@@ -696,7 +700,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 			surface_store = {}
 			surface_store['mesh'] = x_mesh
 			np.savetxt('./'+TAPobject_data.output_name+'/mesh.csv', surface_store['mesh'], delimiter=",")
-			sys.exit()
+			#sys.exit()
 
 		if TAPobject_data.conc_profiles != []:
 			data_store = {}
@@ -957,7 +961,6 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 	##plt.show()
 
 	if TAPobject_data.objective_return == True:
-		print('test')
 		return objective_value
 
 	if TAPobject_data.uncertainty == True:
@@ -966,6 +969,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 		print('Calculating hessian. Could take some time.')
 		hessFolder = TAPobject_data.output_name
 		rf_2 = ReducedFunctional(jfunc_2, controls,tape=tape2)# ,hessian_cb_post=hessCB
+
 
 		rf_2.derivative()
 		utest = []

@@ -1,55 +1,11 @@
 #from structures import *
-from .define_adspecies import define_adspecies
-from .define_gas import define_gas
-from .display_gasses import display_gasses
-from .display_surface import display_surface
-from .experimental_data import experimental_data
-from .mechanism import mechanism
-from .reactor import reactor
-from .reactor_species import reactor_species
-#from read_old_input import read_old_input
 from .TAPobject import TAPobject
 
 #from file_io import *
-from .new_experiments import new_experiments
-from .read_CSV_mechanism import read_CSV_mechanism
-from .read_CSV_reactor import read_CSV_reactor
-from .read_CSV_reactor_species import read_CSV_reactor_species
-from .read_experimental_data_object import read_experimental_data_object
-from .read_mechanism_object import read_mechanism_object
-from .read_reactor_object import read_reactor_object
-from .read_reactor_species_object import read_reactor_species_object 
-from .read_TAPobject import read_TAPobject 
-from .read_transient_sensitivity import read_transient_sensitivity 
-from .save_object import save_object
-#from vary_input_file import vary_input_file
-
-#from mechanism_construction import *
-#from construct_batch_equation import make_batch_equation
-from .construct_f_equation import construct_f_equation
-from .construct_f_equation_multiple_experiments import construct_f_equation_multiple_experiments
-from .construct_rate_equations import rateEqs
-from .display_elementary_processes import display_elementary_processes
-from .elementary_process import elementary_process
-from .elementary_process_details import elementary_process_details
-from .mechanism_constructor import mechanism_constructor
-from .mechanism_reactants import mechanism_reactants
-
-#from reference_parameters import *
-from .reference_parameters import load_standard_parameters
-
-#from simulation_notes import *
-from .timing_details import *
-from .error_details import *
-from .generate_folders import *
-
-#from inverse_problem import *
-from .define_fitting_species import curveFitting
-#from point_objective import point_objective
-from .std_objective import stdEstablishment
-from .total_objective import curveFitting
+from .read_files import read_experimental_data_object
 
 import matplotlib.pyplot as plt
+import math as mp
 import numpy as np
 import sys
 
@@ -60,6 +16,15 @@ def flux_graph(TAPobject_data: TAPobject):
 	ax2.set_xlabel('$Time\ (s)$', fontsize = 14)
 
 	colors = ['b','orange','g','r','k','y','c','m','brown','darkgreen','goldenrod','lavender','lime']
+
+	TAPobject_data.species.reference_diffusions = TAPobject_data.reactor.reference_diffusions
+	zone_keys = list(TAPobject_data.species.reference_diffusions.keys())
+
+	outlet_diffusions = {}
+	for k in TAPobject_data.species.gasses.keys():
+		outlet_diffusions[k] = TAPobject_data.species.reference_diffusions[zone_keys[-1]]*(mp.sqrt(TAPobject_data.species.reference_mass*TAPobject_data.species.temperature)/mp.sqrt(TAPobject_data.species.reference_temperature*TAPobject_data.species.gasses[k].mass))
+	for k in TAPobject_data.species.inert_gasses.keys():
+		outlet_diffusions[k] = TAPobject_data.species.reference_diffusions[zone_keys[-1]]*(mp.sqrt(TAPobject_data.species.reference_mass*TAPobject_data.species.temperature)/mp.sqrt(TAPobject_data.species.reference_temperature*TAPobject_data.species.inert_gasses[k].mass))
 
 	if TAPobject_data.scaled_graph == True:
 		ax2.set_ylabel('$Outlet\ Flow\ (1/s)$', fontsize = 14)
@@ -73,87 +38,103 @@ def flux_graph(TAPobject_data: TAPobject):
 	except:
 		print('no experimental data')
 		experimental_data_exist = False
-	synthetic_data = read_experimental_data_object('./'+TAPobject_data.output_name+'/TAP_experimental_data.json')	
+	synthetic_data = read_experimental_data_object('./'+TAPobject_data.output_name+'/TAP_experimental_data.json')
 	
 	legend_label = []
-	for j in TAPobject_data.reactor_species.gasses:
+	for j in TAPobject_data.species.gasses:
 		legend_label.append(j)
-	for j in TAPobject_data.reactor_species.inert_gasses:
+	for j in TAPobject_data.species.inert_gasses:
 		legend_label.append(j)
 
-	for jnum,j in enumerate(TAPobject_data.reactor_species.gasses):
-		for k in synthetic_data[j]:
-			if k == 0:
-				plt.plot(synthetic_data['time'][0], synthetic_data[j][0],label=j,color=colors[jnum],linestyle='--')
-			else:
-				plt.plot(synthetic_data['time'][0], synthetic_data[j][0],color=colors[jnum],linestyle='--')
+	for jnum,j in enumerate(TAPobject_data.species.gasses):
+		if TAPobject_data.pulses_graphed == []:
+			for k in synthetic_data[j]:
+				if k == 0:
+					plt.plot(synthetic_data['time'][0], synthetic_data[j][int(k)],label=j,color=colors[jnum],linestyle='--')
+				else:
+					plt.plot(synthetic_data['time'][0], synthetic_data[j][int(k)],color=colors[jnum],linestyle='--')
+		else:
+			for k in TAPobject_data.pulses_graphed:
+				if k == 0:
+					plt.plot(synthetic_data['time'][0], synthetic_data[j][int(k)],label=j,color=colors[jnum],linestyle='--')
+				else:
+					plt.plot(synthetic_data['time'][0], synthetic_data[j][int(k)],color=colors[jnum],linestyle='--')
+			
 
-	for jnum,j in enumerate(TAPobject_data.reactor_species.inert_gasses):
-		for k in synthetic_data[j]:
-			if k == 0:
-				plt.plot(synthetic_data['time'][0], synthetic_data[j][0],label=j,color=colors[jnum+len(TAPobject_data.reactor_species.gasses.keys())],linestyle='--')		
-			else:
-				plt.plot(synthetic_data['time'][0], synthetic_data[j][0],color=colors[jnum+len(TAPobject_data.reactor_species.gasses.keys())],linestyle='--')
+	for jnum,j in enumerate(TAPobject_data.species.inert_gasses):
+		if TAPobject_data.pulses_graphed == []:
+			for k in synthetic_data[j]:
+				if k == 0:
+					plt.plot(synthetic_data['time'][0], synthetic_data[j][int(k)],label=j,color=colors[jnum+len(TAPobject_data.species.gasses.keys())],linestyle='--')
+				else:
+					plt.plot(synthetic_data['time'][0], synthetic_data[j][int(k)],color=colors[jnum+len(TAPobject_data.species.gasses.keys())],linestyle='--')
+		else:
+			for k in TAPobject_data.pulses_graphed:
+				if k == 0:
+					plt.plot(synthetic_data['time'][0], synthetic_data[j][int(k)],label=j,color=colors[jnum+len(TAPobject_data.species.gasses.keys())],linestyle='--')
+				else:
+					plt.plot(synthetic_data['time'][0], synthetic_data[j][int(k)],color=colors[jnum+len(TAPobject_data.species.gasses.keys())],linestyle='--')
+			
 	plt.xlim(0,synthetic_data['time'][0][-1])
 	if experimental_data_exist == True:
-		for jnum,j in enumerate(TAPobject_data.reactor_species.gasses):#
+		for jnum,j in enumerate(TAPobject_data.species.gasses):#
 			for k in experimental_data[j]:
 				if k == 0:
 					plt.scatter(experimental_data['time'][0][::6], experimental_data[j][0][::6],s=5,label=j+'_exp',color=colors[jnum])
 				else:
 					plt.scatter(experimental_data['time'][0][::6], experimental_data[j][0][::6],s=5,color=colors[jnum])
 	
-		for jnum,j in enumerate(TAPobject_data.reactor_species.inert_gasses):
+		for jnum,j in enumerate(TAPobject_data.species.inert_gasses):
 			for k in experimental_data[j]:
 				if k == 0:
-					plt.scatter(experimental_data['time'][0][::6], experimental_data[j][0][::6],s=5,label=j+'_exp',color=colors[jnum+len(TAPobject_data.reactor_species.gasses.keys())])#
+					plt.scatter(experimental_data['time'][0][::6], experimental_data[j][0][::6],s=5,label=j+'_exp',color=colors[jnum+len(TAPobject_data.species.gasses.keys())])#
 				else:
-					plt.scatter(experimental_data['time'][0][::6], experimental_data[j][0][::6],s=5,color=colors[jnum+len(TAPobject_data.reactor_species.gasses.keys())])
+					plt.scatter(experimental_data['time'][0][::6], experimental_data[j][0][::6],s=5,color=colors[jnum+len(TAPobject_data.species.gasses.keys())])
 
 	if TAPobject_data.display_analytical == True:
 		# For reactant / product species
 
 		analyticalTiming = synthetic_data['time'][0]#np.arange(0, time_steps*dt, dt).tolist()
-		for kjc in TAPobject_data.reactor_species.gasses:
+		for jnum,kjc in enumerate(TAPobject_data.species.gasses):
 			outlet = []
 		
-			factor = TAPobject_data.reactor_species.gasses[kjc].intensity*TAPobject_data.reactor_species.reference_pulse_size
+			factor = TAPobject_data.species.gasses[kjc].intensity*TAPobject_data.species.reference_pulse_size
 			
 			for k in analyticalTiming:
 				analyticalValue = 0
-				if k - TAPobject_data.reactor_species.gasses[kjc].delay > 0:
+				if k - TAPobject_data.species.gasses[kjc].delay > 0:
 					for n in range(0,50):### Analytical solution section # gasses[name].catalyst_diffusion
-						analyticalValue += ((-1)**n)*(2*n+1)*np.exp((-(n+0.5)**2)*(3.14159**2)*((k - TAPobject_data.reactor_species.gasses[kjc].delay)*(TAPobject_data.reactor_species.gasses[kjc].inert_diffusion/(TAPobject_data.reactor.zone_voids[0]*(TAPobject_data.reactor.total_length**2)))))
+						analyticalValue += ((-1)**n)*(2*n+1)*np.exp((-(n+0.5)**2)*(3.14159**2)*((k - TAPobject_data.species.gasses[kjc].delay)*(outlet_diffusions[kjc]/(TAPobject_data.reactor.voids[0]*(TAPobject_data.reactor.length**2)))))
 				else: 
 					analyticalValue = -1
 				if analyticalValue < 0:
 					outlet.append(0)
 				else:
-					outlet.append(factor*(TAPobject_data.reactor_species.gasses[kjc].inert_diffusion*3.14159/(TAPobject_data.reactor.zone_voids[0]*(TAPobject_data.reactor.total_length**2)))*analyticalValue)
+					outlet.append(factor*(outlet_diffusions[kjc]*3.14159/(TAPobject_data.reactor.voids[0]*(TAPobject_data.reactor.length**2)))*analyticalValue)
 			
 			try:
-				ax2.plot(analyticalTiming,outlet,color='k',label='Analytical '+kjc, alpha=0.7)
+				ax2.plot(analyticalTiming,outlet,color=colors[jnum],label='Analytical '+kjc, alpha=0.7)
 			except ValueError:
 				outlet = outlet[:-1]
-				ax2.plot(analyticalTiming,outlet,color='k',label='Analytical '+kjc, alpha=0.7)
+				ax2.plot(analyticalTiming,outlet,color=colors[jnum],label='Analytical '+kjc, alpha=0.7)
 
 		analyticalTiming = synthetic_data['time'][0]#np.arange(0, time_steps*dt, dt).tolist()
-		for kjc in TAPobject_data.reactor_species.inert_gasses:
+		for kjc in TAPobject_data.species.inert_gasses:
 			outlet = []
 		
-			factor = TAPobject_data.reactor_species.inert_gasses[kjc].intensity*TAPobject_data.reactor_species.reference_pulse_size
+			factor = TAPobject_data.species.inert_gasses[kjc].intensity*TAPobject_data.species.reference_pulse_size
 			
 			for k in analyticalTiming:
 				analyticalValue = 0
-				if k - TAPobject_data.reactor_species.inert_gasses[kjc].delay > 0:
+				if k - TAPobject_data.species.inert_gasses[kjc].delay > 0:
 					for n in range(0,50):### Analytical solution section # gasses[name].catalyst_diffusion
-						analyticalValue += ((-1)**n)*(2*n+1)*np.exp((-(n+0.5)**2)*(3.14159**2)*((k - TAPobject_data.reactor_species.inert_gasses[kjc].delay)*(TAPobject_data.reactor_species.inert_gasses[kjc].inert_diffusion/(TAPobject_data.reactor.zone_voids[0]*(TAPobject_data.reactor.total_length**2)))))
+						analyticalValue += ((-1)**n)*(2*n+1)*np.exp((-(n+0.5)**2)*(3.14159**2)*((k - TAPobject_data.species.inert_gasses[kjc].delay)*(outlet_diffusions[kjc]/(TAPobject_data.reactor.voids[0]*(TAPobject_data.reactor.length**2)))))
 				else: 
 					analyticalValue = -1
 				if analyticalValue < 0:
 					outlet.append(0)
 				else:
-					outlet.append(factor*(TAPobject_data.reactor_species.inert_gasses[kjc].inert_diffusion*3.14159/(TAPobject_data.reactor.zone_voids[0]*(TAPobject_data.reactor.total_length**2)))*analyticalValue)
+					outlet.append(factor*(outlet_diffusions[kjc]*3.14159/(TAPobject_data.reactor.voids[0]*(TAPobject_data.reactor.length**2)))*analyticalValue)
 			
 			try:
 				ax2.plot(analyticalTiming,outlet,color='k',label='Analytical '+kjc, alpha=0.7)
@@ -186,17 +167,17 @@ def flux_graph(TAPobject_data: TAPobject):
 		# For reactant / product species
 
 		analyticalTiming = np.arange(0, time_steps*dt, dt).tolist()
-		for kjc in TAPobject_data.reactor_species.gasses:
+		for kjc in TAPobject_data.species.gasses:
 			outlet = []
 		
 			if reac_input['Scale Output'].lower() == 'true':
 				factor = 1
 			else:
-				factor = TAPobject_data.reactor_species.gasses[kjc].intensity*TAPobject_data.reactor_species.reference_pulse_size
+				factor = TAPobject_data.species.gasses[kjc].intensity*TAPobject_data.species.reference_pulse_size
 			
 			for k in range(0,time_steps+1):
 				analyticalValue = 0
-				if k*dt - TAPobject_data.reactor_species.gasses[kjc].delay > 0:
+				if k*dt - TAPobject_data.species.gasses[kjc].delay > 0:
 					for n in range(0,50):
 						analyticalValue += ((-1)**n)*(2*n+1)*np.exp((-(n+0.5)**2)*(3.14159**2)*((k*dt - species_time[kjc])*(D[kjc][0]/(eb[0]*(np.sum(r_param)**2)))))
 				else: 
