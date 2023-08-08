@@ -31,7 +31,7 @@ from .new_construct_f_equation import * ##SWAP
 from .construct_f_equation_multiple_experiments import * ##SWAP
 from .etc import * ##SWAP
 
-from flux_graph import * ##SWAP
+from .flux_graph import * ##SWAP
 
 from fenics import * 
 from fenics_adjoint import * 
