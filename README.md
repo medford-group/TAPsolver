@@ -9,9 +9,8 @@ TAPsolver is an open-source, python program for the analysis of Temporal Analysi
 * *PDE-constrained optimization of kinetic parameters*
 * *Hessian assesment of parameter uncertainties*
 * *Ensemble-based evaluation of initial state/reactor configuration uncertainties*
-* *Model-based design of experiments and model discrimination (under development)*
-* *Efficient kinetic parameter uncertainty propagation to TAP experiments (under development)*
-* *Bayesian parameter estimation (future work)*
+* *Model-based design of experiments and model discrimination*
+* *Efficient kinetic parameter uncertainty propagation to TAP experiments*
 * *TAP Kinetic informed neural networks (under development)*
 
 <p align="center">
@@ -21,12 +20,10 @@ TAPsolver is an open-source, python program for the analysis of Temporal Analysi
 The python packages [FEniCS](https://fenicsproject.org/)  (Finite Element Computational Software) and [Dolfin-Adjoint](http://www.dolfin-adjoint.org/en/latest/) act as the foundation of TAPsolver and allow for the flexible and efficient application of [algorithmic differentiation](https://towardsdatascience.com/automatic-differentiation-explained-b4ba8e60c2ad). TAPsolver was also closely developed alongside [TAPSAP](https://github.com/IdahoLabResearch/tapsap), which is used for processing and statistically analyzing raw TAP experimental data. 
 
 
-A primary goal of TAPsolver is to make new methods of TAP analysis easily accesable upon publication, leading to community driven development and the unification of workflows. If you have a new approach for processing TAP data and would like to implement it in TAPsolver, please read the [Questions & Development section](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/questionsDiscussion).
+A primary goal of TAPsolver is to make new methods of TAP analysis easily accesable upon publication, leading to community driven development and the unification of workflows. If you have a new approach for processing TAP data and would like to implement it in TAPsolver, please read the [Questions & Development section](https://github.com/medford-group/TAPsolver/tree/tapsolver-4.0/docs/resources/questionsDiscussion).
 
-* [Installation](https://github.com/medford-group/TAPsolver/tree/experimentalFluidity_condensed/docs/resources/installation)
-* [Examples](https://github.com/medford-group/TAPsolver/tree/experimentalFluidity_condensed/docs/resources/examples)
-* [Questions & Development](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/questionsDiscussion)
-* [General Updates](https://github.com/medford-group/TAPsolver/tree/master/docs/resources/generalUpdates)
+* [Installation](https://github.com/medford-group/TAPsolver/tree/tapsolver-4.0/docs/resources/installation)
+* [Examples](https://github.com/medford-group/TAPsolver/tree/tapsolver-4.0/docs/resources/examples)
 
 ### Collaborators and Funding
 
