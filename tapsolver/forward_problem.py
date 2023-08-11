@@ -23,15 +23,14 @@ from .data import *  ##SWAP
 #from experimental_data import experimental_data
 from .mechanism import *#mechanism ##SWAP
 from .reactor import *  ##SWAP
-from .species import * ##SWAP
+from .species import * ##SWAP 
 from .TAPobject import *#TAPobject ##SWAP
 from .read_files import * ##SWAP
-from .construct_f_equation import * ##SWAP
+##from construct_f_equation import * ##SWAP
 from .new_construct_f_equation import * ##SWAP
-from .construct_f_equation_multiple_experiments import * ##SWAP
-from .etc import * ##SWAP
+#from construct_f_equation_multiple_experiments import * ##SWAP
 
-from .flux_graph import * ##SWAP
+from .flux_graph import * ##SWAP again
 
 from fenics import * 
 from fenics_adjoint import * 
@@ -313,7 +312,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 	dz = 1/TAPobject_data.mesh
 	
 	#class integration_section(SubDomain):
-	#	def inside(self, x, on_boundary):
+	#	def inside(self, x, on_boundary):å
 	#		return between(x[0], (1-dz,1.0))
 	
 	right = CompiledSubDomain("near(x[0], 1.)")
@@ -335,6 +334,30 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 
 	constantT = Constant(0)
 	remove_surface = Constant(1)
+
+	Tp = 1e-5
+	##def complicated_func(t):
+	##	return float(outlet_diffusions['A'])  *(t/(Tp**2))*mp.exp(-t/Tp)/ (float(TAPobject_data.reactor.radius)**2)*3.14159
+	##	#return 2*(float(outlet_diffusions['A']) /(float(dx_r))) * (float(TAPobject_data.reactor.radius)**2)*3.14159 *(t/(Tp**2))*mp.exp(-t/Tp)
+
+	#time = 0
+	
+	#time_plot = []
+	#pulse_plot = []
+
+	#u_d0 = Constant(0)
+	## 2*(float(outlet_diffusions[k]) /(float(dx_r))) * (float(TAPobject_data.reactor.radius)**2)*3.14159
+	#bcs.append(DirichletBC(V.sub(0),u_d0,boundary_L))
+
+	#for d in range(0,100):	
+	#	time_plot.append(time)
+	#	pulse_plot.append(complicated_func(time))
+	#	time += 1e-6
+
+	#fig,ax = plt.subplots()
+	#ax.plot(time_plot,pulse_plot)
+	#plt.show()
+	#sys.exit()
 	
 	if TAPobject_data.mesh < 100:
 		b0Test1 = Expression('x[0] < 0.0100005 ? 0.5 : 0', degree=0)
@@ -710,7 +733,7 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 		if TAPobject_data.objective_return == True:
 			objective_value = 0
 		while t <= pulse_time:
-			
+			#u_d0.assign(complicated_func(t))
 			if step_number%TAPobject_data.data_storage_frequency == 0:
 				if TAPobject_data.store_flux_data == True:
 					synthetic_data['time'][k_pulse].append(round(t,6))
@@ -864,9 +887,11 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 					sys.exit()
 							
 			else:
+				##if dt == 0.00001:
 				if dt == 0.0001:
 					pass
 				else:
+					##dt = 0.00001
 					dt = 0.0001
 					dk.assign(dt)
 			
