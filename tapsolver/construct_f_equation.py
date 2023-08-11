@@ -7,14 +7,13 @@ import numpy as np
 
 import sys
 #from structures import TAPobject
-from .TAPobject import TAPobject
-from .mechanism_reactants import mechanism_reactants
+from TAPobject import TAPobject
 
 
 def construct_f_equation(TAPobject_data: TAPobject):
 
 	"""
-	# TAPobject_data.reactor_species.temperature["+str(temperature_number)+"])
+	# TAPobject_data.species.temperature["+str(temperature_number)+"])
 	This function constructs the variational form for TAP simulations in FEniCS, 
 	incorporating the time steps, Knudsen diffusion, advection, and elementary
 	reactions for the reactive gasses, inert gasses, and catalyst adspecies.
@@ -43,55 +42,55 @@ def construct_f_equation(TAPobject_data: TAPobject):
 	
 	def add_diffusion(species_name):
 		"""Add diffusion term for reactive gas species introduced in the reactor"""
-		return "((u_d['u_"+species_name+"'] - u_nd['u_n"+species_name+"']))*v_d['v_"+species_name+"']*dx(0)      + dk*TAPobject_data.diffusion_inclusion*("+"(TAPobject_data.reactor_species.inert_diffusion*sqrt(TAPobject_data.reactor_species.reference_mass*TAPobject_data.reactor_species.temperature)/sqrt(TAPobject_data.reactor_species.reference_temperature*TAPobject_data.reactor_species.gasses['"+species_name+"'].mass))"+"/(TAPobject_data.reactor.zone_voids[0]*(TAPobject_data.reactor.total_length**2)) ) *dot(grad(theta*u_d['u_"+species_name+"']+(1-theta)*u_nd['u_n"+species_name+"']), grad(v_d['v_"+species_name+"']))*dx(0)     + ((u_d['u_"+species_name+"'] - u_nd['u_n"+species_name+"']) )*v_d['v_"+species_name+"']*dx(1)       + dk*("+"(TAPobject_data.reactor_species.catalyst_diffusion*sqrt(TAPobject_data.reactor_species.reference_mass*TAPobject_data.reactor_species.temperature)/sqrt(TAPobject_data.reactor_species.reference_temperature*TAPobject_data.reactor_species.gasses['"+species_name+"'].mass))"+"/(TAPobject_data.reactor.zone_voids[1]*(TAPobject_data.reactor.total_length**2)) )*dot(grad(theta*u_d['u_"+species_name+"'] + (1-theta)*u_nd['u_n"+species_name+"']), grad(v_d['v_"+species_name+"']))*dx(1) " 
+		return "((u_d['u_"+species_name+"'] - u_nd['u_n"+species_name+"']))*v_d['v_"+species_name+"']*dx(0)      + dk*TAPobject_data.diffusion_inclusion*("+"(TAPobject_data.species.inert_diffusion*sqrt(TAPobject_data.species.reference_mass*TAPobject_data.species.temperature)/sqrt(TAPobject_data.species.reference_temperature*TAPobject_data.species.gasses['"+species_name+"'].mass))"+"/(TAPobject_data.reactor.voids[0]*(TAPobject_data.reactor.length**2)) ) *dot(grad(theta*u_d['u_"+species_name+"']+(1-theta)*u_nd['u_n"+species_name+"']), grad(v_d['v_"+species_name+"']))*dx(0)     + ((u_d['u_"+species_name+"'] - u_nd['u_n"+species_name+"']) )*v_d['v_"+species_name+"']*dx(1)       + dk*("+"(TAPobject_data.species.catalyst_diffusion*sqrt(TAPobject_data.species.reference_mass*TAPobject_data.species.temperature)/sqrt(TAPobject_data.species.reference_temperature*TAPobject_data.species.gasses['"+species_name+"'].mass))"+"/(TAPobject_data.reactor.voids[1]*(TAPobject_data.reactor.length**2)) )*dot(grad(theta*u_d['u_"+species_name+"'] + (1-theta)*u_nd['u_n"+species_name+"']), grad(v_d['v_"+species_name+"']))*dx(1) " 
 	
 	def add_advection(species_number):
 		"""Add advective term for reactive or inert gas species introduced in the reactor"""
-		return " (dk)*Constant(theta)*Constant(TAPobject_data.reactor.total_length)*div(advMulti*advTerm*u_d['u_"+species_name+"'])*v_d['v_"+species_name+"']*dx(0) + " + " (dk)*Constant(1-theta)*Constant(np.sum(TAPobject_data.reactor.total_length))*div(advMulti*advTerm*u_nd['u_n"+species_name+"'])*v_d['v_"+species_name+"']*dx(0) + " + " (dk)*Constant(theta)*Constant(TAPobject_data.reactor.total_length)*div(advMulti*advTerm*u_d['u_"+species_name+"'])*v_d['v_"+species_name+"']*dx(1) + " + " (dk)*Constant(1-theta)*Constant(TAPobject_data.reactor.total_length)*div(advMulti*advTerm*u_nd['u_n"+species_name+"'])*v_d['v_"+species_name+"']*dx(1)"
+		return " (dk)*Constant(theta)*Constant(TAPobject_data.reactor.length)*div(advMulti*advTerm*u_d['u_"+species_name+"'])*v_d['v_"+species_name+"']*dx(0) + " + " (dk)*Constant(1-theta)*Constant(np.sum(TAPobject_data.reactor.length))*div(advMulti*advTerm*u_nd['u_n"+species_name+"'])*v_d['v_"+species_name+"']*dx(0) + " + " (dk)*Constant(theta)*Constant(TAPobject_data.reactor.length)*div(advMulti*advTerm*u_d['u_"+species_name+"'])*v_d['v_"+species_name+"']*dx(1) + " + " (dk)*Constant(1-theta)*Constant(TAPobject_data.reactor.length)*div(advMulti*advTerm*u_nd['u_n"+species_name+"'])*v_d['v_"+species_name+"']*dx(1)"
 	
 	# For each reactive gas species, add the diffusion and advection terms (when appropriate)
-	for knum, k in enumerate(list(TAPobject_data.reactor_species.gasses.keys())):
-		if knum < len(TAPobject_data.reactor_species.gasses)-1:
+	for knum, k in enumerate(list(TAPobject_data.species.gasses.keys())):
+		if knum < len(TAPobject_data.species.gasses)-1:
 			F = F+add_diffusion(k)+' + '
-			if TAPobject_data.reactor_species.advection != 0:
+			if TAPobject_data.species.advection != 0:
 				F = F+add_advection(k)+' + '	
 		else:
 			F = F+add_diffusion(k)			
-			if TAPobject_data.reactor_species.advection != 0:
+			if TAPobject_data.species.advection != 0:
 				F = F+' + '+add_advection(k)
 
 	# For each adspecies, define the time variation term 
-	for k in list(TAPobject_data.reactor_species.adspecies.keys()):
+	for k in list(TAPobject_data.species.adspecies.keys()):
 		F = F + " + ((u_d['u_"+k+"'] - u_nd['u_n"+k+"']))*v_d['v_"+k+"']*dx(0) + ((u_d['u_"+k+"'] - u_nd['u_n"+k+"']) )*v_d['v_"+k+"']*dx(1)"
 		
-	def make_g(elementary_process,direction,scale_magnitude):
+	def make_g(process,direction,scale_magnitude):
 		"""Add free energy reaction term for the elementary process specified"""
 		if direction == 'f': # standard_parameters['Av']*
-			return "((standard_parameters['kbt']*TAPobject_data.reactor_species.temperature*(1/TAPobject_data.parameter_scale**("+str(scale_magnitude)+")))/(standard_parameters['h']))*exp(-TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.Ga/(standard_parameters['kbt']*TAPobject_data.reactor_species.temperature))"
+			return "((standard_parameters['kbt']*TAPobject_data.species.temperature*(1/TAPobject_data.parameter_scale**("+str(scale_magnitude)+")))/(standard_parameters['h']))*exp(-TAPobject_data.mechanism.processes["+str(process)+"].f.Ga/(standard_parameters['kbt']*TAPobject_data.species.temperature))"
 		else:
-			return "((standard_parameters['kbt']*TAPobject_data.reactor_species.temperature*(1/TAPobject_data.parameter_scale**("+str(scale_magnitude)+")))/standard_parameters['h'])*exp(-(TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.Ga - TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.dG)/(standard_parameters['kbt']*TAPobject_data.reactor_species.temperature))"
+			return "((standard_parameters['kbt']*TAPobject_data.species.temperature*(1/TAPobject_data.parameter_scale**("+str(scale_magnitude)+")))/standard_parameters['h'])*exp(-(TAPobject_data.mechanism.processes["+str(process)+"].f.Ga - TAPobject_data.mechanism.processes["+str(process)+"].f.dG)/(standard_parameters['kbt']*TAPobject_data.species.temperature))"
 			
-	def make_arr(elementary_process,direction):
+	def make_arr(process,direction):
 		"""Add activation/Arrhenius based reaction term for the elementary process specified"""
 		if direction == 'f':
-			return "TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.Ao*exp(-TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.Ea/(standard_parameters['Rgas']*TAPobject_data.reactor_species.temperature))"
+			return "TAPobject_data.mechanism.processes["+str(process)+"].f.Ao*exp(-TAPobject_data.mechanism.processes["+str(process)+"].f.Ea/(standard_parameters['Rgas']*TAPobject_data.species.temperature))"
 		else:
-			return "TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].backward.Ao*exp(-TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].backward.Ea/(standard_parameters['Rgas']*TAPobject_data.reactor_species.temperature))"
+			return "TAPobject_data.mechanism.processes["+str(process)+"].b.Ao*exp(-TAPobject_data.mechanism.processes["+str(process)+"].b.Ea/(standard_parameters['Rgas']*TAPobject_data.species.temperature))"
 
-	def make_constant(elementary_process,direction):
+	def make_constant(process,direction):
 		"""Add rate constant for the elementary process specified"""
 		if direction == 'f':
-			return "TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].forward.k"
+			return "TAPobject_data.mechanism.processes["+str(process)+"].f.k"
 		else:
-			return "TAPobject_data.mechanism.elementary_processes["+str(elementary_process)+"].backward.k"
+			return "TAPobject_data.mechanism.processes["+str(process)+"].b.k"
 
-	def make_link(elementary_process):
+	def make_link(process):
 		"""Add rate constant for the elementary process specified"""
-		return "TAPobject_data.mechanism.kinetic_links["+str(elementary_process)+"]"
+		return "TAPobject_data.mechanism.kinetic_links["+str(process)+"]"
 
 	# Read through the stoichiometric matrix (i.e. rate_array) and define the associated system of odes for the mechanism
 	if TAPobject_data.mechanism.reactants != []:
-		for k,z in enumerate(TAPobject_data.mechanism.rate_array):
+		for k,z in enumerate(TAPobject_data.mechanism.matrix):
 			irr = None	
 			neg = []
 			val_neg = []
@@ -107,27 +106,27 @@ def construct_f_equation(TAPobject_data: TAPobject):
 
 			together = neg+pos
 		
-			if TAPobject_data.mechanism.elementary_processes[k].forward.use == 'G':
+			if TAPobject_data.mechanism.processes[k].f.use == 'G':
 				new_neg = make_g(k,'f',abs(sum(val_neg))-1)
-			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'E':
+			elif TAPobject_data.mechanism.processes[k].f.use == 'E':
 				new_neg = make_arr(k,'f')
-			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'k':
+			elif TAPobject_data.mechanism.processes[k].f.use == 'k':
 				new_neg = make_constant(k,'f')
-			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'link':
-				new_neg = make_link(TAPobject_data.mechanism.elementary_processes[k].forward.link)
+			elif TAPobject_data.mechanism.processes[k].f.use == 'link':
+				new_neg = make_link(TAPobject_data.mechanism.processes[k].f.link)
 			
 			#sys.exit()
 			for j,v in enumerate(neg): # "(parameter_scale**(-1.0))*"+ "(1/120)*"+
 				new_neg = new_neg+"*(u_d['u_"+v+"']**"+str(abs(val_neg[j]))+")"
 			
-			if TAPobject_data.mechanism.elementary_processes[k].forward.use == 'G':
+			if TAPobject_data.mechanism.processes[k].f.use == 'G':
 				new_pos = make_g(k,'b',abs(sum(val_pos))-1)
-			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'E':
+			elif TAPobject_data.mechanism.processes[k].b.use == 'E':
 				new_pos = make_arr(k,'b')
-			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'k':
+			elif TAPobject_data.mechanism.processes[k].b.use == 'k':
 				new_pos = make_constant(k,'b')
-			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'link':
-				new_pos = make_link(TAPobject_data.mechanism.elementary_processes[k].backward.link)
+			elif TAPobject_data.mechanism.processes[k].b.use == 'link':
+				new_pos = make_link(TAPobject_data.mechanism.processes[k].b.link)
 			else:
 				irr = True
 
@@ -147,7 +146,7 @@ def construct_f_equation(TAPobject_data: TAPobject):
 						F = F+"- dk*Constant(theta)*("+str(abs(val_pos[j-len(neg)]))+"* "+new_neg+"*v_d['v_"+v+"']*dx(1))"
 
 	if TAPobject_data.mechanism.reactants != []: # 
-		for k,z in enumerate(TAPobject_data.mechanism.rate_array):
+		for k,z in enumerate(TAPobject_data.mechanism.matrix):
 			neg = []
 			val_neg = []
 			pos = []
@@ -162,26 +161,26 @@ def construct_f_equation(TAPobject_data: TAPobject):
 			
 			together = neg+pos
 
-			if TAPobject_data.mechanism.elementary_processes[k].forward.use == 'G':
+			if TAPobject_data.mechanism.processes[k].f.use == 'G':
 				new_neg = make_g(k,'f',abs(sum(val_neg))-1)
-			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'E':
+			elif TAPobject_data.mechanism.processes[k].f.use == 'E':
 				new_neg = make_arr(k,'f')
-			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'k':
+			elif TAPobject_data.mechanism.processes[k].f.use == 'k':
 				new_neg = make_constant(k,'f')
-			elif TAPobject_data.mechanism.elementary_processes[k].forward.use == 'link':
-				new_neg = make_link(TAPobject_data.mechanism.elementary_processes[k].forward.link)
+			elif TAPobject_data.mechanism.processes[k].f.use == 'link':
+				new_neg = make_link(TAPobject_data.mechanism.processes[k].f.link)
 
 			for j,v in enumerate(neg):
 				new_neg = new_neg+"*(u_nd['u_n"+v+"']**"+str(abs(val_neg[j]))+")"
 			
-			if TAPobject_data.mechanism.elementary_processes[k].forward.use == 'G':
+			if TAPobject_data.mechanism.processes[k].f.use == 'G':
 				new_pos = make_g(k,'b',abs(sum(val_pos))-1)
-			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'E':
+			elif TAPobject_data.mechanism.processes[k].f.use == 'E':
 				new_pos = make_arr(k,'b')
-			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'k':
+			elif TAPobject_data.mechanism.processes[k].f.use == 'k':
 				new_pos = make_constant(k,'b')
-			elif TAPobject_data.mechanism.elementary_processes[k].backward.use == 'link':
-				new_pos = make_link(TAPobject_data.mechanism.elementary_processes[k].backward.link)
+			elif TAPobject_data.mechanism.processes[k].f.use == 'link':
+				new_pos = make_link(TAPobject_data.mechanism.processes[k].f.link)
 
 			else:
 				irr = True
@@ -203,17 +202,17 @@ def construct_f_equation(TAPobject_data: TAPobject):
 		
 	def add_inert_diffusion(species_name):
 		"""Add diffusion term for inert gas species introduced in the reactor"""		
-		return "((u_d['u_"+species_name+"'] - u_nd['u_n"+species_name+"']))*v_d['v_"+species_name+"']*dx(0)      + dk*("+"(TAPobject_data.reactor_species.inert_diffusion*sqrt(TAPobject_data.reactor_species.reference_mass*TAPobject_data.reactor_species.temperature)/sqrt(TAPobject_data.reactor_species.reference_temperature*TAPobject_data.reactor_species.inert_gasses['"+species_name+"'].mass))"+"/(TAPobject_data.reactor.zone_voids[0]*TAPobject_data.reactor.total_length**2) ) *dot(grad(theta*u_d['u_"+species_name+"']+(1-theta)*u_nd['u_n"+species_name+"']), grad(v_d['v_"+species_name+"']))*dx(0)     + ((u_d['u_"+species_name+"'] - u_nd['u_n"+species_name+"']) )*v_d['v_"+species_name+"']*dx(1)       + dk*("+"(TAPobject_data.reactor_species.catalyst_diffusion*sqrt(TAPobject_data.reactor_species.reference_mass*TAPobject_data.reactor_species.temperature)/sqrt(TAPobject_data.reactor_species.reference_temperature*TAPobject_data.reactor_species.inert_gasses['"+species_name+"'].mass))"+"/(TAPobject_data.reactor.zone_voids[1]*TAPobject_data.reactor.total_length**2) )*dot(grad(theta*u_d['u_"+species_name+"'] + (1-theta)*u_nd['u_n"+species_name+"']), grad(v_d['v_"+species_name+"']))*dx(1) " 
+		return "((u_d['u_"+species_name+"'] - u_nd['u_n"+species_name+"']))*v_d['v_"+species_name+"']*dx(0)      + dk*("+"(TAPobject_data.species.inert_diffusion*sqrt(TAPobject_data.species.reference_mass*TAPobject_data.species.temperature)/sqrt(TAPobject_data.species.reference_temperature*TAPobject_data.species.inert_gasses['"+species_name+"'].mass))"+"/(TAPobject_data.reactor.voids[0]*TAPobject_data.reactor.length**2) ) *dot(grad(theta*u_d['u_"+species_name+"']+(1-theta)*u_nd['u_n"+species_name+"']), grad(v_d['v_"+species_name+"']))*dx(0)     + ((u_d['u_"+species_name+"'] - u_nd['u_n"+species_name+"']) )*v_d['v_"+species_name+"']*dx(1)       + dk*("+"(TAPobject_data.species.catalyst_diffusion*sqrt(TAPobject_data.species.reference_mass*TAPobject_data.species.temperature)/sqrt(TAPobject_data.species.reference_temperature*TAPobject_data.species.inert_gasses['"+species_name+"'].mass))"+"/(TAPobject_data.reactor.voids[1]*TAPobject_data.reactor.length**2) )*dot(grad(theta*u_d['u_"+species_name+"'] + (1-theta)*u_nd['u_n"+species_name+"']), grad(v_d['v_"+species_name+"']))*dx(1) " 
 	
 	# For each inert gas species, add the diffusion and advection terms (when appropriate)
-	for knum, k in enumerate(list(TAPobject_data.reactor_species.inert_gasses.keys())):
-		if knum < len(TAPobject_data.reactor_species.inert_gasses)-1:
+	for knum, k in enumerate(list(TAPobject_data.species.inert_gasses.keys())):
+		if knum < len(TAPobject_data.species.inert_gasses)-1:
 			F = F+" +  "+add_inert_diffusion(k)+' + '
-			if TAPobject_data.reactor_species.advection != 0:
+			if TAPobject_data.species.advection != 0:
 				F = F+" +  "+add_advection(k)+' + '	
 		else:
 			F = F+" +  "+add_inert_diffusion(k)			
-			if TAPobject_data.reactor_species.advection != 0:
+			if TAPobject_data.species.advection != 0:
 				F = F+' + '+add_advection(k)
 	#sys.exit()
 	return F
