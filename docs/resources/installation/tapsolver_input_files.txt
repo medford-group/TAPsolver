@@ -1,0 +1,633 @@
+############## Initial File  0_initial_simulation
+
+from tapsolver import *
+import numpy as np
+import os
+
+new_reactor = reactor()
+
+new_reactor.zone_lengths = {0:1.8675,1:0.2,2:1.8675}
+new_reactor.zone_voids = {0:0.4,1:0.4,2:0.4}
+new_reactor.reactor_radius = 0.19
+
+### Add the reactor gasses (reactive and inert)
+new_reactor_species = reactor_species()
+new_reactor_species.inert_diffusion = 27
+new_reactor_species.catalyst_diffusion = 27
+new_reactor_species.reference_temperature = 700
+new_reactor_species.reference_mass = 40
+new_reactor_species.temperature = 700
+new_reactor_species.advection = 0
+
+C3H8 = define_gas()
+C3H8.mass = 44.1
+C3H8.intensity = 1.0
+C3H8.delay = 0.0
+C3H8.sigma = 0.2
+C3H8.noise = 0.2
+new_reactor_species.add_gas('C3H8',C3H8)
+
+O2 = define_gas()
+O2.mass = 32
+O2.intensity = 1.0
+O2.delay = 0.0
+O2.sigma = 0.2
+O2.noise = 0.2
+new_reactor_species.add_gas('O2',O2)
+#
+C3H6 = define_gas()
+C3H6.mass = 42.08
+C3H6.intensity = 0.0
+C3H6.delay = 0.0
+C3H6.sigma = 0.2
+C3H6.noise = 0.2
+new_reactor_species.add_gas('C3H6',C3H6)
+
+H2O = define_gas()
+H2O.mass = 18
+H2O.intensity = 0.0
+H2O.delay = 0
+H2O.sigma = .4
+H2O.noise = 0.4
+new_reactor_species.add_gas('H2O',H2O)
+
+CO2 = define_gas()
+CO2.mass = 44.01
+CO2.intensity = 0.0
+CO2.delay = 0
+CO2.sigma = .4
+CO2.noise = 0.4
+new_reactor_species.add_gas('CO2',CO2)
+
+Ar = define_gas()
+Ar.mass = 40.1
+Ar.intensity = 1
+Ar.delay = 0.0
+Ar.noise = 0.0
+Ar.sigma = 0.17
+new_reactor_species.add_inert_gas('Ar',Ar)
+
+s = define_adspecies()
+s.concentration = 0
+new_reactor_species.add_adspecies('C3H8*',s)
+
+s = define_adspecies()
+s.concentration = 240
+new_reactor_species.add_adspecies('O*',s)
+
+s = define_adspecies()
+s.concentration = 0
+new_reactor_species.add_adspecies('C3H6*',s)
+
+s = define_adspecies()
+s.concentration = 0
+new_reactor_species.add_adspecies('C3H4*',s)
+
+s = define_adspecies()
+s.concentration = 240
+new_reactor_species.add_adspecies('*',s)
+
+new_mechanism = mechanism()
+
+new_mechanism.elementary_processes[0] = elementary_process('C3H8 + * <-> C3H8*')
+new_mechanism.elementary_processes[1] = elementary_process('O2 + 2* <-> 2O*')
+new_mechanism.elementary_processes[2] = elementary_process('C3H6 + * <-> C3H6*')
+new_mechanism.elementary_processes[3] = elementary_process('C3H8* + O* <-> C3H6* + H2O + *')
+new_mechanism.elementary_processes[4] = elementary_process('C3H8* + 2O* <-> C3H4* + 2H2O + 2*')
+new_mechanism.elementary_processes[5] = elementary_process('C3H6* + O* <-> C3H4* + H2O + *')
+new_mechanism.elementary_processes[6] = elementary_process('C3H4* + 8O* <-> 3CO2 + 2H2O + 9*')
+
+new_mechanism.elementary_processes[0].forward.dG = -0.2
+new_mechanism.elementary_processes[0].forward.Ga = 0.3
+new_mechanism.elementary_processes[1].forward.dG = -0.7
+new_mechanism.elementary_processes[1].forward.Ga = 1.25
+new_mechanism.elementary_processes[2].forward.dG = -0.1
+new_mechanism.elementary_processes[2].forward.Ga = 0.2
+new_mechanism.elementary_processes[3].forward.dG = -0.35
+new_mechanism.elementary_processes[3].forward.Ga = 1.54
+new_mechanism.elementary_processes[4].forward.dG = -3.98
+new_mechanism.elementary_processes[4].forward.Ga = 1.65
+new_mechanism.elementary_processes[5].forward.dG = -3.62
+new_mechanism.elementary_processes[5].forward.Ga = 1.37
+new_mechanism.elementary_processes[6].forward.dG = -8
+new_mechanism.elementary_processes[6].forward.Ga = 0.1
+
+## Make a function
+for j in new_mechanism.elementary_processes:
+	new_mechanism.elementary_processes[j].forward.use = 'G'
+try:
+	new_mechanism.elementary_processes[j].backward.use = 'G'
+except:
+	pass
+
+mechanism_constructor(new_mechanism)
+
+opdh_1 = TAPobject()
+opdh_1.reactor = new_reactor
+opdh_1.reactor_species = new_reactor_species
+opdh_1.mechanism = new_mechanism
+
+opdh_1.show_graph = False
+opdh_1.parameter_scale = 480
+opdh_1.output_name = 'exp_new'
+
+### Step #1 - Run simulations
+
+temp_gasses = opdh_1.reactor_species.gasses
+temp_inert_gasses = opdh_1.reactor_species.inert_gasses
+temp_adspecies = opdh_1.reactor_species.adspecies
+temp_reactants = opdh_1.mechanism.reactants
+
+
+forward_problem(2.5,1,opdh_1)
+
+
+
+####################### Second file 1_fit_parameters
+from tapsolver import *
+import numpy as np
+import os
+
+new_reactor = reactor()
+
+new_reactor.zone_lengths = {0:1.8675,1:0.2,2:1.8675}
+new_reactor.zone_voids = {0:0.4,1:0.4,2:0.4}
+new_reactor.reactor_radius = 0.19
+
+### Add the reactor gasses (reactive and inert)
+new_reactor_species = reactor_species()
+new_reactor_species.inert_diffusion = 27
+new_reactor_species.catalyst_diffusion = 27
+new_reactor_species.reference_temperature = 700
+new_reactor_species.reference_mass = 40
+new_reactor_species.temperature = 700
+new_reactor_species.advection = 0
+
+C3H8 = define_gas()
+C3H8.mass = 44.1
+C3H8.intensity = 1.0
+C3H8.delay = 0.0
+C3H8.sigma = 0.2
+C3H8.noise = 0.2
+new_reactor_species.add_gas('C3H8',C3H8)
+
+O2 = define_gas()
+O2.mass = 32
+O2.intensity = 1.0
+O2.delay = 0.0
+O2.sigma = 0.2
+O2.noise = 0.2
+new_reactor_species.add_gas('O2',O2)
+#
+C3H6 = define_gas()
+C3H6.mass = 42.08
+C3H6.intensity = 0.0
+C3H6.delay = 0.0
+C3H6.sigma = 0.2
+C3H6.noise = 0.2
+new_reactor_species.add_gas('C3H6',C3H6)
+
+H2O = define_gas()
+H2O.mass = 18
+H2O.intensity = 0.0
+H2O.delay = 0
+H2O.sigma = .4
+H2O.noise = 0.4
+new_reactor_species.add_gas('H2O',H2O)
+
+CO2 = define_gas()
+CO2.mass = 44.01
+CO2.intensity = 0.0
+CO2.delay = 0
+CO2.sigma = .4
+CO2.noise = 0.4
+new_reactor_species.add_gas('CO2',CO2)
+
+Ar = define_gas()
+Ar.mass = 40.1
+Ar.intensity = 1
+Ar.delay = 0.0
+Ar.noise = 0.0
+Ar.sigma = 0.17
+new_reactor_species.add_inert_gas('Ar',Ar)
+
+s = define_adspecies()
+s.concentration = 0
+new_reactor_species.add_adspecies('C3H8*',s)
+
+s = define_adspecies()
+s.concentration = 240
+new_reactor_species.add_adspecies('O*',s)
+
+s = define_adspecies()
+s.concentration = 0
+new_reactor_species.add_adspecies('C3H6*',s)
+
+s = define_adspecies()
+s.concentration = 0
+new_reactor_species.add_adspecies('C3H4*',s)
+
+s = define_adspecies()
+s.concentration = 240
+new_reactor_species.add_adspecies('*',s)
+
+new_mechanism = mechanism()
+
+new_mechanism.elementary_processes[0] = elementary_process('C3H8 + * <-> C3H8*')
+new_mechanism.elementary_processes[1] = elementary_process('O2 + 2* <-> 2O*')
+new_mechanism.elementary_processes[2] = elementary_process('C3H6 + * <-> C3H6*')
+new_mechanism.elementary_processes[3] = elementary_process('C3H8* + O* <-> C3H6* + H2O + *')
+new_mechanism.elementary_processes[4] = elementary_process('C3H8* + 2O* <-> C3H4* + 2H2O + 2*')
+new_mechanism.elementary_processes[5] = elementary_process('C3H6* + O* <-> C3H4* + H2O + *')
+new_mechanism.elementary_processes[6] = elementary_process('C3H4* + 8O* <-> 3CO2 + 2H2O + 9*')
+
+new_mechanism.elementary_processes[0].forward.dG = -0.3
+new_mechanism.elementary_processes[0].forward.Ga = 0.3
+new_mechanism.elementary_processes[1].forward.dG = -0.3
+new_mechanism.elementary_processes[1].forward.Ga = 1
+new_mechanism.elementary_processes[2].forward.dG = -0.3
+new_mechanism.elementary_processes[2].forward.Ga = 0.2
+new_mechanism.elementary_processes[3].forward.dG = -0.35
+new_mechanism.elementary_processes[3].forward.Ga = 1.5
+new_mechanism.elementary_processes[4].forward.dG = -3.98
+new_mechanism.elementary_processes[4].forward.Ga = 1.5
+new_mechanism.elementary_processes[5].forward.dG = -3.62
+new_mechanism.elementary_processes[5].forward.Ga = 1.5
+new_mechanism.elementary_processes[6].forward.dG = -8
+new_mechanism.elementary_processes[6].forward.Ga = 0.1
+
+new_mechanism.elementary_processes[3].forward.lower_bound = 1.2
+new_mechanism.elementary_processes[3].forward.upper_bound = 2.2
+new_mechanism.elementary_processes[4].forward.lower_bound = 1.2
+new_mechanism.elementary_processes[4].forward.upper_bound = 2.2
+new_mechanism.elementary_processes[5].forward.lower_bound = 1.2
+new_mechanism.elementary_processes[5].forward.upper_bound = 2.2
+
+## Make a function
+for j in new_mechanism.elementary_processes:
+	new_mechanism.elementary_processes[j].forward.use = 'G'
+try:
+	new_mechanism.elementary_processes[j].backward.use = 'G'
+except:
+	pass
+
+mechanism_constructor(new_mechanism)
+
+opdh_1 = TAPobject()
+opdh_1.reactor = new_reactor
+opdh_1.reactor_species = new_reactor_species
+opdh_1.mechanism = new_mechanism
+
+opdh_1.show_graph = False
+opdh_1.parameter_scale = 480
+opdh_1.output_name = 'exp_new'
+
+temp_gasses = opdh_1.reactor_species.gasses
+temp_inert_gasses = opdh_1.reactor_species.inert_gasses
+temp_adspecies = opdh_1.reactor_species.adspecies
+temp_reactants = opdh_1.mechanism.reactants
+
+
+opdh_1.parameters_of_interest = ['TAPobject_data.mechanism.elementary_processes[0].forward.dG','TAPobject_data.mechanism.elementary_processes[1].forward.dG','TAPobject_data.mechanism.elementary_processes[1].forward.Ga','TAPobject_data.mechanism.elementary_processes[2].forward.dG','TAPobject_data.mechanism.elementary_processes[3].forward.Ga','TAPobject_data.mechanism.elementary_processes[4].forward.Ga','TAPobject_data.mechanism.elementary_processes[5].forward.Ga']
+opdh_1.data_name = 'path_to_data'
+opdh_1.gasses_objective = ['C3H8','O2','C3H6','H2O','CO2']
+opdh_1.output_name = 'fit_new'
+opdh_1.optimize = True
+opdh_1.optimization_method = 'CG'
+forward_problem(1.4,1,opdh_1)
+
+sys.exit()
+
+
+################### Third file 2_uq_analysis
+from tapsolver import *
+import numpy as np
+import os
+
+new_reactor = reactor()
+
+new_reactor.zone_lengths = {0:1.8675,1:0.2,2:1.8675}
+new_reactor.zone_voids = {0:0.4,1:0.4,2:0.4}
+new_reactor.reactor_radius = 0.19
+
+### Add the reactor gasses (reactive and inert)
+new_reactor_species = reactor_species()
+new_reactor_species.inert_diffusion = 27
+new_reactor_species.catalyst_diffusion = 27
+new_reactor_species.reference_temperature = 700
+new_reactor_species.reference_mass = 40
+new_reactor_species.temperature = 700
+new_reactor_species.advection = 0
+
+C3H8 = define_gas()
+C3H8.mass = 44.1
+C3H8.intensity = 1.0
+C3H8.delay = 0.0
+C3H8.sigma = 0.2
+C3H8.noise = 0.2
+new_reactor_species.add_gas('C3H8',C3H8)
+
+O2 = define_gas()
+O2.mass = 32
+O2.intensity = 1.0
+O2.delay = 0.0
+O2.sigma = 0.2
+O2.noise = 0.2
+new_reactor_species.add_gas('O2',O2)
+#
+C3H6 = define_gas()
+C3H6.mass = 42.08
+C3H6.intensity = 0.0
+C3H6.delay = 0.0
+C3H6.sigma = 0.2
+C3H6.noise = 0.2
+new_reactor_species.add_gas('C3H6',C3H6)
+
+H2O = define_gas()
+H2O.mass = 18
+H2O.intensity = 0.0
+H2O.delay = 0
+H2O.sigma = .4
+H2O.noise = 0.4
+new_reactor_species.add_gas('H2O',H2O)
+
+CO2 = define_gas()
+CO2.mass = 44.01
+CO2.intensity = 0.0
+CO2.delay = 0
+CO2.sigma = .4
+CO2.noise = 0.4
+new_reactor_species.add_gas('CO2',CO2)
+
+Ar = define_gas()
+Ar.mass = 40.1
+Ar.intensity = 1
+Ar.delay = 0.0
+Ar.noise = 0.0
+Ar.sigma = 0.17
+new_reactor_species.add_inert_gas('Ar',Ar)
+
+s = define_adspecies()
+s.concentration = 0
+new_reactor_species.add_adspecies('C3H8*',s)
+
+s = define_adspecies()
+s.concentration = 240
+new_reactor_species.add_adspecies('O*',s)
+
+s = define_adspecies()
+s.concentration = 0
+new_reactor_species.add_adspecies('C3H6*',s)
+
+s = define_adspecies()
+s.concentration = 0
+new_reactor_species.add_adspecies('C3H4*',s)
+
+s = define_adspecies()
+s.concentration = 240
+new_reactor_species.add_adspecies('*',s)
+
+new_mechanism = mechanism()
+
+new_mechanism.elementary_processes[0] = elementary_process('C3H8 + * <-> C3H8*')
+new_mechanism.elementary_processes[1] = elementary_process('O2 + 2* <-> 2O*')
+new_mechanism.elementary_processes[2] = elementary_process('C3H6 + * <-> C3H6*')
+new_mechanism.elementary_processes[3] = elementary_process('C3H8* + O* <-> C3H6* + H2O + *')
+new_mechanism.elementary_processes[4] = elementary_process('C3H8* + 2O* <-> C3H4* + 2H2O + 2*')
+new_mechanism.elementary_processes[5] = elementary_process('C3H6* + O* <-> C3H4* + H2O + *')
+new_mechanism.elementary_processes[6] = elementary_process('C3H4* + 8O* <-> 3CO2 + 2H2O + 9*')
+# -0.20011497798099603,-0.5332260851761182,1.2308606648954636,-0.15407454134505477,1.5416082332007137,1.6135426440590896,1.422301367594213
+new_mechanism.elementary_processes[0].forward.dG = -0.2001149
+new_mechanism.elementary_processes[0].forward.Ga = 0.3
+new_mechanism.elementary_processes[1].forward.dG = -0.53322608
+new_mechanism.elementary_processes[1].forward.Ga = 1.2308606
+new_mechanism.elementary_processes[2].forward.dG = -0.154074541
+new_mechanism.elementary_processes[2].forward.Ga = 0.2
+new_mechanism.elementary_processes[3].forward.dG = -0.35
+new_mechanism.elementary_processes[3].forward.Ga = 1.53
+new_mechanism.elementary_processes[4].forward.dG = -3.98
+new_mechanism.elementary_processes[4].forward.Ga = 1.61
+new_mechanism.elementary_processes[5].forward.dG = -3.62
+new_mechanism.elementary_processes[5].forward.Ga = 1.42
+new_mechanism.elementary_processes[6].forward.dG = -8
+new_mechanism.elementary_processes[6].forward.Ga = 0.1
+
+new_mechanism.elementary_processes[3].forward.lower_bound = 1.2
+new_mechanism.elementary_processes[3].forward.upper_bound = 2.2
+new_mechanism.elementary_processes[4].forward.lower_bound = 1.2
+new_mechanism.elementary_processes[4].forward.upper_bound = 2.2
+new_mechanism.elementary_processes[5].forward.lower_bound = 1.2
+new_mechanism.elementary_processes[5].forward.upper_bound = 2.2
+
+## Make a function
+for j in new_mechanism.elementary_processes:
+	new_mechanism.elementary_processes[j].forward.use = 'G'
+try:
+	new_mechanism.elementary_processes[j].backward.use = 'G'
+except:
+	pass
+
+mechanism_constructor(new_mechanism)
+
+opdh_1 = TAPobject()
+opdh_1.reactor = new_reactor
+opdh_1.reactor_species = new_reactor_species
+opdh_1.mechanism = new_mechanism
+
+opdh_1.show_graph = False
+opdh_1.parameter_scale = 480
+opdh_1.output_name = 'exp_new'
+
+### Step #1 - Run simulations
+
+temp_gasses = opdh_1.reactor_species.gasses
+temp_inert_gasses = opdh_1.reactor_species.inert_gasses
+temp_adspecies = opdh_1.reactor_species.adspecies
+temp_reactants = opdh_1.mechanism.reactants
+
+opdh_1.parameters_of_interest = ['TAPobject_data.mechanism.elementary_processes[0].forward.dG','TAPobject_data.mechanism.elementary_processes[1].forward.dG','TAPobject_data.mechanism.elementary_processes[1].forward.Ga','TAPobject_data.mechanism.elementary_processes[2].forward.dG','TAPobject_data.mechanism.elementary_processes[3].forward.Ga','TAPobject_data.mechanism.elementary_processes[4].forward.Ga','TAPobject_data.mechanism.elementary_processes[5].forward.Ga']
+opdh_1.data_name = 'path_to_data'
+opdh_1.gasses_objective = ['C3H8','O2','C3H6','H2O','CO2']
+opdh_1.output_name = 'fit_new'
+opdh_1.optimize = True
+opdh_1.optimization_method = 'CG'
+opdh_2 = update_parameters(opdh_1)
+opdh_2.uncertainty = True
+forward_problem(1.4,1,opdh_2)
+
+
+##################### Fourth file 3_sampling
+from tapsolver import *
+import numpy as np
+import os
+
+new_reactor = reactor()
+
+new_reactor.zone_lengths = {0:1.8675,1:0.2,2:1.8675}
+new_reactor.zone_voids = {0:0.4,1:0.4,2:0.4}
+new_reactor.reactor_radius = 0.19
+
+### Add the reactor gasses (reactive and inert)
+new_reactor_species = reactor_species()
+new_reactor_species.inert_diffusion = 27
+new_reactor_species.catalyst_diffusion = 27
+new_reactor_species.reference_temperature = 700
+new_reactor_species.reference_mass = 40
+new_reactor_species.temperature = 700
+new_reactor_species.advection = 0
+
+C3H8 = define_gas()
+C3H8.mass = 44.1
+C3H8.intensity = 1.0
+C3H8.delay = 0.0
+C3H8.sigma = 0.2
+C3H8.noise = 0.0
+new_reactor_species.add_gas('C3H8',C3H8)
+
+O2 = define_gas()
+O2.mass = 32
+O2.intensity = 1.0
+O2.delay = 0.0
+O2.sigma = 0.2
+O2.noise = 0.0
+new_reactor_species.add_gas('O2',O2)
+#
+C3H6 = define_gas()
+C3H6.mass = 42.08
+C3H6.intensity = 0.0
+C3H6.delay = 0.0
+C3H6.sigma = 0.2
+C3H6.noise = 0.0
+new_reactor_species.add_gas('C3H6',C3H6)
+
+H2O = define_gas()
+H2O.mass = 18
+H2O.intensity = 0.0
+H2O.delay = 0
+H2O.sigma = 0.4
+H2O.noise = 0.0
+new_reactor_species.add_gas('H2O',H2O)
+
+CO2 = define_gas()
+CO2.mass = 44.01
+CO2.intensity = 0.0
+CO2.delay = 0
+CO2.sigma = 0.4
+CO2.noise = 0.0
+new_reactor_species.add_gas('CO2',CO2)
+
+Ar = define_gas()
+Ar.mass = 40
+Ar.intensity = 1
+Ar.delay = 0
+Ar.sigma = 0.4
+Ar.noise = 0.0
+new_reactor_species.add_inert_gas('Ar',Ar)
+
+s = define_adspecies()
+s.concentration = 0
+new_reactor_species.add_adspecies('C3H8*',s)
+
+s = define_adspecies()
+s.concentration = 240
+new_reactor_species.add_adspecies('O*',s)
+
+s = define_adspecies()
+s.concentration = 0
+new_reactor_species.add_adspecies('C3H6*',s)
+
+s = define_adspecies()
+s.concentration = 0
+new_reactor_species.add_adspecies('C3H4*',s)
+
+s = define_adspecies()
+s.concentration = 240
+new_reactor_species.add_adspecies('*',s)
+
+new_mechanism = mechanism()
+
+new_mechanism.elementary_processes[0] = elementary_process('C3H8 + * <-> C3H8*')
+new_mechanism.elementary_processes[1] = elementary_process('O2 + 2* <-> 2O*')
+new_mechanism.elementary_processes[2] = elementary_process('C3H6 + * <-> C3H6*')
+new_mechanism.elementary_processes[3] = elementary_process('C3H8* + O* <-> C3H6* + H2O + *')
+new_mechanism.elementary_processes[4] = elementary_process('C3H8* + 2O* <-> C3H4* + 2H2O + 2*')
+new_mechanism.elementary_processes[5] = elementary_process('C3H6* + O* <-> C3H4* + H2O + *')
+new_mechanism.elementary_processes[6] = elementary_process('C3H4* + 8O* <-> 3CO2 + 2H2O + 9*')
+
+new_mechanism.elementary_processes[0].forward.dG = -0.201138
+new_mechanism.elementary_processes[0].forward.Ga = 0.3
+new_mechanism.elementary_processes[1].forward.dG = -0.53802526
+new_mechanism.elementary_processes[1].forward.Ga = 1.235943
+new_mechanism.elementary_processes[2].forward.dG = -0.09970375635776009
+new_mechanism.elementary_processes[2].forward.Ga = 0.2
+new_mechanism.elementary_processes[3].forward.dG = -0.35
+new_mechanism.elementary_processes[3].forward.Ga = 1.54025449
+new_mechanism.elementary_processes[4].forward.dG = -3.98
+new_mechanism.elementary_processes[4].forward.Ga = 1.6385931701550969
+new_mechanism.elementary_processes[5].forward.dG = -3.62
+new_mechanism.elementary_processes[5].forward.Ga = 1.3749264461
+new_mechanism.elementary_processes[6].forward.dG = -8
+new_mechanism.elementary_processes[6].forward.Ga = 0.1
+
+## Make a function
+for j in new_mechanism.elementary_processes:
+	new_mechanism.elementary_processes[j].forward.use = 'G'
+try:
+	new_mechanism.elementary_processes[j].backward.use = 'G'
+except:
+	pass
+
+mechanism_constructor(new_mechanism)
+
+opdh_1 = TAPobject()
+opdh_1.reactor = new_reactor
+opdh_1.reactor_species = new_reactor_species
+opdh_1.mechanism = new_mechanism
+
+opdh_1.show_graph = False
+opdh_1.parameter_scale = 480
+opdh_1.output_name = 'exp_new'
+
+### Step #1 - Run simulations
+
+temp_gasses = opdh_1.reactor_species.gasses
+temp_inert_gasses = opdh_1.reactor_species.inert_gasses
+temp_adspecies = opdh_1.reactor_species.adspecies
+temp_reactants = opdh_1.mechanism.reactants
+opdh_2 = new_experiments(opdh_1,'-B',original_gasses=temp_gasses,original_inert_gasses=temp_inert_gasses,original_adspecies=temp_adspecies)
+opdh_2.reactor_species.temperature = {0:700,1:650}
+opdh_2.reactor_species.gasses["C3H8-B"].intensity = 0
+opdh_2.reactor_species.gasses["O2-B"].intensity = 0
+opdh_2.reactor_species.gasses["C3H8-B"].delay = 0.0
+#opdh_3 = update_parameters(opdh_2)
+opdh_2.parameters_of_interest = ['TAPobject_data.mechanism.elementary_processes[0].forward.dG','TAPobject_data.mechanism.elementary_processes[1].forward.dG','TAPobject_data.mechanism.elementary_processes[1].forward.Ga','TAPobject_data.mechanism.elementary_processes[2].forward.dG','TAPobject_data.mechanism.elementary_processes[3].forward.Ga','TAPobject_data.mechanism.elementary_processes[4].forward.Ga','TAPobject_data.mechanism.elementary_processes[5].forward.Ga']
+#forward_problem(2.5,1,opdh_2)
+
+C3H8_int = [1,1.5,2]
+o2_int = [1,1.5,2]
+o2_delay = [0.15,0.3,0.45,0.6]
+temperature = [650,675,700]
+
+for jnum1,j1 in enumerate(C3H8_int):
+	for jnum2,j2 in enumerate(o2_int):
+		for jnum3,j3 in enumerate(o2_delay):
+			for jnum4,j4 in enumerate(temperature):
+				try:
+					os.mkdir('./'+str(jnum1)+'_'+str(jnum2)+'_'+str(jnum3)+'_'+str(jnum4))
+				except OSError:
+					pass
+				opdh_2.reactor_species.gasses['C3H8-B'].intensity = j1
+				opdh_2.reactor_species.gasses['O2-B'].intensity = j2
+				opdh_2.reactor_species.gasses['C3H8-B'].delay = j3
+				opdh_2.reactor_species.temperature[1] = j4
+				save_object(opdh_2,'./'+str(jnum1)+'_'+str(jnum2)+'_'+str(jnum3)+'_'+str(jnum4)+'/mech_1.json')
+
+############### Fifth file 4_dynamic_analysis
+from tapsolver import *
+
+opdh_1 = read_TAPobject('./mech_1.json')
+opdh_1.output_name = 'exp_new'
+opdh_1.data_name = None
+opdh_1.finite_difference_trans_sensitivty = True
+#forward_problem(2,1,opdh_1)
+transient_sensitivity(2, 1, opdh_1)

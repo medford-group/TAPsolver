@@ -3,7 +3,9 @@
   <img src="https://github.com/medford-group/TAPsolver/blob/experimentalFluidity_condensed/docs/figures/tapsolver_logo.jpg">
 </p>
 
-THIS IS A REPO FOR STORING THE CODE USED TO GENERATE AND ANALYZE THE DATA IN THE MBDOE PAPER (DOI TO BE INCLUDED). THIS WILL ALSO BE FROZEN IN ZENODO FOR FUTURE USE.
+THIS IS A REPO FOR STORING THE CODE USED TO GENERATE AND ANALYZE THE DATA IN THE MBDOE PAPER (DOI TO BE INCLUDED). THIS WILL ALSO BE FROZEN IN ZENODO FOR FUTURE USE. HOW TO INSTALL THE SOFTWARE, EXAMPLES OF THE CODE, AND THE SCRIPTS AND RAW DATA ARE PROVIDED IN THE FOLLOWING LINK.
+
+* [Installation, Examples, and Raw Data](https://github.com/medford-group/TAPsolver/tree/mbdoe_publication/docs/resources/installation)
 
 TAPsolver is an open-source, python program for the analysis of Temporal Analysis of Products (TAP) reactor experiments. The methods of analysis available (as well as the ones we're working on and the ones we'd love to see) include:
 
@@ -13,8 +15,6 @@ TAPsolver is an open-source, python program for the analysis of Temporal Analysi
 
 The python packages [FEniCS](https://fenicsproject.org/)  (Finite Element Computational Software) and [Dolfin-Adjoint](http://www.dolfin-adjoint.org/en/latest/) act as the foundation of TAPsolver and allow for the flexible and efficient application of [algorithmic differentiation](https://towardsdatascience.com/automatic-differentiation-explained-b4ba8e60c2ad). TAPsolver was also closely developed alongside [TAPSAP](https://github.com/IdahoLabResearch/tapsap), which is used for processing and statistically analyzing raw TAP experimental data. 
 
-
-* [Installation, Examples, and Raw Data](https://github.com/medford-group/TAPsolver/tree/mbdoe_publication/docs/resources/installation)
 
 ### Collaborators and Funding
 
