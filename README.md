@@ -3,16 +3,9 @@
   <img src="https://github.com/medford-group/TAPsolver/blob/experimentalFluidity_condensed/docs/figures/tapsolver_logo.jpg">
 </p>
 
-TAPsolver is an open-source, python program for the analysis of Temporal Analysis of Products (TAP) reactor experiments. The methods of analysis available (as well as the ones we're working on and the ones we'd love to see) include:
+THIS IS A REPO FOR STORING THE CODE USED TO GENERATE AND ANALYZE THE DATA IN THE MBDOE PAPER (DOI TO BE INCLUDED). THIS WILL ALSO BE FROZEN IN ZENODO FOR FUTURE USE.
 
-* *PDE-based simulations, including state-altering, state-defining and pump-probe operating conditions*
-* *PDE-constrained optimization of kinetic parameters*
-* *Hessian assesment of parameter uncertainties*
-* *Ensemble-based evaluation of initial state/reactor configuration uncertainties*
-* *Model-based design of experiments and model discrimination (under development)*
-* *Efficient kinetic parameter uncertainty propagation to TAP experiments (under development)*
-* *Bayesian parameter estimation (future work)*
-* *TAP Kinetic informed neural networks (under development)*
+TAPsolver is an open-source, python program for the analysis of Temporal Analysis of Products (TAP) reactor experiments. The methods of analysis available (as well as the ones we're working on and the ones we'd love to see) include:
 
 <p align="center">
   <img src="https://github.com/medford-group/TAPsolver/blob/experimentalFluidity_condensed/docs/figures/tapsolver_concept.gif">
